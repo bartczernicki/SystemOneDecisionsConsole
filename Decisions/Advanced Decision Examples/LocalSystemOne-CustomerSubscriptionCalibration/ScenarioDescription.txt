@@ -1,0 +1,17 @@
+Local SystemOne - Customer Subscription Calibration
+
+Forecast 200 real historical customer outcomes from the original UCI Bank Marketing dataset in two separately scored groups. The Representative holdout retains the original 100 customers selected across the full dataset. The Previous campaign success diagnostic adds 100 different customers whose previous campaign outcome was success. Both selections use fixed hash rules without consulting the current campaign's outcome.
+
+Each separate Local SystemOne request receives the same neutral campaign context and one customer's prior profile. It estimates the probability that the customer subscribed to a term deposit. Group labels, selection metadata, other answers, and recorded outcomes are kept outside the requests. The representative customers run first, followed by the diagnostic customers, with source-row order preserved within each group. Each case shows P(Yes), the recorded outcome, its Brier score, and API response time in milliseconds.
+
+Each group's final summary reports model Brier score, global reference baseline Brier score, Brier skill score, expected calibration error (ECE), and observed subscription rate. ECE uses ten 10-percentage-point bins to calculate the average absolute gap between mean predicted probability and observed subscription rate, weighted by each bin's customer count. Lower ECE means smaller empirical calibration gaps. The constant global-reference-rate baseline comes from the other 45,011 records, excluding all 200 evaluated records. Probabilities are measured as returned, without fitted recalibration.
+
+The diagnostic group helps examine forecasts for customers with a known favorable prior-campaign history. It is a selected subgroup and should not be treated as representative of all bank customers. The groups are scored separately.
+
+This is a retrospective, descriptive demonstration on two small public-data samples. Small samples and sparse bins make calibration estimates uncertain. It does not establish future performance or guarantee that the model has never encountered the data.
+
+Source: UCI Machine Learning Repository, Bank Marketing (original bank-full.csv).
+Dataset: https://archive.ics.uci.edu/dataset/222/bank+marketing
+License: Creative Commons Attribution 4.0 International (CC BY 4.0), https://creativecommons.org/licenses/by/4.0/
+Attribution: Moro, S., Rita, P., & Cortez, P. (2014). Bank Marketing [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5K306.
+Adaptation: 200 selected records in two groups, limited prior-profile fields, and separately encoded 0/1 outcomes. The preparation script and provenance record document the source checksums and both selection rules.

@@ -1,0 +1,26 @@
+Historical customer-subscription forecasting context
+
+The original UCI Bank Marketing dataset describes telephone marketing campaigns by a Portuguese banking institution. The target is whether a customer subscribed to a term deposit during the campaign. You will receive one customer's known prior profile after this context. Estimate the campaign subscription probability from that profile and the reference context below.
+
+Reference context from the separate pool of unselected records:
+- Reference records: 45,011.
+- Recorded term-deposit subscriptions (Yes): 5,213.
+- Recorded non-subscriptions (No): 39,798.
+- Reference subscription rate: 5213/45011 = 0.1158161338339517 (approximately 11.581613%).
+This reference pool excludes every evaluated record. Its aggregate rate is starting context, not a prescribed probability for an individual customer.
+
+Profile fields:
+- age: age in years.
+- job: job category.
+- marital: marital status; the divorced category also includes widowed customers.
+- education: education category.
+- default: whether the customer has credit in default.
+- balance: average yearly balance in euros; negative values are possible.
+- housing: whether the customer has a housing loan.
+- loan: whether the customer has a personal loan.
+- pdays: days since contact in a previous campaign; -1 means the customer was not previously contacted.
+- previous: number of contacts before the current campaign.
+- poutcome: outcome of a previous campaign, which is distinct from the current campaign's subscription outcome.
+The category unknown represents an unknown field value. No current-call details or current-campaign outcome are supplied. Do not invent them.
+
+This is a retrospective forecast of a historical record, using only the provided prior information and aggregate reference context. The public source may have been encountered by the model previously; this exercise does not assert that the records are unseen.

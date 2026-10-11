@@ -1,0 +1,3402 @@
+[
+  {
+    "id": "customer-001",
+    "cohortId": "representative",
+    "features": {
+      "age": 38,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 389,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-002",
+    "cohortId": "representative",
+    "features": {
+      "age": 46,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "unknown",
+      "default": "no",
+      "balance": 401,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-003",
+    "cohortId": "representative",
+    "features": {
+      "age": 43,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1376,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-004",
+    "cohortId": "representative",
+    "features": {
+      "age": 41,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": -97,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-005",
+    "cohortId": "representative",
+    "features": {
+      "age": 29,
+      "job": "technician",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 409,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-006",
+    "cohortId": "representative",
+    "features": {
+      "age": 46,
+      "job": "admin.",
+      "marital": "divorced",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 3749,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-007",
+    "cohortId": "representative",
+    "features": {
+      "age": 50,
+      "job": "entrepreneur",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": -52,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-008",
+    "cohortId": "representative",
+    "features": {
+      "age": 51,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 1194,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-009",
+    "cohortId": "representative",
+    "features": {
+      "age": 37,
+      "job": "management",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 23867,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-010",
+    "cohortId": "representative",
+    "features": {
+      "age": 32,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 7406,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-011",
+    "cohortId": "representative",
+    "features": {
+      "age": 36,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 0,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-012",
+    "cohortId": "representative",
+    "features": {
+      "age": 47,
+      "job": "services",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 2070,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-013",
+    "cohortId": "representative",
+    "features": {
+      "age": 45,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": -302,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-014",
+    "cohortId": "representative",
+    "features": {
+      "age": 46,
+      "job": "admin.",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1328,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-015",
+    "cohortId": "representative",
+    "features": {
+      "age": 32,
+      "job": "services",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 250,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-016",
+    "cohortId": "representative",
+    "features": {
+      "age": 35,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 5310,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-017",
+    "cohortId": "representative",
+    "features": {
+      "age": 46,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 0,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-018",
+    "cohortId": "representative",
+    "features": {
+      "age": 26,
+      "job": "services",
+      "marital": "divorced",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1600,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-019",
+    "cohortId": "representative",
+    "features": {
+      "age": 34,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 147,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-020",
+    "cohortId": "representative",
+    "features": {
+      "age": 38,
+      "job": "admin.",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 0,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-021",
+    "cohortId": "representative",
+    "features": {
+      "age": 37,
+      "job": "self-employed",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 125,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-022",
+    "cohortId": "representative",
+    "features": {
+      "age": 39,
+      "job": "services",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 158,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-023",
+    "cohortId": "representative",
+    "features": {
+      "age": 44,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 349,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-024",
+    "cohortId": "representative",
+    "features": {
+      "age": 38,
+      "job": "blue-collar",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 519,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-025",
+    "cohortId": "representative",
+    "features": {
+      "age": 47,
+      "job": "admin.",
+      "marital": "married",
+      "education": "unknown",
+      "default": "no",
+      "balance": 989,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-026",
+    "cohortId": "representative",
+    "features": {
+      "age": 24,
+      "job": "technician",
+      "marital": "single",
+      "education": "primary",
+      "default": "no",
+      "balance": 126,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-027",
+    "cohortId": "representative",
+    "features": {
+      "age": 36,
+      "job": "management",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 2239,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-028",
+    "cohortId": "representative",
+    "features": {
+      "age": 26,
+      "job": "technician",
+      "marital": "divorced",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 278,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-029",
+    "cohortId": "representative",
+    "features": {
+      "age": 41,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 17,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-030",
+    "cohortId": "representative",
+    "features": {
+      "age": 34,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 0,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-031",
+    "cohortId": "representative",
+    "features": {
+      "age": 32,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 187,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-032",
+    "cohortId": "representative",
+    "features": {
+      "age": 59,
+      "job": "blue-collar",
+      "marital": "single",
+      "education": "primary",
+      "default": "no",
+      "balance": -86,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-033",
+    "cohortId": "representative",
+    "features": {
+      "age": 44,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 3113,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-034",
+    "cohortId": "representative",
+    "features": {
+      "age": 53,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 4143,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-035",
+    "cohortId": "representative",
+    "features": {
+      "age": 57,
+      "job": "retired",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 374,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-036",
+    "cohortId": "representative",
+    "features": {
+      "age": 49,
+      "job": "unemployed",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 136,
+      "housing": "no",
+      "loan": "yes",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-037",
+    "cohortId": "representative",
+    "features": {
+      "age": 40,
+      "job": "services",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 111,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-038",
+    "cohortId": "representative",
+    "features": {
+      "age": 45,
+      "job": "admin.",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 524,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-039",
+    "cohortId": "representative",
+    "features": {
+      "age": 56,
+      "job": "management",
+      "marital": "divorced",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1654,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-040",
+    "cohortId": "representative",
+    "features": {
+      "age": 51,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 794,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-041",
+    "cohortId": "representative",
+    "features": {
+      "age": 31,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 892,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-042",
+    "cohortId": "representative",
+    "features": {
+      "age": 48,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": -404,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-043",
+    "cohortId": "representative",
+    "features": {
+      "age": 49,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 141,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-044",
+    "cohortId": "representative",
+    "features": {
+      "age": 44,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 4333,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-045",
+    "cohortId": "representative",
+    "features": {
+      "age": 46,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1975,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-046",
+    "cohortId": "representative",
+    "features": {
+      "age": 33,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 644,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-047",
+    "cohortId": "representative",
+    "features": {
+      "age": 59,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 754,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-048",
+    "cohortId": "representative",
+    "features": {
+      "age": 32,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": -413,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-049",
+    "cohortId": "representative",
+    "features": {
+      "age": 47,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 362,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-050",
+    "cohortId": "representative",
+    "features": {
+      "age": 34,
+      "job": "technician",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 666,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-051",
+    "cohortId": "representative",
+    "features": {
+      "age": 35,
+      "job": "management",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 0,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-052",
+    "cohortId": "representative",
+    "features": {
+      "age": 60,
+      "job": "admin.",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 41,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-053",
+    "cohortId": "representative",
+    "features": {
+      "age": 59,
+      "job": "retired",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 0,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-054",
+    "cohortId": "representative",
+    "features": {
+      "age": 43,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 241,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-055",
+    "cohortId": "representative",
+    "features": {
+      "age": 36,
+      "job": "self-employed",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": -103,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-056",
+    "cohortId": "representative",
+    "features": {
+      "age": 57,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 7554,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-057",
+    "cohortId": "representative",
+    "features": {
+      "age": 38,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "yes",
+      "balance": 540,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-058",
+    "cohortId": "representative",
+    "features": {
+      "age": 36,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": -179,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 124,
+      "previous": 1,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-059",
+    "cohortId": "representative",
+    "features": {
+      "age": 54,
+      "job": "blue-collar",
+      "marital": "divorced",
+      "education": "primary",
+      "default": "no",
+      "balance": 10374,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 189,
+      "previous": 2,
+      "poutcome": "other"
+    }
+  },
+  {
+    "id": "customer-060",
+    "cohortId": "representative",
+    "features": {
+      "age": 41,
+      "job": "services",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 92,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-061",
+    "cohortId": "representative",
+    "features": {
+      "age": 43,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 2100,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-062",
+    "cohortId": "representative",
+    "features": {
+      "age": 41,
+      "job": "management",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 0,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-063",
+    "cohortId": "representative",
+    "features": {
+      "age": 33,
+      "job": "technician",
+      "marital": "divorced",
+      "education": "secondary",
+      "default": "no",
+      "balance": 558,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 93,
+      "previous": 3,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-064",
+    "cohortId": "representative",
+    "features": {
+      "age": 31,
+      "job": "management",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 358,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 256,
+      "previous": 51,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-065",
+    "cohortId": "representative",
+    "features": {
+      "age": 29,
+      "job": "management",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": -420,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-066",
+    "cohortId": "representative",
+    "features": {
+      "age": 48,
+      "job": "technician",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": -92,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-067",
+    "cohortId": "representative",
+    "features": {
+      "age": 28,
+      "job": "technician",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 4253,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-068",
+    "cohortId": "representative",
+    "features": {
+      "age": 29,
+      "job": "admin.",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 873,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-069",
+    "cohortId": "representative",
+    "features": {
+      "age": 29,
+      "job": "self-employed",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1457,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 314,
+      "previous": 1,
+      "poutcome": "other"
+    }
+  },
+  {
+    "id": "customer-070",
+    "cohortId": "representative",
+    "features": {
+      "age": 39,
+      "job": "services",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 702,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 300,
+      "previous": 1,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-071",
+    "cohortId": "representative",
+    "features": {
+      "age": 29,
+      "job": "services",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 690,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 316,
+      "previous": 1,
+      "poutcome": "other"
+    }
+  },
+  {
+    "id": "customer-072",
+    "cohortId": "representative",
+    "features": {
+      "age": 28,
+      "job": "student",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 844,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-073",
+    "cohortId": "representative",
+    "features": {
+      "age": 33,
+      "job": "management",
+      "marital": "divorced",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 525,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": 281,
+      "previous": 1,
+      "poutcome": "other"
+    }
+  },
+  {
+    "id": "customer-074",
+    "cohortId": "representative",
+    "features": {
+      "age": 46,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": -175,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": 324,
+      "previous": 2,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-075",
+    "cohortId": "representative",
+    "features": {
+      "age": 54,
+      "job": "self-employed",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 641,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 148,
+      "previous": 2,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-076",
+    "cohortId": "representative",
+    "features": {
+      "age": 33,
+      "job": "blue-collar",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 700,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 80,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "customer-077",
+    "cohortId": "representative",
+    "features": {
+      "age": 19,
+      "job": "student",
+      "marital": "single",
+      "education": "unknown",
+      "default": "no",
+      "balance": 5368,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-078",
+    "cohortId": "representative",
+    "features": {
+      "age": 43,
+      "job": "technician",
+      "marital": "divorced",
+      "education": "secondary",
+      "default": "no",
+      "balance": 305,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 250,
+      "previous": 4,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-079",
+    "cohortId": "representative",
+    "features": {
+      "age": 39,
+      "job": "unemployed",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 1147,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": 363,
+      "previous": 5,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-080",
+    "cohortId": "representative",
+    "features": {
+      "age": 38,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 0,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-081",
+    "cohortId": "representative",
+    "features": {
+      "age": 55,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1402,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 175,
+      "previous": 1,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-082",
+    "cohortId": "representative",
+    "features": {
+      "age": 31,
+      "job": "blue-collar",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1598,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 305,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "customer-083",
+    "cohortId": "representative",
+    "features": {
+      "age": 31,
+      "job": "admin.",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 2,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-084",
+    "cohortId": "representative",
+    "features": {
+      "age": 35,
+      "job": "admin.",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 10,
+      "housing": "no",
+      "loan": "yes",
+      "pdays": 175,
+      "previous": 4,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-085",
+    "cohortId": "representative",
+    "features": {
+      "age": 32,
+      "job": "services",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 481,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 174,
+      "previous": 4,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-086",
+    "cohortId": "representative",
+    "features": {
+      "age": 45,
+      "job": "management",
+      "marital": "divorced",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 2813,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-087",
+    "cohortId": "representative",
+    "features": {
+      "age": 43,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 479,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 370,
+      "previous": 2,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-088",
+    "cohortId": "representative",
+    "features": {
+      "age": 26,
+      "job": "blue-collar",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 26,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-089",
+    "cohortId": "representative",
+    "features": {
+      "age": 51,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1174,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-090",
+    "cohortId": "representative",
+    "features": {
+      "age": 31,
+      "job": "admin.",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1374,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 370,
+      "previous": 1,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-091",
+    "cohortId": "representative",
+    "features": {
+      "age": 41,
+      "job": "technician",
+      "marital": "divorced",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 2611,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 314,
+      "previous": 2,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-092",
+    "cohortId": "representative",
+    "features": {
+      "age": 54,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 0,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 192,
+      "previous": 8,
+      "poutcome": "other"
+    }
+  },
+  {
+    "id": "customer-093",
+    "cohortId": "representative",
+    "features": {
+      "age": 37,
+      "job": "admin.",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 96,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 182,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "customer-094",
+    "cohortId": "representative",
+    "features": {
+      "age": 55,
+      "job": "technician",
+      "marital": "divorced",
+      "education": "secondary",
+      "default": "no",
+      "balance": 3450,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 183,
+      "previous": 1,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-095",
+    "cohortId": "representative",
+    "features": {
+      "age": 33,
+      "job": "management",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 718,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 98,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "customer-096",
+    "cohortId": "representative",
+    "features": {
+      "age": 62,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1456,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-097",
+    "cohortId": "representative",
+    "features": {
+      "age": 53,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 3591,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 181,
+      "previous": 2,
+      "poutcome": "other"
+    }
+  },
+  {
+    "id": "customer-098",
+    "cohortId": "representative",
+    "features": {
+      "age": 33,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 983,
+      "housing": "no",
+      "loan": "no",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "customer-099",
+    "cohortId": "representative",
+    "features": {
+      "age": 38,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1477,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 769,
+      "previous": 2,
+      "poutcome": "failure"
+    }
+  },
+  {
+    "id": "customer-100",
+    "cohortId": "representative",
+    "features": {
+      "age": 39,
+      "job": "admin.",
+      "marital": "divorced",
+      "education": "secondary",
+      "default": "no",
+      "balance": 728,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": -1,
+      "previous": 0,
+      "poutcome": "unknown"
+    }
+  },
+  {
+    "id": "prior-success-001",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 45,
+      "job": "management",
+      "marital": "divorced",
+      "education": "secondary",
+      "default": "no",
+      "balance": 644,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 168,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-002",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 44,
+      "job": "technician",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 4580,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 189,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-003",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 33,
+      "job": "services",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 772,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 259,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-004",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 28,
+      "job": "services",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1820,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 203,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-005",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 41,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 0,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 200,
+      "previous": 4,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-006",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 49,
+      "job": "technician",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 523,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 31,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-007",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 34,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1012,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": 163,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-008",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 36,
+      "job": "technician",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 470,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 265,
+      "previous": 13,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-009",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 35,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1207,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 331,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-010",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 33,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 158,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 83,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-011",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 31,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1331,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 86,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-012",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 57,
+      "job": "admin.",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 169,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 86,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-013",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 32,
+      "job": "technician",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1246,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 85,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-014",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 33,
+      "job": "technician",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1636,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 66,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-015",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 34,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 315,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 89,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-016",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 35,
+      "job": "student",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 188,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 78,
+      "previous": 8,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-017",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 55,
+      "job": "management",
+      "marital": "divorced",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 2171,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": 176,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-018",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 41,
+      "job": "services",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 471,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 293,
+      "previous": 4,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-019",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 46,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 5461,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 174,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-020",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 38,
+      "job": "admin.",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 755,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 97,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-021",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 27,
+      "job": "technician",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 11862,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 101,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-022",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 31,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 180,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 70,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-023",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 52,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 196,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": 99,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-024",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 53,
+      "job": "management",
+      "marital": "married",
+      "education": "unknown",
+      "default": "no",
+      "balance": 2240,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 385,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-025",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 42,
+      "job": "services",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1376,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 92,
+      "previous": 4,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-026",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 43,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 3917,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 93,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-027",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 31,
+      "job": "services",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 447,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 77,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-028",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 29,
+      "job": "technician",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 5763,
+      "housing": "no",
+      "loan": "yes",
+      "pdays": 92,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-029",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 22,
+      "job": "blue-collar",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 682,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 91,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-030",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 37,
+      "job": "admin.",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1000,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 90,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-031",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 32,
+      "job": "admin.",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 4041,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 99,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-032",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 35,
+      "job": "entrepreneur",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 2971,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 95,
+      "previous": 6,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-033",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 31,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 199,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": 461,
+      "previous": 4,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-034",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 49,
+      "job": "entrepreneur",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 5802,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 104,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-035",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 56,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 616,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 105,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-036",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 45,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 4119,
+      "housing": "yes",
+      "loan": "yes",
+      "pdays": 283,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-037",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 46,
+      "job": "admin.",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 2552,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 94,
+      "previous": 8,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-038",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 26,
+      "job": "technician",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1231,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 93,
+      "previous": 7,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-039",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 60,
+      "job": "admin.",
+      "marital": "divorced",
+      "education": "secondary",
+      "default": "no",
+      "balance": 12039,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 187,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-040",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 61,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 267,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 184,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-041",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 68,
+      "job": "retired",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 2144,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 184,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-042",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 47,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 3663,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 213,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-043",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 33,
+      "job": "technician",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1699,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 94,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-044",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 35,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 0,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 96,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-045",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 34,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 294,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 184,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-046",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 26,
+      "job": "services",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 12,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 186,
+      "previous": 6,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-047",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 61,
+      "job": "management",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 544,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 200,
+      "previous": 9,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-048",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 66,
+      "job": "retired",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 203,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 195,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-049",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 61,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 13546,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 283,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-050",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 65,
+      "job": "retired",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1973,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 287,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-051",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 55,
+      "job": "management",
+      "marital": "divorced",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 2037,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 94,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-052",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 34,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1778,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 93,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-053",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 52,
+      "job": "unemployed",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 94,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 92,
+      "previous": 13,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-054",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 77,
+      "job": "retired",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 2590,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 94,
+      "previous": 15,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-055",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 30,
+      "job": "student",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 48,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 191,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-056",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 36,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 495,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 182,
+      "previous": 6,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-057",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 54,
+      "job": "services",
+      "marital": "divorced",
+      "education": "secondary",
+      "default": "no",
+      "balance": 0,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 290,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-058",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 47,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 288,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 181,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-059",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 73,
+      "job": "retired",
+      "marital": "divorced",
+      "education": "secondary",
+      "default": "no",
+      "balance": 7111,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 182,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-060",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 51,
+      "job": "technician",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 0,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 66,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-061",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 54,
+      "job": "unknown",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 2206,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 91,
+      "previous": 4,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-062",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 50,
+      "job": "admin.",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 3608,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 182,
+      "previous": 4,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-063",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 57,
+      "job": "retired",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 9367,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 92,
+      "previous": 7,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-064",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 62,
+      "job": "retired",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 3114,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 186,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-065",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 46,
+      "job": "housemaid",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 38,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 183,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-066",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 29,
+      "job": "blue-collar",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 455,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 36,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-067",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 39,
+      "job": "services",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1970,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 404,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-068",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 71,
+      "job": "retired",
+      "marital": "divorced",
+      "education": "primary",
+      "default": "no",
+      "balance": 275,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 425,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-069",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 33,
+      "job": "management",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 224,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 107,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-070",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 35,
+      "job": "blue-collar",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 262,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 109,
+      "previous": 4,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-071",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 57,
+      "job": "retired",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 1044,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 182,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-072",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 61,
+      "job": "retired",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 938,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 183,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-073",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 60,
+      "job": "services",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 739,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 182,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-074",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 27,
+      "job": "admin.",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 2855,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 178,
+      "previous": 4,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-075",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 49,
+      "job": "admin.",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 197,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 101,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-076",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 31,
+      "job": "admin.",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 255,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 181,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-077",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 55,
+      "job": "technician",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1320,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 91,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-078",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 61,
+      "job": "management",
+      "marital": "married",
+      "education": "unknown",
+      "default": "no",
+      "balance": 264,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 178,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-079",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 37,
+      "job": "management",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 62,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 272,
+      "previous": 8,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-080",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 68,
+      "job": "retired",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 2812,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 181,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-081",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 45,
+      "job": "admin.",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 205,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 92,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-082",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 80,
+      "job": "retired",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 2354,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 181,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-083",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 48,
+      "job": "housemaid",
+      "marital": "single",
+      "education": "primary",
+      "default": "no",
+      "balance": 46,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 1,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-084",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 34,
+      "job": "admin.",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 79,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 92,
+      "previous": 5,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-085",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 44,
+      "job": "technician",
+      "marital": "divorced",
+      "education": "secondary",
+      "default": "no",
+      "balance": 314,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 651,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-086",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 49,
+      "job": "services",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 1830,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 179,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-087",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 29,
+      "job": "technician",
+      "marital": "single",
+      "education": "secondary",
+      "default": "no",
+      "balance": 113,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 185,
+      "previous": 6,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-088",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 33,
+      "job": "technician",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 484,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 182,
+      "previous": 9,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-089",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 27,
+      "job": "technician",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1075,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 184,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-090",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 52,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 2635,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 108,
+      "previous": 8,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-091",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 64,
+      "job": "retired",
+      "marital": "married",
+      "education": "primary",
+      "default": "no",
+      "balance": 48,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 92,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-092",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 74,
+      "job": "retired",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1843,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 184,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-093",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 59,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 5397,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 92,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-094",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 40,
+      "job": "management",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 3840,
+      "housing": "yes",
+      "loan": "no",
+      "pdays": 409,
+      "previous": 2,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-095",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 31,
+      "job": "management",
+      "marital": "married",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 4328,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 165,
+      "previous": 14,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-096",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 53,
+      "job": "admin.",
+      "marital": "married",
+      "education": "secondary",
+      "default": "no",
+      "balance": 459,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 192,
+      "previous": 1,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-097",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 44,
+      "job": "management",
+      "marital": "single",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 1090,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 93,
+      "previous": 6,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-098",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 54,
+      "job": "management",
+      "marital": "divorced",
+      "education": "tertiary",
+      "default": "no",
+      "balance": 5475,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 91,
+      "previous": 4,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-099",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 44,
+      "job": "technician",
+      "marital": "single",
+      "education": "unknown",
+      "default": "no",
+      "balance": 11115,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 185,
+      "previous": 4,
+      "poutcome": "success"
+    }
+  },
+  {
+    "id": "prior-success-100",
+    "cohortId": "prior-success",
+    "features": {
+      "age": 77,
+      "job": "unknown",
+      "marital": "married",
+      "education": "unknown",
+      "default": "no",
+      "balance": 397,
+      "housing": "no",
+      "loan": "no",
+      "pdays": 185,
+      "previous": 3,
+      "poutcome": "success"
+    }
+  }
+]

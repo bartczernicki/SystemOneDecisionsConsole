@@ -21,9 +21,15 @@ internal sealed record DecisionEvidenceStage(string Label, string InputFile);
 
 internal sealed record DecisionFrame(string QuestionId, string Label, string InputFile);
 
+internal sealed record DecisionEvaluationCohort(string Id, string Label, int CaseCount);
+
+internal sealed record DecisionBinaryEvaluation(
+    string QuestionId, string CasesFile, string OutcomesFile, string ProvenanceFile, int CaseCount,
+    IReadOnlyList<DecisionEvaluationCohort> Cohorts);
+
 internal sealed record DecisionExample(string Label, string Folder, DecisionBackend Backend, string QuestionType,
     ScoreProbabilityAggregation? Aggregation = null, IReadOnlyList<DecisionEvidenceStage>? EvidenceStages = null,
-    IReadOnlyList<DecisionFrame>? Frames = null);
+    IReadOnlyList<DecisionFrame>? Frames = null, DecisionBinaryEvaluation? Evaluation = null);
 
 internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
 {
@@ -58,6 +64,14 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
                 new("Carrier records", "evidence-2.txt"),
                 new("Verified delivery readiness", "evidence-3.txt")
             ]),
+        new("Local SystemOne - Customer Subscription Brier Score and Calibration",
+            Path.Combine("Advanced Decision Examples", "LocalSystemOne-CustomerSubscriptionCalibration"),
+            DecisionBackend.LocalSystemOne, "noul", Evaluation:
+                new("Customer Subscription", "cases.json", "outcomes.json", "provenance.json", 200,
+                [
+                    new("representative", "Representative holdout", 100),
+                    new("prior-success", "Previous campaign success diagnostic", 100)
+                ])),
         new("Foundry SystemOne - Apple Watch Step Goal with Decision Rule",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-AppleWatchStepGoal"),
             DecisionBackend.FoundrySystemOne, "noul"),
@@ -85,6 +99,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
         string? responseBody = null;
         try
         {
+            if (example.Evaluation is not null)
+            {
+                ValidateEvaluationMetadata(example);
+            }
             if (example.Frames is not null)
             {
                 ValidateFrameMetadata(example);
@@ -122,6 +140,11 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
                 {
                     model = "clef-flash";
                 }
+            }
+            if (example.Evaluation is not null)
+            {
+                await RunBinaryEvaluationAsync(example, folder, uri, model);
+                return;
             }
             if (example.EvidenceStages is not null)
             {
@@ -316,7 +339,14 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
     private static T Deserialize<T>(string json) =>
         JsonSerializer.Deserialize<T>(json, JsonOptions) ?? throw new JsonException("JSON must not be null.");
 
-    private async Task<string> SendAsync(Uri endpoint, object request, DecisionBackend backend, string? apiKey)
+    private sealed class RequestCapture
+    {
+        internal string? Body { get; set; }
+        internal long ElapsedMilliseconds { get; set; }
+    }
+
+    private async Task<string> SendAsync(Uri endpoint, object request, DecisionBackend backend, string? apiKey,
+        RequestCapture? capture = null, bool quiet = false)
     {
         // Serialize and prepare content before timing so elapsed time measures the HTTP round trip.
         string json = JsonSerializer.Serialize(request, JsonOptions);
@@ -336,13 +366,20 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
             }
         }
         string callingMessage = backend == DecisionBackend.FoundrySystemOne ? "Calling Foundry API..." : "Calling local API...";
-        DisplayColoredLine(callingMessage, ConsoleColor.DarkYellow, "\u001b[38;2;255;180;84m");
+        if (!quiet)
+        {
+            DisplayColoredLine(callingMessage, ConsoleColor.DarkYellow, "\u001b[38;2;255;180;84m");
+        }
         var stopwatch = Stopwatch.StartNew();
         try
         {
             // ResponseContentRead includes the entire body in HttpClient's timeout and timing.
             using var response = await httpClient.SendAsync(message, HttpCompletionOption.ResponseContentRead);
             string body = await response.Content.ReadAsStringAsync();
+            if (capture is not null)
+            {
+                capture.Body = body;
+            }
             stopwatch.Stop();
             if (!response.IsSuccessStatusCode)
             {
@@ -353,8 +390,15 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
         finally
         {
             stopwatch.Stop();
-            Console.WriteLine($"Response time: {stopwatch.ElapsedMilliseconds} ms");
-            Console.WriteLine();
+            if (capture is not null)
+            {
+                capture.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+            }
+            if (!quiet)
+            {
+                Console.WriteLine($"Response time: {stopwatch.ElapsedMilliseconds} ms");
+                Console.WriteLine();
+            }
         }
     }
 

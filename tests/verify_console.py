@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-"""Integration checks: build first; --include-timeout adds two one-minute timeout checks."""
+"""Integration checks: build first; --include-timeout adds three one-minute timeout checks."""
 import argparse
+import csv
+from datetime import datetime
+import hashlib
 import json
 import math
 import os
@@ -35,13 +38,23 @@ SHIPMENT_PROBABILITIES = [(0.22, 0.18, 0.24, 0.16, 0.20),
                          (0.08, 0.06, 0.62, 0.10, 0.14),
                          (0.01, 0.01, 0.94, 0.02, 0.02)]
 APPLE_WATCH_FOLDER = "FoundrySystemOne-AppleWatchStepGoal"
+CUSTOMER_FOLDER = "LocalSystemOne-CustomerSubscriptionCalibration"
+CUSTOMER_MENU = "4) Local SystemOne - Customer Subscription Brier Score and Calibration"
+CUSTOMER_QUESTION = "Customer Subscription"
+CUSTOMER_FILES = ["ScenarioDescription.txt", "input.txt", "questions.json", "cases.json", "outcomes.json", "provenance.json"]
+CALIBRATION_LABELS = [f"[{index / 10:.1f}, {(index + 1) / 10:.1f}{']' if index == 9 else ')'}" for index in range(10)]
+CUSTOMER_COHORTS = [("representative", "Representative holdout"),
+                    ("prior-success", "Previous campaign success diagnostic")]
+CUSTOMER_CASE_COUNT = 200
+CUSTOMER_PROBABILITIES = tuple((0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)[index % 10] for index in range(100)) + \
+    tuple((0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 1)[index % 10] for index in range(100))
 APPLE_WATCH_QUESTIONS = ["Park with Kids", "Take a Walk", "Go for a Long Run"]
 APPLE_WATCH_PROBABILITIES = (0.15, 0.65, 0.95)
 APPLE_WATCH_HISTORIES = [(1800, 2200, 2500, 2800, 3100, 3400, 3700, 4100, 4700, 5200),
                          (4400, 4600, 4800, 4900, 5000, 5100, 5200, 5400, 5500, 5700),
                          (7200, 7600, 7900, 8100, 8400, 8700, 9000, 9300, 9600, 9900)]
 ENERGY_FOLDER = "FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming"
-ENERGY_MENU = "5) Foundry SystemOne - Energy Plant Investment Strategy with Decision Framing"
+ENERGY_MENU = "6) Foundry SystemOne - Energy Plant Investment Strategy with Decision Framing"
 ENERGY_QUESTIONS = ["Creativity Hat (Green)", "Caution Hat (Black)", "Benefits Hat (Yellow)"]
 ENERGY_FRAME_LABELS = ["Creativity", "Caution", "Benefits"]
 ENERGY_FRAME_FILES = ["frame-creativity.txt", "frame-caution.txt", "frame-benefits.txt"]
@@ -160,6 +173,206 @@ def apple_watch_answers(payload, probabilities=APPLE_WATCH_PROBABILITIES):
     answers = {name: {"type": "noul", "noul": probability}
                for name, probability in zip(APPLE_WATCH_QUESTIONS, probabilities)}
     return {"model": payload["model"], "answers": dict(reversed(list(answers.items())))}
+
+
+def customer_answers(payload, probability=0.5):
+    return {"model": payload["model"], "answers": {CUSTOMER_QUESTION: {"type": "noul", "noul": probability}}}
+
+
+def customer_profile(features):
+    """Expected public profile text, independent of the application's formatter."""
+    previous_contact = "not previously contacted" if features["pdays"] == -1 else str(features["pdays"])
+    return "\n".join([
+        "Customer profile before the current campaign contact:",
+        f"Age: {features['age']} years", f"Occupation: {features['job']}",
+        f"Marital status: {features['marital']}", f"Education: {features['education']}",
+        f"Credit in default: {features['default']}", f"Average yearly balance: {features['balance']} EUR",
+        f"Housing loan: {features['housing']}", f"Personal loan: {features['loan']}",
+        f"Days since previous campaign contact: {previous_contact}",
+        f"Contacts before this campaign: {features['previous']}",
+        f"Previous campaign outcome: {features['poutcome']}",
+    ])
+
+
+def expected_binary_summary(probabilities, outcomes, reference_rate):
+    score = sum((probability - outcome) ** 2 for probability, outcome in zip(probabilities, outcomes)) / len(probabilities)
+    baseline = sum((reference_rate - outcome) ** 2 for outcome in outcomes) / len(outcomes)
+    bins = []
+    for index, label in enumerate(CALIBRATION_LABELS):
+        lower, upper = index / 10, (index + 1) / 10
+        entries = [(probability, outcome) for probability, outcome in zip(probabilities, outcomes)
+                   if lower <= probability and (probability < upper or index == 9 and probability <= upper)]
+        mean = sum(probability for probability, _ in entries) / len(entries) if entries else None
+        observed = sum(outcome for _, outcome in entries) / len(entries) if entries else None
+        bins.append({"label": label, "count": len(entries), "meanPredicted": mean,
+                     "observedRate": observed, "gapPercentagePoints": None if not entries else 100 * (mean - observed)})
+    calibration_error = sum(entry["count"] / len(probabilities) * abs(entry["meanPredicted"] - entry["observedRate"])
+                            for entry in bins if entry["count"])
+    return {"brierScore": score, "baselineBrierScore": baseline, "brierSkillScore": None if baseline == 0 else 1 - score / baseline,
+            "observedRate": sum(outcomes) / len(outcomes), "expectedCalibrationError": calibration_error, "bins": bins}
+
+
+def assert_binary_summary(actual, expected):
+    assert set(actual) == set(expected), (actual, expected)
+    for key, value in expected.items():
+        if key == "bins":
+            assert len(actual[key]) == 10, actual
+            for actual_bin, expected_bin in zip(actual[key], value):
+                for field, expected_value in expected_bin.items():
+                    actual_value = actual_bin.get(field)
+                    if isinstance(expected_value, float):
+                        assert isinstance(actual_value, (float, int)) and math.isclose(actual_value, expected_value, rel_tol=1e-12, abs_tol=1e-12), (field, actual_bin, expected_bin)
+                    else:
+                        assert actual_value == expected_value, (field, actual_bin, expected_bin)
+        elif value is None:
+            assert actual[key] is None, (key, actual)
+        else:
+            assert math.isclose(actual[key], value, rel_tol=1e-12, abs_tol=1e-12), (key, actual, expected)
+
+
+def assert_binary_scoring(temporary, assembly):
+    harness = Path(temporary) / "binary-scoring-checks"
+    harness.mkdir()
+    (harness / "BinaryScoringChecks.csproj").write_text(
+        '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType>'
+        '<TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings>'
+        '<Nullable>enable</Nullable></PropertyGroup></Project>', encoding="utf-8")
+    shutil.copyfile(ROOT / "tests/BinaryEvaluationHarness.cs", harness / "Program.cs")
+    result = subprocess.run(["dotnet", "run", "--project", str(harness / "BinaryScoringChecks.csproj"),
+                             "--", str(assembly)], capture_output=True, text=True, encoding="utf-8",
+                            cwd=temporary, timeout=60)
+    assert result.returncode == 0, result.stdout + result.stderr
+    samples = [json.loads(line[len("SCORING:"):]) for line in result.stdout.splitlines() if line.startswith("SCORING:")]
+    expected = [
+        ("boundaries", [index / 10 for index in range(11)], [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1], 0.5),
+        ("adjacent-boundaries", [probability for index in range(1, 10)
+                                  for probability in (math.nextafter(index / 10, 0), index / 10, math.nextafter(index / 10, 1))],
+         [0] * 27, 0.5),
+        ("zero-baseline", [0, 0], [0, 0], 0), ("negative-skill", [1, 0], [0, 1], 0.5),
+        ("perfect", [0, 1], [0, 1], 0.5), ("uncertain", [0.5, 0.5], [0, 1], 0.5),
+        ("golden-ece", [0.1, 0.4, 0.8, 1], [0, 1, 1, 1], 0.5),
+        ("unequal-bin-counts", [0.1, 0.1, 0.1, 0.9], [0, 0, 0, 0], 0.5),
+        ("absolute-bin-gaps", [0.1, 0.9], [0, 1], 0.5),
+        ("yes-probability-calibration", [0.1, 0.9], [0, 0], 0.5),
+        ("full-precision", [0.123456789, 0.123456781, 0.876543219], [0, 1, 1], 0.5),
+    ]
+    assert len(samples) == len(expected), result.stdout
+    assert "PASS: invalid scoring inputs and incompatible evaluation metadata rejected" in result.stdout, result.stdout
+    for actual, (name, probabilities, outcomes, reference_rate) in zip(samples, expected):
+        assert actual["name"] == name, actual
+        assert_binary_summary(actual["summary"], expected_binary_summary(probabilities, outcomes, reference_rate))
+    summaries = {sample["name"]: sample["summary"] for sample in samples}
+    for name, expected_ece in (("golden-ece", 0.225), ("unequal-bin-counts", 0.3),
+                               ("absolute-bin-gaps", 0.1), ("yes-probability-calibration", 0.5),
+                               ("perfect", 0), ("negative-skill", 1), ("uncertain", 0)):
+        assert math.isclose(summaries[name]["expectedCalibrationError"], expected_ece, abs_tol=1e-12), summaries[name]
+    assert math.isclose(summaries["golden-ece"]["brierScore"], 0.1025, abs_tol=1e-12), summaries["golden-ece"]
+    assert not math.isclose(summaries["full-precision"]["expectedCalibrationError"],
+                            round(summaries["full-precision"]["expectedCalibrationError"], 4), abs_tol=1e-12), summaries["full-precision"]
+
+
+
+def assert_customer_report(directory, cases, outcomes, provenance, questions, states, probabilities,
+                           failed_case=None, failed_response=None, model="console-test-model"):
+    assert re.fullmatch(r"\d{8}T\d{9}Z-[0-9a-f]{32}", directory.name), directory
+    report = json.loads((directory / "results.json").read_text(encoding="utf-8"))
+    completed = len(probabilities)
+    assert report["status"] == ("complete" if failed_case is None else "incomplete"), report
+    assert report["model"] == model and report["plannedCases"] == CUSTOMER_CASE_COUNT and report["completedCases"] == completed, report
+    assert report["referenceRate"] == provenance["referenceRate"] and report["provenance"] == provenance, report
+    assert report["questions"] == questions, report
+    started = datetime.fromisoformat(report["startedUtc"].replace("Z", "+00:00"))
+    finished = datetime.fromisoformat(report["finishedUtc"].replace("Z", "+00:00"))
+    assert finished >= started and started.tzinfo is not None, report
+    records = report["records"]
+    assert len(records) == completed + (failed_case is not None), report
+    for index, (record, probability) in enumerate(zip(records, probabilities)):
+        case = cases[index]
+        assert record["caseId"] == case["id"] and record["cohortId"] == case["cohortId"] and record["state"] == states[index], record
+        assert record["actualOutcome"] == outcomes[case["id"]], record
+        assert record["probabilityYes"] == probability, record
+        assert math.isclose(record["brierScore"], (probability - record["actualOutcome"]) ** 2, abs_tol=1e-12), record
+        assert record["responseModel"] == model and record["elapsedMilliseconds"] >= 0, record
+        assert json.loads(record["rawResponse"]) == customer_answers({"model": model}, probability), record
+        assert "error" not in record, record
+    if failed_case is None:
+        assert "error" not in report and "failedCaseId" not in report, report
+        assert "summary" not in report and len(report["cohortSummaries"]) == 2, report
+        for cohort, (cohort_id, label) in zip(report["cohortSummaries"], CUSTOMER_COHORTS):
+            entries = [(probability, outcomes[case["id"]]) for case, probability in zip(cases, probabilities)
+                       if case["cohortId"] == cohort_id]
+            assert (cohort["cohortId"], cohort["label"], cohort["caseCount"]) == (cohort_id, label, 100), cohort
+            expected = expected_binary_summary([probability for probability, _ in entries],
+                                               [outcome for _, outcome in entries], provenance["referenceRate"])
+            assert_binary_summary(cohort["summary"], expected)
+    else:
+        assert failed_case == completed + 1 and "summary" not in report and "cohortSummaries" not in report, report
+        record = records[-1]
+        assert record["caseId"] == report["failedCaseId"] == cases[completed]["id"], record
+        assert record["state"] == states[completed] and record["cohortId"] == cases[completed]["cohortId"] and record["actualOutcome"] == outcomes[record["caseId"]], record
+        assert record["error"] and report["error"] and record["elapsedMilliseconds"] >= 0, record
+        assert "probabilityYes" not in record and "brierScore" not in record, record
+        if failed_response is None:
+            assert "rawResponse" not in record, record
+        elif isinstance(failed_response, str):
+            assert record["rawResponse"] == failed_response, record
+        else:
+            assert json.dumps(json.loads(record["rawResponse"]), sort_keys=True) == json.dumps(failed_response, sort_keys=True), record
+    with (directory / "results.csv").open(encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file)
+        assert reader.fieldnames == ["CaseId", "CohortId", "ProbabilityYes", "ActualOutcome", "BrierScore", "ElapsedMilliseconds"], reader.fieldnames
+        rows = list(reader)
+    assert len(rows) == completed, rows
+    for row, record in zip(rows, records):
+        assert row["CaseId"] == record["caseId"] and row["CohortId"] == record["cohortId"] and float(row["ProbabilityYes"]) == record["probabilityYes"], row
+        assert int(row["ActualOutcome"]) == record["actualOutcome"], row
+        assert math.isclose(float(row["BrierScore"]), record["brierScore"], abs_tol=1e-12), row
+        assert int(row["ElapsedMilliseconds"]) == record["elapsedMilliseconds"], row
+    assert not list(directory.glob("*.tmp")), directory
+    return report
+
+
+def assert_customer_summary(text, cohort_summaries):
+    assert text.count("Brier Score and Calibration Summary:") == 2, text
+    assert "Calibration Curve:" not in text and "Calibration (ten probability bins):" not in text, text
+    assert "Brier Score and Calibration Summary:\n" not in text, text
+    for index, (cohort, (_, label)) in enumerate(zip(cohort_summaries, CUSTOMER_COHORTS)):
+        heading = f"Brier Score and Calibration Summary: {label}\n"
+        assert heading in text, text
+        section = text.split(heading, 1)[1]
+        if index == 0:
+            section = section.split("Brier Score and Calibration Summary:", 1)[0]
+        assert_customer_cohort_summary(section, cohort["summary"])
+
+
+def assert_customer_cohort_summary(text, summary):
+    assert f"Model Brier score: {summary['brierScore']:.4f}" in text, text
+    assert f"Global reference baseline Brier score: {summary['baselineBrierScore']:.4f}" in text, text
+    skill = "N/A" if summary["brierSkillScore"] is None else f"{summary['brierSkillScore']:.4f}"
+    assert f"Brier skill score: {skill}" in text, text
+    ece = summary["expectedCalibrationError"]
+    assert f"Expected calibration error (ECE): {ece:.4f} ({100 * ece:.2f} pp)" in text, text
+    assert f"Observed subscription rate: {100 * summary['observedRate']:.2f} %" in text, text
+    metrics = re.findall(r"^(?:Model Brier score:|Global reference baseline Brier score:|Brier skill score:|Expected calibration error \(ECE\):|Observed subscription rate:).*$", text, re.MULTILINE)
+    assert metrics == [f"Model Brier score: {summary['brierScore']:.4f}",
+                       f"Global reference baseline Brier score: {summary['baselineBrierScore']:.4f}",
+                       f"Brier skill score: {skill}", f"Expected calibration error (ECE): {ece:.4f} ({100 * ece:.2f} pp)",
+                       f"Observed subscription rate: {100 * summary['observedRate']:.2f} %"], metrics
+    assert "Calibration bin " not in text and "Probability bin" not in text and "Response JSON:" not in text, text
+    assert all(label not in text for label in CALIBRATION_LABELS), text
+    assert all(heading not in text for heading in CHART_HEADINGS), text
+    assert "Calling local API..." not in text and not TIMING.search(text), text
+
+
+def assert_customer_case_rows(text, records):
+    assert "Case              | P(Yes)    | Outcome | Brier  | Response time\n" in text, text
+    rows = re.findall(r"^Case\s+(\d+) of 200\s+\|\s+([\d.]+) %\s+\|\s+(Yes|No)\s+\|\s+([\d.]+)\s+\|\s+(\d+) ms$", text, re.MULTILINE)
+    completed = [record for record in records if "probabilityYes" in record]
+    assert len(rows) == len(completed), (rows, completed)
+    for index, (row, record) in enumerate(zip(rows, completed)):
+        assert row == (str(index + 1), f"{100 * record['probabilityYes']:.2f}",
+                       "Yes" if record["actualOutcome"] else "No", f"{record['brierScore']:.4f}",
+                       str(record["elapsedMilliseconds"])), (row, record)
 
 
 def assert_apple_watch_answers(text, probabilities=APPLE_WATCH_PROBABILITIES):
@@ -382,6 +595,8 @@ def answers_for(payload, path):
         return shipment_answers(payload)
     if system_one and list(questions) == APPLE_WATCH_QUESTIONS:
         return apple_watch_answers(payload)
+    if system_one and list(questions) == [CUSTOMER_QUESTION]:
+        return customer_answers(payload)
     if system_one and questions and all(name in ENERGY_QUESTIONS for name in questions):
         return energy_answers(payload)
     items = questions.items() if system_one else ((q["name"], q) for q in questions)
@@ -508,17 +723,23 @@ def main():
             def shipment_input():
                 return "2\n3\n\n0\n0\n"
 
+            def customer_folder():
+                return output / "Decisions" / ADVANCED_CATEGORY / CUSTOMER_FOLDER
+
+            def customer_input():
+                return "2\n4\n\n0\n0\n"
+
             def apple_watch_folder():
                 return output / "Decisions" / ADVANCED_CATEGORY / APPLE_WATCH_FOLDER
 
             def apple_watch_input():
-                return "2\n4\n\n0\n0\n"
+                return "2\n5\n\n0\n0\n"
 
             def energy_folder():
                 return output / "Decisions" / ADVANCED_CATEGORY / ENERGY_FOLDER
 
             def energy_input():
-                return "2\n5\n\n0\n0\n"
+                return "2\n6\n\n0\n0\n"
 
             def check_failure(label, input_text=None, overrides=None, timeout=15, timed=True):
                 nonlocal checks
@@ -1266,18 +1487,52 @@ def main():
                     assert response_json == energy_answers(payload, distributions, confidences, selected_choices), response_json
                 checks += 1
 
-            # Even an invalid final frame must be detected before any answer or chart is printed.
-            invalid_energy_responses = []
-            for label, modify in (
-                ("missing frame answer", lambda answers: answers.pop(ENERGY_QUESTIONS[2])),
-                ("extra frame answer", lambda answers: answers.update(Unexpected={"type": "noul", "noul": 0.5})),
-                ("renamed frame answer", lambda answers: answers.update(**{"Wrong frame": answers.pop(ENERGY_QUESTIONS[2])})),
-                ("wrong frame answer type", lambda answers: answers.update(**{ENERGY_QUESTIONS[2]: {"type": "noul", "noul": 0.5}})),
-            ):
-                response = energy_answers(energy_payload)
-                modify(response["answers"])
-                invalid_energy_responses.append((label, response))
-            for label, modify in (
+            # Failures stop the sequence at each frame while preserving completed answers and current JSON.
+            def check_frame_failure(label, failed_frame, response, http_status=None):
+                nonlocal checks
+                def respond(payload, path, number):
+                    server.status = http_status if number == failed_frame and http_status is not None else 200
+                    return response if number == failed_frame else energy_answers(payload)
+                server.response = respond
+                text = run(energy_input())
+                assert len(server.requests) == failed_frame, (label, text)
+                assert f"Error: Frame {failed_frame} of 3 ({ENERGY_QUESTIONS[failed_frame - 1]}):" in text, (label, text)
+                assert "Decision framing incomplete; later frames were not run." in text, (label, text)
+                assert "Decision Framing Comparison:" not in text, (label, text)
+                assert text.count("Probability Distribution:\n") == failed_frame - 1, (label, text)
+                expected_json_count = failed_frame if http_status is None else failed_frame - 1
+                assert text.count("Response JSON:\n") == expected_json_count, (label, text)
+                assert len(TIMING.findall(text)) == failed_frame, (label, text)
+                assert text.count("Press Enter to return to the menu:") == 1, (label, text)
+                sections = framing_sections(text)
+                assert len(sections) == failed_frame, (label, text)
+                for index, section in enumerate(sections[:-1]):
+                    distribution = ENERGY_PROBABILITIES[index]
+                    selected = ENERGY_CHOICES[max(range(4), key=distribution.__getitem__)]
+                    assert_energy_frame(section, index, distribution, ENERGY_CONFIDENCES[index], selected)
+                    previous_json, _ = json.JSONDecoder().raw_decode(section.split("Response JSON:\n", 1)[1].lstrip())
+                    assert previous_json == energy_answers(energy_payloads[index]), (label, previous_json)
+                failed_section = sections[-1]
+                assert "Confidence:" not in failed_section and "Probability Distribution:" not in failed_section, (label, failed_section)
+                assert not re.search(r"^\d+ of 3\) (?:Creativity Hat|Caution Hat|Benefits Hat)", failed_section, re.MULTILINE), (label, failed_section)
+                if http_status is None:
+                    current_json = failed_section.split("Response JSON:\n", 1)[1].lstrip()
+                    if isinstance(response, str):
+                        assert current_json.startswith(response), (label, current_json)
+                    else:
+                        actual_response, _ = json.JSONDecoder().raw_decode(current_json)
+                        assert json.dumps(actual_response, sort_keys=True) == json.dumps(response, sort_keys=True), (label, current_json)
+                else:
+                    assert f"HTTP {http_status}" in failed_section and "Response JSON:" not in failed_section, (label, failed_section)
+                checks += 1
+
+            invalid_frame_answers = [
+                ("missing frame answer", lambda answers, name: answers.pop(name)),
+                ("extra frame answer", lambda answers, name: answers.update(Unexpected={"type": "noul", "noul": 0.5})),
+                ("renamed frame answer", lambda answers, name: answers.update(**{"Wrong frame": answers.pop(name)})),
+                ("wrong frame answer type", lambda answers, name: answers.update(**{name: {"type": "noul", "noul": 0.5}})),
+            ]
+            invalid_frame_fields = [
                 ("missing frame probability", lambda answer: answer["probabilities"].pop(ENERGY_CHOICES[3])),
                 ("extra frame probability", lambda answer: answer["probabilities"].update(Unexpected=0)),
                 ("renamed frame probability", lambda answer: answer["probabilities"].update(
@@ -1287,8 +1542,10 @@ def main():
                 ("NaN frame probability", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: float("nan")})),
                 ("infinite frame probability", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: float("inf")})),
                 ("null frame probability", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: None})),
-                ("frame probability sum low", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: 0.04})),
-                ("frame probability sum high", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: 0.06})),
+                ("frame probability sum low", lambda answer: answer["probabilities"].update(
+                    {ENERGY_CHOICES[3]: answer["probabilities"][ENERGY_CHOICES[3]] - 0.01})),
+                ("frame probability sum high", lambda answer: answer["probabilities"].update(
+                    {ENERGY_CHOICES[3]: answer["probabilities"][ENERGY_CHOICES[3]] + 0.01})),
                 ("empty frame probabilities", lambda answer: answer.update(probabilities={})),
                 ("null frame probabilities", lambda answer: answer.update(probabilities=None)),
                 ("missing frame probabilities", lambda answer: answer.pop("probabilities")),
@@ -1302,26 +1559,22 @@ def main():
                 ("infinite frame confidence", lambda answer: answer.update(confidence=float("inf"))),
                 ("null frame confidence", lambda answer: answer.update(confidence=None)),
                 ("missing frame confidence", lambda answer: answer.pop("confidence")),
-            ):
-                response = energy_answers(energy_payload)
-                modify(response["answers"][ENERGY_QUESTIONS[2]])
-                invalid_energy_responses.append((label, response))
-            invalid_energy_responses += [("malformed framing JSON", "{"), ("missing framing answers", {"model": FOUNDRY_MODEL}),
-                                         ("null framing answers", {"model": FOUNDRY_MODEL, "answers": None})]
-            for label, response in invalid_energy_responses:
-                server.response = response
-                check_failure(label, energy_input())
-                assert len(server.requests) == 1 and "Decision Framing Comparison:" not in raw_text, (label, raw_text)
-                clean_text = ANSI.sub("", raw_text)
-                assert not re.search(r"^\d+\) (?:Creativity Hat|Caution Hat|Benefits Hat)", clean_text, re.MULTILINE), (label, clean_text)
-                assert "Response JSON:" in clean_text and clean_text.count("Confidence:") == 0, (label, clean_text)
-                current_json = clean_text.split("Response JSON:\n", 1)[1].lstrip()
-                if isinstance(response, str):
-                    assert current_json.startswith(response), (label, current_json)
-                else:
-                    actual_response, _ = json.JSONDecoder().raw_decode(current_json)
-                    assert json.dumps(actual_response, sort_keys=True) == json.dumps(response, sort_keys=True), (label, current_json)
-            server.response = None
+            ]
+            for failed_frame in (1, 2, 3):
+                current_payload = energy_payloads[failed_frame - 1]
+                current_name = ENERGY_QUESTIONS[failed_frame - 1]
+                for label, modify in invalid_frame_answers:
+                    response = energy_answers(current_payload)
+                    modify(response["answers"], current_name)
+                    check_frame_failure(label, failed_frame, response)
+                for label, modify in invalid_frame_fields:
+                    response = energy_answers(current_payload)
+                    modify(response["answers"][current_name])
+                    check_frame_failure(label, failed_frame, response)
+                for label, response in (("malformed framing JSON", "{"), ("missing framing answers", {"model": FOUNDRY_MODEL}),
+                                        ("null framing answers", {"model": FOUNDRY_MODEL, "answers": None})):
+                    check_frame_failure(label, failed_frame, response)
+            server.status, server.response = 200, None
 
             # Question metadata must retain frame IDs/order and identical ordered strategy descriptions.
             questions_file = energy / "questions.json"
@@ -1359,7 +1612,7 @@ def main():
                 assert not server.requests, raw_text
             finally:
                 questions_file.write_bytes(original)
-            for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
+            for filename in ENERGY_FILES:
                 file = energy / filename
                 original = file.read_bytes()
                 try:
@@ -1368,17 +1621,342 @@ def main():
                     assert not server.requests, raw_text
                 finally:
                     file.write_bytes(original)
+            for filename in ENERGY_FRAME_FILES:
+                file = energy / filename
+                original = file.read_bytes()
+                try:
+                    for content in ("", " \n\t\n "):
+                        file.write_text(content, encoding="utf-8")
+                        check_failure(f"empty framing {filename}", energy_input(), timed=False)
+                        assert not server.requests and "Decision Framing Comparison:" not in raw_text, raw_text
+                finally:
+                    file.write_bytes(original)
             for setting in ("MicrosoftFoundrySystemOneAPI", "MicrosoftFoundryDecisionModelDeploymentName", "MicrosoftFoundryAPIKey"):
                 check_failure(f"missing framing {setting}", energy_input(), {setting: " "}, timed=False)
                 assert not server.requests and setting in raw_text, raw_text
-            for status in (401, 403, 500):
-                server.status, server.response = status, {"error": "framing fixture failure"}
-                check_failure(f"framing Foundry HTTP {status}", energy_input())
-                assert len(server.requests) == 1 and f"HTTP {status}" in raw_text, raw_text
-                assert "Decision Framing Comparison:" not in raw_text, raw_text
+            for failed_frame in (1, 2, 3):
+                for status in (401, 403, 500):
+                    check_frame_failure(f"framing Foundry HTTP {status}", failed_frame,
+                                        {"error": f"framing {failed_frame} fixture failure"}, status)
             server.status, server.response = 200, None
             assert_frame_metadata_combinations(temporary, output / "SystemOneDecisionsConsole.dll")
             checks += 1
+
+            # Two customer cohorts make 200 isolated local requests and retain separate evaluations.
+            customer = customer_folder()
+            customer_source = ROOT / "Decisions" / ADVANCED_CATEGORY / CUSTOMER_FOLDER
+            for filename in CUSTOMER_FILES:
+                assert (customer / filename).read_bytes() == (customer_source / filename).read_bytes(), filename
+            customer_questions = json.loads((customer / "questions.json").read_text(encoding="utf-8"))
+            cases = json.loads((customer / "cases.json").read_text(encoding="utf-8"))
+            outcomes = json.loads((customer / "outcomes.json").read_text(encoding="utf-8"))
+            provenance = json.loads((customer / "provenance.json").read_text(encoding="utf-8"))
+            shared_input = (customer / "input.txt").read_bytes().decode("utf-8-sig").strip()
+            customer_states = [shared_input + "\n\n" + customer_profile(case["features"]) for case in cases]
+            assert list(customer_questions) == [CUSTOMER_QUESTION] and customer_questions[CUSTOMER_QUESTION]["type"] == "noul"
+            assert len(cases) == len(outcomes) == CUSTOMER_CASE_COUNT
+            assert [case["id"] for case in cases] == [f"customer-{index:03}" for index in range(1, 101)] + \
+                   [f"prior-success-{index:03}" for index in range(1, 101)], cases
+            assert [case["cohortId"] for case in cases] == ["representative"] * 100 + ["prior-success"] * 100, cases
+            assert sum(outcomes[case["id"]] for case in cases[:100]) == 16 and set(outcomes) == {case["id"] for case in cases}, outcomes
+            assert sum(outcomes[case["id"]] for case in cases[100:]) == 60, outcomes
+            assert all(case["features"]["poutcome"] == "success" for case in cases[100:]), cases[100:]
+            feature_names = ["age", "job", "marital", "education", "default", "balance", "housing", "loan", "pdays", "previous", "poutcome"]
+            assert all(list(case["features"]) == feature_names for case in cases), cases
+            assert provenance["featureNames"] == feature_names and provenance["excludedFields"] == ["contact", "day", "month", "duration", "campaign", "y"]
+            assert provenance["referenceCount"] == 45011 and provenance["referenceYesCount"] == 5213
+            assert provenance["referenceRate"] == 5213 / 45011 and provenance["sampleCount"] == CUSTOMER_CASE_COUNT
+            assert len(provenance["cohorts"]) == 2, provenance
+            for cohort, (cohort_id, label), seed in zip(provenance["cohorts"], CUSTOMER_COHORTS,
+                                                       ("customer-subscription-v1", "customer-subscription-prior-success-v1")):
+                assert (cohort["id"], cohort["label"], cohort["sampleCount"], cohort["seed"]) == (cohort_id, label, 100, seed), cohort
+                assert cohort["selectionRule"].strip() and len(set(cohort["selectedSourceRows"])) == 100, cohort
+                assert cohort["selectedSourceRows"] == sorted(cohort["selectedSourceRows"]), cohort
+                assert all(1 <= row <= 45211 for row in cohort["selectedSourceRows"]), cohort
+            assert not set(provenance["cohorts"][0]["selectedSourceRows"]) & set(provenance["cohorts"][1]["selectedSourceRows"]), provenance
+            assert provenance["selectedSourceRows"] == sorted(row for cohort in provenance["cohorts"] for row in cohort["selectedSourceRows"]), provenance
+            expected_representative_rows = sorted(sorted(range(1, 45212), key=lambda row:
+                (hashlib.sha256(f"customer-subscription-v1:{row}".encode("utf-8")).hexdigest(), row))[:100])
+            assert provenance["cohorts"][0]["selectedSourceRows"] == expected_representative_rows, provenance
+            results_root = Path(temporary) / "Results/CustomerSubscription"
+
+            def report_directories():
+                return set(results_root.iterdir()) if results_root.exists() else set()
+
+            def check_customer_requests(count, model="console-test-model"):
+                assert len(server.requests) == count, server.requests
+                for index, ((path, payload), headers) in enumerate(zip(server.requests, server.request_headers)):
+                    assert path == "/v1/systemone" and set(payload) == {"model", "state", "questions"}, payload
+                    assert payload["model"] == model and payload["questions"] == customer_questions, payload
+                    assert payload["state"] == customer_states[index], (index, payload)
+                    wire = json.dumps(payload)
+                    assert all(case["id"] not in wire for case in cases), payload
+                    assert all(key not in wire for key in ('"cohortId"', '"actualOutcome"', '"answers"', '"probabilityYes"', '"brierScore"')), payload
+                    assert all(key not in headers for key in ("api-key", "authorization", "ocp-apim-subscription-key")), headers
+
+            before = report_directories()
+            def customer_checkpoint_fixture(payload, path, number):
+                server.delay = 0.12 if number == 1 else 0
+                current_directories = report_directories() - before
+                assert len(current_directories) == 1, current_directories
+                checkpoint = json.loads((next(iter(current_directories)) / "results.json").read_text(encoding="utf-8"))
+                assert checkpoint["status"] == "running" and checkpoint["completedCases"] == number - 1, checkpoint
+                assert "summary" not in checkpoint and "cohortSummaries" not in checkpoint, checkpoint
+                assert len(checkpoint["records"]) == number - 1, checkpoint
+                assert (next(iter(current_directories)) / "results.csv").is_file()
+                return customer_answers(payload, CUSTOMER_PROBABILITIES[number - 1])
+            server.response = customer_checkpoint_fixture
+            text = run(customer_input(), {"MicrosoftFoundrySystemOneAPI": "", "MicrosoftFoundryDecisionModelDeploymentName": "", "MicrosoftFoundryAPIKey": ""}, timeout=60)
+            assert "Error:" not in text and text.count("Press Enter to return to the menu:") == 1, text
+            check_customer_requests(CUSTOMER_CASE_COUNT)
+            created = report_directories() - before
+            assert len(created) == 1, created
+            complete_directory = created.pop()
+            complete_report = assert_customer_report(complete_directory, cases, outcomes, provenance, customer_questions, customer_states, CUSTOMER_PROBABILITIES)
+            assert_customer_summary(text, complete_report["cohortSummaries"])
+            assert "Evaluating 200 independent customer profiles using Local SystemOne." in text, text
+            for cohort_id, label in CUSTOMER_COHORTS:
+                assert f"{label} (100 cases):" in text, text
+            assert text.index("Representative holdout (100 cases):") < text.index("Case   1 of 200") < \
+                   text.index("Previous campaign success diagnostic (100 cases):") < text.index("Case 101 of 200"), text
+            assert complete_report["cohortSummaries"][0]["summary"] != complete_report["cohortSummaries"][1]["summary"], complete_report
+            assert text.count("Shared Input:\n") == text.count("Scenario Description:\n") == 1, text
+            description = (customer / "ScenarioDescription.txt").read_text(encoding="utf-8").strip()
+            displayed_description = text.split("Scenario Description:\n", 1)[1].split("Shared Input:\n", 1)[0].strip()
+            displayed_input = text.split("Shared Input:\n", 1)[1].split("Evaluating 200", 1)[0].strip()
+            assert " ".join(displayed_description.split()) == " ".join(description.split()), displayed_description
+            assert " ".join(displayed_input.split()) == " ".join(shared_input.split()), displayed_input
+            assert_customer_case_rows(text, complete_report["records"])
+            assert complete_report["records"][0]["elapsedMilliseconds"] >= 100, complete_report["records"][0]
+            preserved_files = {file.name: file.read_bytes() for file in complete_directory.iterdir()}
+            checks += 1
+
+            # Repeating an evaluation creates another directory and reports empty bins as N/A.
+            server.response = None
+            before = report_directories()
+            text = run(customer_input(), timeout=60)
+            check_customer_requests(CUSTOMER_CASE_COUNT)
+            created = report_directories() - before
+            assert len(created) == 1 and complete_directory not in created, created
+            repeated_directory = created.pop()
+            repeated_report = assert_customer_report(repeated_directory, cases, outcomes, provenance, customer_questions, customer_states, [0.5] * CUSTOMER_CASE_COUNT)
+            assert_customer_summary(text, repeated_report["cohortSummaries"])
+            assert_customer_case_rows(text, repeated_report["records"])
+            for cohort in repeated_report["cohortSummaries"]:
+                assert [entry["count"] for entry in cohort["summary"]["bins"]] == [0, 0, 0, 0, 0, 100, 0, 0, 0, 0], cohort
+            assert {file.name: file.read_bytes() for file in complete_directory.iterdir()} == preserved_files
+            checks += 1
+            assert_binary_scoring(temporary, output / "SystemOneDecisionsConsole.dll")
+            checks += 1
+
+            def check_customer_failure(label, failed_case, response, status=200, model="console-test-model", overrides=None):
+                nonlocal checks
+                before = report_directories()
+                def fixture(payload, path, number):
+                    server.status = status if number == failed_case else 200
+                    return response if number == failed_case else customer_answers(payload)
+                server.response = fixture
+                text = run(customer_input(), overrides, timeout=60)
+                check_customer_requests(failed_case, model)
+                assert f"Error: Case {failed_case} of 200 ({cases[failed_case - 1]['id']}) failed:" in text, (label, text)
+                assert f"Run incomplete: {failed_case - 1} of 200 cases completed." in text, (label, text)
+                assert "Brier Score and Calibration Summary:" not in text and "Calibration (ten probability bins):" not in text, (label, text)
+                assert "Calibration Curve:" not in text, (label, text)
+                assert all(heading not in text for heading in CHART_HEADINGS), (label, text)
+                assert text.count("Response JSON:\n") == text.count("Press Enter to return to the menu:") == 1, (label, text)
+                assert len(re.findall(r"^Case\s+\d+ of 200\s+\|", text, re.MULTILINE)) == failed_case - 1, (label, text)
+                current = text.split("Response JSON:\n", 1)[1].split("Press Enter", 1)[0].strip()
+                expected_body = response if isinstance(response, str) else json.dumps(response)
+                if expected_body == "{":
+                    assert current == "{", (label, current)
+                else:
+                    assert json.dumps(json.loads(current), sort_keys=True) == json.dumps(json.loads(expected_body), sort_keys=True), (label, current)
+                created = report_directories() - before
+                assert len(created) == 1, (label, created)
+                report = assert_customer_report(created.pop(), cases, outcomes, provenance, customer_questions, customer_states,
+                                                [0.5] * (failed_case - 1), failed_case, response, model)
+                assert_customer_case_rows(text, report["records"])
+                assert {file.name: file.read_bytes() for file in complete_directory.iterdir()} == preserved_files
+                server.status, server.response = 200, None
+                checks += 1
+
+            customer_valid = customer_answers({"model": "console-test-model"})
+            bad_responses = [
+                ("malformed JSON", "{"), ("missing response model", {"answers": customer_valid["answers"]}),
+                ("blank response model", {**customer_valid, "model": " "}),
+                ("null response model", {**customer_valid, "model": None}),
+                ("missing answers", {"model": "console-test-model"}), ("null answers", {**customer_valid, "answers": None}),
+                ("missing answer ID", {**customer_valid, "answers": {}}),
+                ("wrong answer ID", {**customer_valid, "answers": {"Other": {"type": "noul", "noul": 0.5}}}),
+                ("extra answer ID", {**customer_valid, "answers": {**customer_valid["answers"], "Other": {"type": "noul", "noul": 0.5}}}),
+                ("wrong answer type", {**customer_valid, "answers": {CUSTOMER_QUESTION: {"type": "choice", "choice": "Yes", "confidence": 1, "probabilities": {"Yes": 1}}}}),
+                ("missing probability", {**customer_valid, "answers": {CUSTOMER_QUESTION: {"type": "noul"}}}),
+                ("duplicate response probability", '{"model":"console-test-model","answers":{"Customer Subscription":{"type":"noul","noul":0.2,"noul":0.5}}}'),
+                ("duplicate response ID", '{"model":"console-test-model","answers":{"Customer Subscription":{"type":"noul","noul":0.5},"Customer Subscription":{"type":"noul","noul":0.5}}}'),
+            ]
+            for probability in (-0.01, 1.01, None, "0.5", float("nan"), float("inf")):
+                bad_responses.append((f"invalid probability {probability}", customer_answers({"model": "console-test-model"}, probability)))
+            for label, response in bad_responses:
+                check_customer_failure(label, 1, response)
+            for failed_case in (100, 101, 200):
+                check_customer_failure("malformed cohort boundary/final response", failed_case, customer_answers({"model": "console-test-model"}, -0.1))
+            for failed_case, status in ((1, 401), (100, 500), (101, 503), (200, 503)):
+                check_customer_failure(f"HTTP {status}", failed_case, {"error": f"customer {failed_case} failure"}, status)
+            check_customer_failure("default local model", 1, "{", model="clef-flash", overrides={"LocalDecisionModel": " "})
+
+            # Assets are validated completely before any call or report directory is created.
+            def check_customer_preflight(label, overrides=None):
+                nonlocal checks
+                before = report_directories()
+                text = run(customer_input(), overrides)
+                assert "Error:" in text and not server.requests, (label, text)
+                assert report_directories() == before, (label, text)
+                assert "Brier Score and Calibration Summary:" not in text and "Shared Input:" not in text, (label, text)
+                assert "Calibration Curve:" not in text, (label, text)
+                assert text.count("Press Enter to return to the menu:") == 1, (label, text)
+                checks += 1
+
+            for setting in ({"LocalSystemOneAPI": " "}, {"LocalSystemOneAPI": "not-an-endpoint"}):
+                check_customer_preflight("missing/invalid local endpoint", setting)
+            displaced_results = results_root.with_name("CustomerSubscription-saved")
+            results_root.rename(displaced_results)
+            try:
+                results_root.write_text("Output directory is occupied by a file.", encoding="utf-8")
+                text = run(customer_input())
+                assert "Error:" in text and not server.requests and "Shared Input:" not in text, text
+                checks += 1
+            finally:
+                results_root.unlink()
+                displaced_results.rename(results_root)
+            for filename in CUSTOMER_FILES:
+                file = customer / filename
+                original = file.read_bytes()
+                try:
+                    file.unlink()
+                    check_customer_preflight(f"missing {filename}")
+                    if filename != "ScenarioDescription.txt":
+                        for content in ("", " \n"):
+                            file.write_text(content, encoding="utf-8")
+                            check_customer_preflight(f"empty {filename}")
+                finally:
+                    file.write_bytes(original)
+
+            input_file = customer / "input.txt"
+            original_input = input_file.read_bytes()
+            try:
+                for label, old, new in (
+                    ("stale reference count", "45,011", "45,111"),
+                    ("stale reference Yes count", "5,213", "5,273"),
+                    ("stale reference No count", "39,798", "39,838"),
+                    ("stale reference fraction", "5213/45011", "5273/45111"),
+                ):
+                    input_file.write_text(shared_input.replace(old, new), encoding="utf-8")
+                    check_customer_preflight(label)
+            finally:
+                input_file.write_bytes(original_input)
+
+            mutations = []
+            def add_mutation(filename, label, source, modify):
+                value = json.loads(json.dumps(source))
+                modify(value)
+                mutations.append((filename, label, json.dumps(value)))
+            for label, modify in (
+                ("199 cases", lambda value: value.pop()),
+                ("201 cases", lambda value: value.append(value[0])),
+                ("wrong diagnostic cohort", lambda value: value[-1].update(cohortId="representative")),
+                ("unknown cohort", lambda value: value[-1].update(cohortId="other")),
+                ("missing cohort", lambda value: value[-1].pop("cohortId")),
+                ("blank cohort", lambda value: value[-1].update(cohortId=" ")),
+                ("wrong cohort order", lambda value: value.__setitem__(slice(99, 101), list(reversed(value[99:101])))),
+                ("ineligible diagnostic", lambda value: value[-1]["features"].update(poutcome="failure")),
+                ("duplicate case ID", lambda value: value[-1].update(id=value[0]["id"])),
+                ("blank case ID", lambda value: value[-1].update(id=" ")),
+                ("missing features", lambda value: value[-1].pop("features")),
+                ("null features", lambda value: value[-1].update(features=None)),
+                ("unknown case field", lambda value: value[-1].update(actualOutcome=1)),
+                ("missing feature", lambda value: value[-1]["features"].pop("age")),
+                ("leaked outcome feature", lambda value: value[-1]["features"].update(y="yes")),
+                ("current campaign feature", lambda value: value[-1]["features"].update(duration=100)),
+                ("null category", lambda value: value[-1]["features"].update(job=None)),
+                ("blank category", lambda value: value[-1]["features"].update(job=" ")),
+                ("noninteger age", lambda value: value[-1]["features"].update(age=38.5)),
+                ("string age", lambda value: value[-1]["features"].update(age="38")),
+                ("null balance", lambda value: value[-1]["features"].update(balance=None)),
+                ("zero age", lambda value: value[-1]["features"].update(age=0)),
+                ("integer overflow", lambda value: value[-1]["features"].update(balance=2147483648)),
+                ("invalid pdays", lambda value: value[-1]["features"].update(pdays=-2)),
+                ("negative previous", lambda value: value[-1]["features"].update(previous=-1)),
+            ):
+                add_mutation("cases.json", label, cases, modify)
+            for label, modify in (
+                ("missing outcome", lambda value: value.pop(cases[-1]["id"])),
+                ("extra outcome", lambda value: value.update(extra=1)),
+                ("outcome nonbinary", lambda value: value.update({cases[-1]["id"]: 2})),
+                ("outcome null", lambda value: value.update({cases[-1]["id"]: None})),
+                ("outcome boolean", lambda value: value.update({cases[-1]["id"]: True})),
+            ):
+                add_mutation("outcomes.json", label, outcomes, modify)
+            for label, modify in (
+                ("missing provenance field", lambda value: value.pop("archiveUrl")),
+                ("unknown provenance field", lambda value: value.update(extra=1)),
+                ("blank provenance source", lambda value: value.update(sourceUrl=" ")),
+                ("invalid archive hash", lambda value: value.update(archiveSha256="x" * 64)),
+                ("wrong CSV hash", lambda value: value.update(csvSha256="0" * 64)),
+                ("wrong row count", lambda value: value.update(sourceRowCount=45212)),
+                ("wrong sample count", lambda value: value.update(sampleCount=199)),
+                ("wrong seed", lambda value: value.update(seed="other")),
+                ("wrong reference count", lambda value: value.update(referenceCount=45010)),
+                ("inconsistent reference rate", lambda value: value.update(referenceRate=0.5)),
+                ("altered reference baseline", lambda value: value.update(referenceYesCount=5214, referenceRate=5214 / 45011)),
+                ("nonfinite reference rate", lambda value: value.update(referenceRate=float("nan"))),
+                ("duplicate selected source row", lambda value: value["selectedSourceRows"].__setitem__(-1, value["selectedSourceRows"][0])),
+                ("unsorted selected rows", lambda value: value["selectedSourceRows"].reverse()),
+                ("out of range selected row", lambda value: value["selectedSourceRows"].__setitem__(-1, 45212)),
+                ("missing selected row", lambda value: value["selectedSourceRows"].pop()),
+                ("reordered feature names", lambda value: value["featureNames"].reverse()),
+                ("missing excluded target", lambda value: value["excludedFields"].pop()),
+                ("missing cohorts", lambda value: value.pop("cohorts")),
+                ("null cohorts", lambda value: value.update(cohorts=None)),
+                ("missing diagnostic provenance", lambda value: value["cohorts"].pop()),
+                ("duplicate provenance cohort", lambda value: value["cohorts"].__setitem__(1, value["cohorts"][0])),
+                ("reordered provenance cohorts", lambda value: value["cohorts"].reverse()),
+                ("unknown diagnostic cohort", lambda value: value["cohorts"][1].update(id="other")),
+                ("wrong diagnostic label", lambda value: value["cohorts"][1].update(label="other")),
+                ("wrong diagnostic count", lambda value: value["cohorts"][1].update(sampleCount=99)),
+                ("wrong diagnostic seed", lambda value: value["cohorts"][1].update(seed="customer-subscription-v1")),
+                ("blank diagnostic selection", lambda value: value["cohorts"][1].update(selectionRule=" ")),
+                ("missing diagnostic field", lambda value: value["cohorts"][1].pop("selectedSourceRows")),
+                ("malformed diagnostic field", lambda value: value["cohorts"][1].update(selectedSourceRows="not rows")),
+                ("missing diagnostic row", lambda value: value["cohorts"][1]["selectedSourceRows"].pop()),
+                ("duplicate diagnostic row", lambda value: value["cohorts"][1]["selectedSourceRows"].__setitem__(-1, value["cohorts"][1]["selectedSourceRows"][0])),
+                ("unsorted diagnostic rows", lambda value: value["cohorts"][1]["selectedSourceRows"].reverse()),
+                ("out of range diagnostic row", lambda value: value["cohorts"][1]["selectedSourceRows"].__setitem__(-1, 45212)),
+                ("overlapping cohort rows", lambda value: value["cohorts"][1].update(selectedSourceRows=value["cohorts"][0]["selectedSourceRows"])),
+                ("wrong row union", lambda value: value["selectedSourceRows"].__setitem__(0, 1)),
+            ):
+                add_mutation("provenance.json", label, provenance, modify)
+            for label, modify in (
+                ("wrong question ID", lambda value: value.update(Other=value.pop(CUSTOMER_QUESTION))),
+                ("extra question", lambda value: value.update(Other=value[CUSTOMER_QUESTION])),
+                ("wrong question type", lambda value: value[CUSTOMER_QUESTION].update(type="choice", criteria={"A": "First"})),
+                ("blank instructions", lambda value: value[CUSTOMER_QUESTION].update(instructions=" ")),
+                ("missing instructions", lambda value: value[CUSTOMER_QUESTION].pop("instructions")),
+            ):
+                add_mutation("questions.json", label, customer_questions, modify)
+            for filename in ("cases.json", "outcomes.json", "provenance.json", "questions.json"):
+                mutations += [(filename, "malformed JSON", "{"), (filename, "null JSON", "null")]
+                original_text = (customer / filename).read_text(encoding="utf-8")
+                needle = '"age":' if filename == "cases.json" else '"customer-001":' if filename == "outcomes.json" else '"referenceCount":' if filename == "provenance.json" else '"type":'
+                duplicate = '"age": 38, "age":' if filename == "cases.json" else '"customer-001": 0, "customer-001":' if filename == "outcomes.json" else '"referenceCount": 45011, "referenceCount":' if filename == "provenance.json" else '"type": "noul", "type":'
+                mutations.append((filename, "duplicate JSON key", original_text.replace(needle, duplicate, 1)))
+            for filename, label, content in mutations:
+                file = customer / filename
+                original = file.read_bytes()
+                try:
+                    file.write_text(content, encoding="utf-8")
+                    check_customer_preflight(f"{filename}: {label}")
+                finally:
+                    file.write_bytes(original)
 
             # Publish must include the same scenario files, using the existing project content glob.
             publish = Path(temporary) / "publish"
@@ -1388,20 +1966,21 @@ def main():
             assert result.returncode == 0, result.stdout + result.stderr
             scenarios = [(BASIC_CATEGORY, name) for name in FOLDERS] + \
                         [(ADVANCED_CATEGORY, FOOTBALL_FOLDER), (ADVANCED_CATEGORY, TOTAL_POINTS_FOLDER),
-                         (ADVANCED_CATEGORY, SHIPMENT_FOLDER), (ADVANCED_CATEGORY, APPLE_WATCH_FOLDER),
+                         (ADVANCED_CATEGORY, SHIPMENT_FOLDER), (ADVANCED_CATEGORY, CUSTOMER_FOLDER), (ADVANCED_CATEGORY, APPLE_WATCH_FOLDER),
                          (ADVANCED_CATEGORY, ENERGY_FOLDER)]
-            assert len(scenarios) == 14, scenarios
+            assert len(scenarios) == 15, scenarios
             expected_file_count = 0
             for category, scenario in scenarios:
                 published_folder = publish / "Decisions" / category / scenario
                 scenario_source = ROOT / "Decisions" / category / scenario
-                filenames = SHIPMENT_FILES if scenario == SHIPMENT_FOLDER else ("ScenarioDescription.txt", "input.txt", "questions.json")
+                filenames = SHIPMENT_FILES if scenario == SHIPMENT_FOLDER else CUSTOMER_FILES if scenario == CUSTOMER_FOLDER else ENERGY_FILES if scenario == ENERGY_FOLDER else \
+                    ("ScenarioDescription.txt", "input.txt", "questions.json")
                 expected_file_count += len(filenames)
                 for filename in filenames:
                     assert (published_folder / filename).read_bytes() == (scenario_source / filename).read_bytes(), (scenario, filename)
-            assert expected_file_count == 44, expected_file_count
+            assert expected_file_count == 53, expected_file_count
             published_assets = [file for file in (publish / "Decisions").rglob("*") if file.suffix in (".txt", ".json")]
-            assert len(published_assets) == 44, published_assets
+            assert len(published_assets) == 53, published_assets
             checks += 1
 
             text = run("1\n7\n\n1\n\n4\n\n0\n0\n")
@@ -1549,7 +2128,8 @@ def main():
             assert "1) Local SystemOne - Football Game Probability Foreacast" in text and "0) Back" in text, text
             assert "2) Local SystemOne - Football Total Points Cumulative Probability" in text, text
             assert "3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating" in text, text
-            assert "4) Foundry SystemOne - Apple Watch Step Goal with Decision Rule" in text, text
+            assert CUSTOMER_MENU in text, text
+            assert "5) Foundry SystemOne - Apple Watch Step Goal with Decision Rule" in text, text
             assert ENERGY_MENU in text, text
             assert "Calling local API..." not in text and not TIMING.search(text), text
             if os.name != "nt":
@@ -1564,7 +2144,8 @@ def main():
                               "1) Local SystemOne - Football Game Probability Foreacast",
                               "2) Local SystemOne - Football Total Points Cumulative Probability",
                               "3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating",
-                              "4) Foundry SystemOne - Apple Watch Step Goal with Decision Rule",
+                              CUSTOMER_MENU,
+                              "5) Foundry SystemOne - Apple Watch Step Goal with Decision Rule",
                               ENERGY_MENU,
                               "0) Exit", "0) Back"):
                     assert label in colored_menus, (label, raw_text)
@@ -1602,9 +2183,40 @@ def main():
             assert len(server.requests) == 3 and text.count("Press Enter to return to the menu:") == 1, text
             checks += 1
 
+            text = run(customer_input(), timeout=60)
+            pause = text.index("Press Enter to return to the menu:")
+            returned_to_advanced = text.index(CUSTOMER_MENU, pause)
+            returned_to_startup = text.index("1) Basic Decision Examples", pause)
+            assert returned_to_advanced < returned_to_startup, text
+            assert len(server.requests) == CUSTOMER_CASE_COUNT and text.count("Press Enter to return to the menu:") == 1, text
+            checks += 1
+
+            # A completed run and a later failed repeat keep separate reports within one menu session.
+            before = report_directories()
+            repeat_failure = {"error": "second customer evaluation failure"}
+            def customer_repeat_fixture(payload, path, number):
+                server.status = 503 if number == 202 else 200
+                return repeat_failure if number == 202 else answers_for(payload, path)
+            server.response = customer_repeat_fixture
+            text = run("2\n 4 \n\n1\n\n4\n\n0\n0\n", timeout=60)
+            assert len(server.requests) == 202 and text.count("Press Enter to return to the menu:") == 3, text
+            assert [list(payload["questions"]) for _, payload in server.requests] == \
+                   [[CUSTOMER_QUESTION]] * CUSTOMER_CASE_COUNT + [list(FOOTBALL_QUESTIONS), [CUSTOMER_QUESTION]], server.requests
+            assert server.requests[0][1] == server.requests[-1][1] and all(path == "/v1/systemone" for path, _ in server.requests), server.requests
+            assert text.count("Brier Score and Calibration Summary:") == 2 and "Run incomplete: 0 of 200 cases completed." in text, text
+            created = report_directories() - before
+            assert len(created) == 2, created
+            reports = sorted(created, key=lambda directory: json.loads((directory / "results.json").read_text())["startedUtc"])
+            assert_customer_report(reports[0], cases, outcomes, provenance, customer_questions, customer_states, [0.5] * CUSTOMER_CASE_COUNT)
+            assert_customer_report(reports[1], cases, outcomes, provenance, customer_questions, customer_states,
+                                   [], failed_case=1, failed_response=repeat_failure)
+            assert {file.name: file.read_bytes() for file in complete_directory.iterdir()} == preserved_files
+            server.status, server.response = 200, None
+            checks += 1
+
             text = run(apple_watch_input())
             pause = text.index("Press Enter to return to the menu:")
-            returned_to_advanced = text.index("4) Foundry SystemOne - Apple Watch Step Goal with Decision Rule", pause)
+            returned_to_advanced = text.index("5) Foundry SystemOne - Apple Watch Step Goal with Decision Rule", pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 1 and text.count("Press Enter to return to the menu:") == 1, text
@@ -1615,7 +2227,7 @@ def main():
             returned_to_advanced = text.index(ENERGY_MENU, pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
-            assert len(server.requests) == 1 and text.count("Press Enter to return to the menu:") == 1, text
+            assert len(server.requests) == 3 and text.count("Press Enter to return to the menu:") == 1, text
             checks += 1
 
             text = run("2\n 1 \n\n1\n\n0\n1\n2\n\n0\n0\n")
@@ -1647,7 +2259,7 @@ def main():
             assert len(TIMING.findall(text)) == 7 and text.count("Response JSON:\n") == 7, text
             checks += 1
 
-            text = run("2\n 4 \n\n1\n\n4\n\n0\n0\n")
+            text = run("2\n 5 \n\n1\n\n5\n\n0\n0\n")
             assert "Error:" not in text and len(server.requests) == 3, text
             assert [list(payload["questions"]) for _, payload in server.requests] == \
                    [APPLE_WATCH_QUESTIONS, list(FOOTBALL_QUESTIONS), APPLE_WATCH_QUESTIONS], server.requests
@@ -1663,25 +2275,25 @@ def main():
             assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 3, text
             checks += 1
 
-            text = run("2\n 5 \n\n1\n\n5\n\n0\n0\n")
-            assert "Error:" not in text and len(server.requests) == 3, text
+            text = run("2\n 6 \n\n1\n\n6\n\n0\n0\n")
+            assert "Error:" not in text and len(server.requests) == 7, text
             assert [list(payload["questions"]) for _, payload in server.requests] == \
-                   [ENERGY_QUESTIONS, list(FOOTBALL_QUESTIONS), ENERGY_QUESTIONS], server.requests
-            assert [path for path, _ in server.requests] == [FOUNDRY_PATH, "/v1/systemone", FOUNDRY_PATH], server.requests
-            assert server.requests[0][1] == server.requests[2][1] == energy_payload, server.requests
-            for index in (0, 2):
+                   [[name] for name in ENERGY_QUESTIONS] + [list(FOOTBALL_QUESTIONS)] + [[name] for name in ENERGY_QUESTIONS], server.requests
+            assert [path for path, _ in server.requests] == [FOUNDRY_PATH] * 3 + ["/v1/systemone"] + [FOUNDRY_PATH] * 3, server.requests
+            assert [payload for _, payload in server.requests[:3]] == [payload for _, payload in server.requests[4:]] == energy_payloads, server.requests
+            for index in (0, 1, 2, 4, 5, 6):
                 assert server.request_headers[index].get("api-key") == FOUNDRY_KEY, server.request_headers
-            assert "api-key" not in server.request_headers[1], server.request_headers
-            assert re.findall(r"^\d+\) (?:Creativity Hat \(Green\)|Caution Hat \(Black\)|Benefits Hat \(Yellow\)):",
+            assert "api-key" not in server.request_headers[3], server.request_headers
+            assert re.findall(r"^\d+ of 3\) (?:Creativity Hat \(Green\)|Caution Hat \(Black\)|Benefits Hat \(Yellow\)):",
                               text, re.MULTILINE) == energy_labels * 2, text
             assert text.count("Decision Framing Comparison:\n") == 2 and text.count("Press Enter to return to the menu:") == 3, text
-            assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 3, text
+            assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 7, text
             checks += 1
 
             for input_text, message, count in (
                 ("bad\n\n3\n 0 \n", "Please enter 0, 1, or 2", 3),
                 ("1\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4),
-                ("2\nbad\n\n6\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, or 5", 4),
+                ("2\nbad\n\n7\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, or 6", 4),
             ):
                 text = run(input_text)
                 assert text.count(message) == count, text
@@ -1689,11 +2301,12 @@ def main():
                 checks += 1
 
             for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n", "1\n7\n",
-                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n", "2\n4\n", "2\n4\n\n", "2\n5\n", "2\n5\n\n"):
-                text = run(input_text)
+                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n", "2\n4\n", "2\n4\n\n", "2\n5\n", "2\n5\n\n", "2\n6\n", "2\n6\n\n"):
+                text = run(input_text, timeout=60)
                 assert "Error:" not in text, text
-                expected_requests = 3 if input_text in ("2\n3\n", "2\n3\n\n") else \
-                    1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n4\n", "2\n4\n\n", "2\n5\n", "2\n5\n\n") else 0
+                expected_requests = CUSTOMER_CASE_COUNT if input_text in ("2\n4\n", "2\n4\n\n") else \
+                    3 if input_text in ("2\n3\n", "2\n3\n\n", "2\n6\n", "2\n6\n\n") else \
+                    1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n5\n", "2\n5\n\n") else 0
                 assert len(server.requests) == expected_requests, text
                 checks += 1
             check_failure("missing endpoint", overrides={"LocalSystemOneAPI": ""}, timed=False)
@@ -1795,8 +2408,21 @@ def main():
                 server.delay = 61
                 check_failure("60-second timeout", timeout=70)
                 check_failure("Foundry 60-second timeout", basic_input(7), timeout=70)
+                before = report_directories()
+                text = run(customer_input(), timeout=70)
+                check_customer_requests(1)
+                assert "Error: Case 1 of 200 (customer-001) failed: API request timed out after 60 seconds." in text, text
+                assert "Run incomplete: 0 of 200 cases completed." in text and "Response JSON:" not in text, text
+                assert "Brier Score and Calibration Summary:" not in text and all(heading not in text for heading in CHART_HEADINGS), text
+                assert "Calibration Curve:" not in text, text
+                created = report_directories() - before
+                assert len(created) == 1, created
+                report = assert_customer_report(created.pop(), cases, outcomes, provenance, customer_questions, customer_states,
+                                                [], failed_case=1, failed_response=None)
+                assert report["records"][0]["elapsedMilliseconds"] >= 59000, report
+                checks += 1
                 server.delay = 0
-            print(f"PASS: {checks} console integration scenarios (nine Basic examples and five Advanced examples included).")
+            print(f"PASS: {checks} console integration scenarios (nine Basic examples and six Advanced examples included).")
     finally:
         server.shutdown()
         server.server_close()

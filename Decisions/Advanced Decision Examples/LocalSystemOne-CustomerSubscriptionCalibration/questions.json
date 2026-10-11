@@ -1,0 +1,6 @@
+{
+  "Customer Subscription": {
+    "type": "noul",
+    "instructions": "Estimate the probability that the customer in the supplied profile subscribed to a term deposit during the historical bank marketing campaign. Yes means the recorded campaign target y is yes; No means it is no. Return the probability of Yes as noul. Use only the supplied prior customer profile and shared reference context. A previous campaign's outcome is evidence about history, not the current campaign's outcome. The current outcome is withheld for evaluation. Assess each customer separately; probabilities across customers do not need to sum to one. Do not infer the outcome from presentation order or prescribe the reference rate as every customer's probability."
+  }
+}

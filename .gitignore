@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Saved probability evaluation runs
+Results/
+
 # User-specific files
 *.rsuser
 *.suo

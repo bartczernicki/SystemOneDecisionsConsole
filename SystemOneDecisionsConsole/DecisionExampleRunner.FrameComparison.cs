@@ -23,7 +23,6 @@ internal sealed partial class DecisionExampleRunner
             states.Add($"{sharedInput}\n\n{frameInput}");
         }
 
-        Console.WriteLine("Same facts; different thinking frames.");
         var answers = new List<SystemOneChoiceAnswer>();
         for (int index = 0; index < frames.Count; index++)
         {
