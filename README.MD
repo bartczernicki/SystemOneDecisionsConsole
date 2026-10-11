@@ -39,52 +39,58 @@ dotnet run --project SystemOneDecisionsConsole
 
 Use a terminal that supports ANSI RGB colors to display the cyan banner and gold menu.
 
-## Local API User Secrets
+## Download LM Studio and a decision model
 
-The project has a `UserSecretsId` configured and loads these settings with `Microsoft.Extensions.Configuration.UserSecrets`. Store the settings outside the repository. Each developer needs to configure them on their own machine.
+For local examples (options 1–6), install LM Studio and load a decision model such as Clef or Clef-Flash:
 
-| Secret key | Value |
-| --- | --- |
-| `LocalSystemOneAPI` | `http://10.0.0.37:1234/v1/systemone` |
-| `LocalDecisionsAPI` | `http://10.0.0.37:1234/v1/decisions` |
-| `LocalDecisionModel` | Optional; defaults to `clef-flash` |
+1. Download the installer for your operating system from the [LM Studio download page](https://lmstudio.ai/download) and install the application.
+2. Open **Discover** and search for `Clef` or `Clef-Flash`. For a concrete download, paste the [ggml-org/Clef-Flash-GGUF model URL](https://huggingface.co/ggml-org/Clef-Flash-GGUF) into the search bar. LM Studio supports searching by model name or Hugging Face URL; see its [model download guide](https://lmstudio.ai/docs/app/basics/download-model).
+3. Download a supported GGUF quantization that fits your available memory, such as `Q4_K_M`.
+4. Load the downloaded model in LM Studio and note its model identifier. Use that exact identifier for `LocalDecisionModel` in the User Secrets section below; the console defaults to `clef-flash`.
+5. Open the **Developer** tab and turn on **Start server**. The usual local address is `http://localhost:1234`; use the address and port shown by your server. See the [LM Studio server guide](https://lmstudio.ai/docs/developer/core/server).
 
-Run these commands from the repository root:
+Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. Foundry examples (options 7–9) use the hosted deployment and do not require a local model.
+
+## User Secrets for local APIs and Microsoft Foundry
+
+The project has a `UserSecretsId` configured and loads these settings with `Microsoft.Extensions.Configuration.UserSecrets`. Store both local API and Microsoft Foundry settings in the same project's User Secrets, outside the repository. Each developer needs to configure the settings for their chosen backend on their own machine.
+
+| Backend | Secret key | Value |
+| --- | --- | --- |
+| Local | `LocalSystemOneAPI` | `http://localhost:1234/v1/systemone` |
+| Local | `LocalDecisionsAPI` | `http://localhost:1234/v1/decisions` |
+| Local | `LocalDecisionModel` | Optional; defaults to `clef-flash`. Must match the loaded model identifier. |
+| Foundry | `MicrosoftFoundrySystemOneAPI` | `https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone` |
+| Foundry | `MicrosoftFoundryDecisionModelDeploymentName` | Your deployment name, for example `Decision-1-Global` |
+| Foundry | `MicrosoftFoundryAPIKey` | Required for Foundry calls; set your key locally. |
+
+Run the following commands from the repository root for the backend you use.
+
+For **local examples (options 1–6)**, these endpoints assume LM Studio runs on the same machine. If it runs on another computer, enable [Serve on Local Network](https://lmstudio.ai/docs/developer/core/server/serve-on-network) and replace `localhost:1234` with the server's address and port, such as `10.0.0.37:1234`:
 
 ```sh
-dotnet user-secrets set "LocalSystemOneAPI" "http://10.0.0.37:1234/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
-dotnet user-secrets set "LocalDecisionsAPI" "http://10.0.0.37:1234/v1/decisions" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+dotnet user-secrets set "LocalSystemOneAPI" "http://localhost:1234/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+dotnet user-secrets set "LocalDecisionsAPI" "http://localhost:1234/v1/decisions" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 ```
 
-To override the model:
+If the loaded model's identifier differs from `clef-flash`, replace `your-loaded-model-id` with that identifier:
 
 ```sh
 dotnet user-secrets set "LocalDecisionModel" "your-loaded-model-id" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 ```
 
-Verify the configured values:
-
-```sh
-dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
-```
-
-
-## Microsoft Foundry User Secrets
-
-Store these Microsoft Foundry settings in the same project’s User Secrets. The gateway and resource names are hidden in this README; replace `<your-gateway-name>` and `<your-foundry-name>` with your actual names when running the setup command locally.
-
-| Secret key | Value |
-| --- | --- |
-| `MicrosoftFoundrySystemOneAPI` | `https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone` |
-| `MicrosoftFoundryDecisionModelDeploymentName` | `Decision-1-Global` |
-| `MicrosoftFoundryAPIKey` | Required for Foundry calls; set your key locally. |
-
-Run these commands from the repository root:
+For **Foundry examples (options 7–9)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
 
 ```sh
 dotnet user-secrets set "MicrosoftFoundrySystemOneAPI" "https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet user-secrets set "MicrosoftFoundryDecisionModelDeploymentName" "Decision-1-Global" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet user-secrets set "MicrosoftFoundryAPIKey" "your-api-key" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+```
+
+Verify the configured values for either backend:
+
+```sh
+dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 ```
 
 ## Example files
@@ -111,13 +117,13 @@ Each Basic example directory contains the following three files, for 27 example 
 
 | File | Purpose |
 | --- | --- |
-| `ScenarioDescription.txt` | Explanation displayed first under a magenta `Scenario Description:` label, wrapped at 80 characters. Never included in the API request. |
-| `input.txt` | Text evidence displayed under a green `Input:` label, wrapped at 80 characters, then sent as SystemOne `state` or Decisions `input`. Display wrapping does not change the submitted text. |
-| `questions.json` | Questions deserialized into typed .NET objects before sending. |
+| `ScenarioDescription.txt` | Decision Scenario explanation. Never included in the API request. |
+| `input.txt` | This is the input/state prompt that is passed into the decision model. |
+| `questions.json` | These are the questions (choices, yes/no, score) on howto process the decision input. |
 
-Choice examples route a duplicate-charge complaint to Billing, Technical, or Shipping. Yes/No examples detect a duplicate charge. Score examples rate a Safari export failure that has a Chrome workaround using ordered levels: Cosmetic (0), Workaround Available (1), Fully Blocked (2). Scores may be fractional. The Foundry examples contain unchanged copies of the corresponding local SystemOne scenario files, so their inputs and questions match.
 
-Edit the repository-root files to change the scenarios, then rebuild or run again. All example files are copied to build and publish output beneath `Decisions/Basic Decision Examples/`, preserving their nested directories. The application loads them relative to `AppContext.BaseDirectory`, so the current working directory does not affect loading. Display wrapping preserves paragraph breaks and splits words longer than 80 characters.
+
+Edit the repository-root files to change the scenarios, then rebuild or run again. 
 
 ## JSON formats
 
