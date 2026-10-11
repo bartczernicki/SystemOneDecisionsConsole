@@ -1,6 +1,6 @@
 # SystemOne Decisions
 
-A .NET 10 console application with examples for local SystemOne and OpenAI-compatible Decisions APIs:
+A .NET 10 console application with examples for local SystemOne, OpenAI-compatible Decisions, and Microsoft Foundry SystemOne APIs:
 
 ```text
 1) Basic Decision Examples
@@ -13,22 +13,25 @@ Select **Basic Decision Examples** to open its submenu:
 ```text
 Basic Decision Examples
 
-1) Local System One - Choice
-2) Local System One - Yes/No (noul)
-3) Local System One - Score
+1) Local SystemOne - Choice
+2) Local SystemOne - Yes/No (noul)
+3) Local SystemOne - Score
 4) Local Decisions - Choice
 5) Local Decisions - Yes/No (predicate)
 6) Local Decisions - Score
+7) Foundry SystemOne - Choice
+8) Foundry SystemOne - Yes/No (noul)
+9) Foundry SystemOne - Score
 0) Back
 ```
 
-Select an example to display its scenario description, call the configured local API, and show a typed answer summary, available confidence/probabilities, response time in milliseconds, and formatted response JSON. Press Enter after an example to return to the Basic submenu. Select `0) Back` in either submenu to return to the startup menu, where `0) Exit` closes the application. Yes/No answers remain probabilities; the application does not impose a boolean threshold. Decisions refusals are shown explicitly.
+Select an example to display its scenario description, call its configured API, and show a typed answer summary, available confidence/probabilities, response time in milliseconds, and formatted response JSON. Press Enter after an example to return to the Basic submenu. Select `0) Back` in either submenu to return to the startup menu, where `0) Exit` closes the application. Yes/No answers remain probabilities; the application does not impose a boolean threshold. Decisions refusals are shown explicitly.
 
 The **Advanced Decision Examples** submenu currently displays “No advanced examples yet” and offers `0) Back` without calling an API. End-of-input at any prompt exits cleanly.
 
 ## Run
 
-Install the .NET 10 SDK and start the local API server with a supported decision model loaded. The default model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. Run from the repository root:
+Install the .NET 10 SDK. For options 1–6, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For options 7–9, configure the Foundry settings below. Run from the repository root:
 
 ```sh
 dotnet run --project SystemOneDecisionsConsole
@@ -65,35 +68,28 @@ Verify the configured values:
 dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 ```
 
-Environment variables with the same names override User Secrets, which is useful for an alternate server or tests without changing saved settings:
-
-```sh
-LocalSystemOneAPI="http://127.0.0.1:1234/v1/systemone" LocalDecisionsAPI="http://127.0.0.1:1234/v1/decisions" LocalDecisionModel="clef-flash" dotnet run --project SystemOneDecisionsConsole
-```
-
-An empty endpoint override is treated as missing configuration. User Secrets are a local development store and are not encrypted. These endpoints are URLs, not authentication tokens. Calls go to the configured local URLs without authentication headers; the application does not call hosted APIs.
 
 ## Microsoft Foundry User Secrets
 
-Store these Microsoft Foundry settings in the same project’s User Secrets. The gateway name is hidden in this README; replace `<your-gateway-name>` with your actual gateway name when running the setup command locally.
+Store these Microsoft Foundry settings in the same project’s User Secrets. The gateway and resource names are hidden in this README; replace `<your-gateway-name>` and `<your-foundry-name>` with your actual names when running the setup command locally.
 
 | Secret key | Value |
 | --- | --- |
 | `MicrosoftFoundrySystemOneAPI` | `https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone` |
 | `MicrosoftFoundryDecisionModelDeploymentName` | `Decision-1-Global` |
-| `MicrosoftFoundryAPIKey` | `Secret Key` |
+| `MicrosoftFoundryAPIKey` | Required for Foundry calls; set your key locally. |
 
 Run these commands from the repository root:
 
 ```sh
-dotnet user-secrets set "MicrosoftFoundrySystemOneAPI" "https://<your-gateway-name>.azure-api.net/foundrybart/providers/microsoft/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+dotnet user-secrets set "MicrosoftFoundrySystemOneAPI" "https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet user-secrets set "MicrosoftFoundryDecisionModelDeploymentName" "Decision-1-Global" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet user-secrets set "MicrosoftFoundryAPIKey" "your-api-key" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 ```
 
 ## Example files
 
-The repository-root `Decisions` folder groups examples by category. All six current examples are in **Basic Decision Examples**:
+The repository-root `Decisions` folder groups examples by category. All nine current examples are in **Basic Decision Examples**:
 
 ```text
 Decisions/
@@ -104,11 +100,14 @@ Decisions/
     LocalDecisions-Choice/
     LocalDecisions-YesNo/
     LocalDecisions-Score/
+    FoundrySystemOne-Choice/
+    FoundrySystemOne-YesNo/
+    FoundrySystemOne-Score/
   Advanced Decision Examples/
     .gitkeep
 ```
 
-Each Basic example directory contains the following files. The empty Advanced category is retained in Git with `.gitkeep`.
+Each Basic example directory contains the following three files, for 27 example files in total. The empty Advanced category is retained in Git with `.gitkeep`.
 
 | File | Purpose |
 | --- | --- |
@@ -116,13 +115,13 @@ Each Basic example directory contains the following files. The empty Advanced ca
 | `input.txt` | Text evidence displayed under a green `Input:` label, wrapped at 80 characters, then sent as SystemOne `state` or Decisions `input`. Display wrapping does not change the submitted text. |
 | `questions.json` | Questions deserialized into typed .NET objects before sending. |
 
-Choice examples route a duplicate-charge complaint to Billing, Technical, or Shipping. Yes/No examples detect a duplicate charge. Score examples rate a Safari export failure that has a Chrome workaround using ordered levels: Cosmetic (0), Workaround Available (1), Fully Blocked (2). Scores may be fractional.
+Choice examples route a duplicate-charge complaint to Billing, Technical, or Shipping. Yes/No examples detect a duplicate charge. Score examples rate a Safari export failure that has a Chrome workaround using ordered levels: Cosmetic (0), Workaround Available (1), Fully Blocked (2). Scores may be fractional. The Foundry examples contain unchanged copies of the corresponding local SystemOne scenario files, so their inputs and questions match.
 
 Edit the repository-root files to change the scenarios, then rebuild or run again. All example files are copied to build and publish output beneath `Decisions/Basic Decision Examples/`, preserving their nested directories. The application loads them relative to `AppContext.BaseDirectory`, so the current working directory does not affect loading. Display wrapping preserves paragraph breaks and splits words longer than 80 characters.
 
 ## JSON formats
 
-SystemOne follows the [Jev SystemOne schema](https://api.typesafe.ai/openapi.json). Its `questions.json` is a dictionary keyed by question ID. The application builds `{ "model": "...", "state": "...", "questions": { ... } }`. Choice uses `criteria` as an object, Yes/No uses `type: "noul"`, and Score uses an ordered `criteria` array. For example:
+Both local and Foundry SystemOne examples follow the [Jev SystemOne schema](https://api.typesafe.ai/openapi.json) and use the same typed .NET request and response models. Their `questions.json` is a dictionary keyed by question ID. The application builds `{ "model": "...", "state": "...", "questions": { ... } }`. Choice uses `criteria` as an object, Yes/No uses `type: "noul"`, and Score uses an ordered `criteria` array. For example:
 
 ```json
 {
@@ -151,6 +150,8 @@ Decisions follows the [OpenAI Decisions API reference](https://developers.openai
 
 ## Response timing and errors
 
+While sending a request, the application displays orange `Calling local API...` or `Calling Foundry API...` text. The `Response JSON:` label is blue. These colors are independent of the scenario and input labels.
+
 `Response time: 123 ms` measures the client-observed HTTP round trip. A `Stopwatch` starts immediately before sending the prepared request and stops after the entire response body is received. File loading, request preparation, response deserialization, and console rendering are excluded. Failed requests also display elapsed milliseconds.
 
 Requests have a 60-second timeout and no automatic retries. Missing settings or files, invalid JSON, HTTP failures, timeouts, and malformed responses display an error and allow returning to the menu.
@@ -173,4 +174,4 @@ python3 tests/verify_console.py
 python3 tests/verify_console.py --include-timeout
 ```
 
-The checks use a temporary localhost HTTP server and a copy of the built application, so they do not change saved User Secrets or call your local decision model. The optional timeout check takes about one minute.
+The checks use a temporary localhost HTTP server and a copy of the built application, so they do not change saved User Secrets or call your local decision model or Foundry gateway. They cover all nine request formats, the Foundry deployment and per-request authentication header, credential isolation from local calls, menu navigation, configuration and response errors, wrapping, and response timing. The optional timeout checks take about two minutes.

@@ -1,0 +1,1 @@
+The Download CSV button fails with an error every time I export the monthly report in Safari. I can still view the report, and exporting the same report in Chrome works. Switching browsers lets me complete the task, but the Safari export remains broken.

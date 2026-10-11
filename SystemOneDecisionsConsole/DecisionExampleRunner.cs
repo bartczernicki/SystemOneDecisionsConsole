@@ -7,18 +7,28 @@ using SystemOneDecisionsConsole.Models;
 
 namespace SystemOneDecisionsConsole;
 
-internal sealed record DecisionExample(string Label, string Folder, bool IsSystemOne, string QuestionType);
+internal enum DecisionBackend
+{
+    LocalSystemOne,
+    LocalDecisions,
+    FoundrySystemOne
+}
+
+internal sealed record DecisionExample(string Label, string Folder, DecisionBackend Backend, string QuestionType);
 
 internal sealed class DecisionExampleRunner(HttpClient httpClient)
 {
     internal static IReadOnlyList<DecisionExample> Examples { get; } =
     [
-        new("Local System One - Choice", Path.Combine("Basic Decision Examples", "LocalSystemOne-Choice"), true, "choice"),
-        new("Local System One - Yes/No (noul)", Path.Combine("Basic Decision Examples", "LocalSystemOne-YesNo"), true, "noul"),
-        new("Local System One - Score", Path.Combine("Basic Decision Examples", "LocalSystemOne-Score"), true, "score"),
-        new("Local Decisions - Choice", Path.Combine("Basic Decision Examples", "LocalDecisions-Choice"), false, "choice"),
-        new("Local Decisions - Yes/No (predicate)", Path.Combine("Basic Decision Examples", "LocalDecisions-YesNo"), false, "predicate"),
-        new("Local Decisions - Score", Path.Combine("Basic Decision Examples", "LocalDecisions-Score"), false, "score")
+        new("Local SystemOne - Choice", Path.Combine("Basic Decision Examples", "LocalSystemOne-Choice"), DecisionBackend.LocalSystemOne, "choice"),
+        new("Local SystemOne - Yes/No (noul)", Path.Combine("Basic Decision Examples", "LocalSystemOne-YesNo"), DecisionBackend.LocalSystemOne, "noul"),
+        new("Local SystemOne - Score", Path.Combine("Basic Decision Examples", "LocalSystemOne-Score"), DecisionBackend.LocalSystemOne, "score"),
+        new("Local Decisions - Choice", Path.Combine("Basic Decision Examples", "LocalDecisions-Choice"), DecisionBackend.LocalDecisions, "choice"),
+        new("Local Decisions - Yes/No (predicate)", Path.Combine("Basic Decision Examples", "LocalDecisions-YesNo"), DecisionBackend.LocalDecisions, "predicate"),
+        new("Local Decisions - Score", Path.Combine("Basic Decision Examples", "LocalDecisions-Score"), DecisionBackend.LocalDecisions, "score"),
+        new("Foundry SystemOne - Choice", Path.Combine("Basic Decision Examples", "FoundrySystemOne-Choice"), DecisionBackend.FoundrySystemOne, "choice"),
+        new("Foundry SystemOne - Yes/No (noul)", Path.Combine("Basic Decision Examples", "FoundrySystemOne-YesNo"), DecisionBackend.FoundrySystemOne, "noul"),
+        new("Foundry SystemOne - Score", Path.Combine("Basic Decision Examples", "FoundrySystemOne-Score"), DecisionBackend.FoundrySystemOne, "score")
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -41,32 +51,44 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
 
             var configuration = new ConfigurationBuilder().AddUserSecrets<Program>(optional: true).Build();
             using var configurationLifetime = configuration as IDisposable;
-            string endpointKey = example.IsSystemOne ? "LocalSystemOneAPI" : "LocalDecisionsAPI";
-            string? endpoint = GetSetting(configuration, endpointKey)?.Trim();
-            if (string.IsNullOrEmpty(endpoint))
+            string endpointKey = example.Backend switch
             {
-                throw new InvalidDataException($"Missing {endpointKey}. Set it with dotnet user-secrets set --project SystemOneDecisionsConsole.");
-            }
+                DecisionBackend.LocalSystemOne => "LocalSystemOneAPI",
+                DecisionBackend.LocalDecisions => "LocalDecisionsAPI",
+                DecisionBackend.FoundrySystemOne => "MicrosoftFoundrySystemOneAPI",
+                _ => throw new InvalidDataException("Unknown example backend.")
+            };
+            string endpoint = GetRequiredSetting(configuration, endpointKey);
             if (!Uri.TryCreate(endpoint, UriKind.Absolute, out Uri? uri) || uri.Scheme is not ("http" or "https"))
             {
                 throw new InvalidDataException($"{endpointKey} must be an absolute HTTP or HTTPS URL.");
             }
 
-            string model = GetSetting(configuration, "LocalDecisionModel")?.Trim() ?? "clef-flash";
-            if (string.IsNullOrEmpty(model))
+            string model;
+            string? apiKey = null;
+            if (example.Backend == DecisionBackend.FoundrySystemOne)
             {
-                model = "clef-flash";
+                model = GetRequiredSetting(configuration, "MicrosoftFoundryDecisionModelDeploymentName");
+                apiKey = GetRequiredSetting(configuration, "MicrosoftFoundryAPIKey");
+            }
+            else
+            {
+                model = GetSetting(configuration, "LocalDecisionModel")?.Trim() ?? "clef-flash";
+                if (string.IsNullOrEmpty(model))
+                {
+                    model = "clef-flash";
+                }
             }
             string input = await ReadTextAsync(folder, "input.txt");
             DisplayTextSection("Input:", input, ConsoleColor.Green, "\u001b[38;2;128;255;160m");
             string questionsJson = await ReadTextAsync(folder, "questions.json");
 
-            if (example.IsSystemOne)
+            if (example.Backend is DecisionBackend.LocalSystemOne or DecisionBackend.FoundrySystemOne)
             {
                 var questions = Deserialize<Dictionary<string, SystemOneQuestion>>(questionsJson);
                 ValidateQuestions(questions, example.QuestionType);
                 var request = new SystemOneRequest { Model = model, State = input, Questions = questions };
-                responseBody = await SendAsync(uri, request);
+                responseBody = await SendAsync(uri, request, example.Backend, apiKey);
                 var response = Deserialize<SystemOneResponse>(responseBody);
                 if (response.Answers is null || response.Answers.Count != questions.Count ||
                     questions.Keys.Any(name => !response.Answers.ContainsKey(name)))
@@ -83,7 +105,7 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
                 var questions = Deserialize<List<DecisionQuestion>>(questionsJson);
                 ValidateQuestions(questions, example.QuestionType);
                 var request = new DecisionsRequest { Model = model, Input = input, Questions = questions };
-                responseBody = await SendAsync(uri, request);
+                responseBody = await SendAsync(uri, request, example.Backend, apiKey);
                 var response = Deserialize<DecisionsResponse>(responseBody);
                 if (response.Answers is null || response.Answers.Count != questions.Count)
                 {
@@ -128,6 +150,16 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
 
     private static string? GetSetting(IConfiguration configuration, string key) =>
         Environment.GetEnvironmentVariable(key) ?? configuration[key];
+
+    private static string GetRequiredSetting(IConfiguration configuration, string key)
+    {
+        string? value = GetSetting(configuration, key)?.Trim();
+        if (string.IsNullOrEmpty(value))
+        {
+            throw new InvalidDataException($"Missing {key}. Set it with dotnet user-secrets set --project SystemOneDecisionsConsole.");
+        }
+        return value;
+    }
 
     private static void DisplayColoredLine(string text, ConsoleColor color, string ansiCode)
     {
@@ -190,7 +222,7 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
     private static T Deserialize<T>(string json) =>
         JsonSerializer.Deserialize<T>(json, JsonOptions) ?? throw new JsonException("JSON must not be null.");
 
-    private async Task<string> SendAsync(Uri endpoint, object request)
+    private async Task<string> SendAsync(Uri endpoint, object request, DecisionBackend backend, string? apiKey)
     {
         // Serialize and prepare content before timing so elapsed time measures the HTTP round trip.
         string json = JsonSerializer.Serialize(request, JsonOptions);
@@ -198,7 +230,19 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
-        DisplayColoredLine("Calling local API...", ConsoleColor.DarkYellow, "\u001b[38;2;255;180;84m");
+        if (backend == DecisionBackend.FoundrySystemOne)
+        {
+            try
+            {
+                message.Headers.Add("api-key", apiKey);
+            }
+            catch (FormatException)
+            {
+                throw new InvalidDataException("MicrosoftFoundryAPIKey must be a valid HTTP header value.");
+            }
+        }
+        string callingMessage = backend == DecisionBackend.FoundrySystemOne ? "Calling Foundry API..." : "Calling local API...";
+        DisplayColoredLine(callingMessage, ConsoleColor.DarkYellow, "\u001b[38;2;255;180;84m");
         var stopwatch = Stopwatch.StartNew();
         try
         {
