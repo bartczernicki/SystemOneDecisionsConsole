@@ -1,226 +1,48 @@
 # SystemOne Decisions
 
-A .NET 10 console application with examples for local SystemOne, OpenAI-compatible Decisions, and Microsoft Foundry SystemOne APIs:
+A .NET 10 console application demonstrating decisions through Local (SystemOne API), Local (Decisions API), and Foundry (SystemOne API).
 
-```text
-1) Basic Decision Examples
-2) Advanced Decision Examples
-0) Exit
-```
+## Contents
 
-Select **Basic Decision Examples** to open its submenu:
+- [Basic Decision Examples](#basic-decision-examples)
+- [Advanced Decision Examples](#advanced-decision-examples)
+- [Run the Console Application](#run-the-console-application)
+- [Download LM Studio and a Decision Model](#download-lm-studio-and-a-decision-model)
+- [User Secrets](#user-secrets-for-local-apis-and-microsoft-foundry)
+- [Example files](#example-files)
+- [JSON formats](#json-formats)
+- [Build and publish](#build-and-publish)
+- [Validation](#validation)
+- [Sources](#sources)
 
-```text
-Basic Decision Examples
+## Basic Decision Examples
 
-1) Local (SystemOne API) - Choice
-2) Local (SystemOne API) - Yes/No (noul)
-3) Local (SystemOne API) - Score
-4) Local (Decisions API) - Choice
-5) Local (Decisions API) - Yes/No (predicate)
-6) Local (Decisions API) - Score
-7) Foundry (SystemOne API) - Choice
-8) Foundry (SystemOne API) - Yes/No (noul)
-9) Foundry (SystemOne API) - Score
-0) Back
-```
-
-Select **Advanced Decision Examples** to open its submenu:
-
-```text
-Advanced Decision Examples
-
-1) Local (SystemOne API) - Football Game Probability Foreacast
-2) Local (SystemOne API) - Football Total Points Cumulative Probability
-3) Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating
-4) Local (SystemOne API) - Customer Subscription Brier Score and Calibration
-5) Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule
-6) Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing
-7) Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix
-8) Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation?
-0) Back
-```
-
-Select an example to display its scenario description and call its configured API. The usual output includes a typed answer summary, available confidence, a horizontal probability chart, response time in milliseconds, and formatted response JSON. The customer subscription batch shows compact progress and saves full inputs and responses as described below. Press Enter after an example to return to its submenu. Select `0) Back` in either submenu to return to the startup menu, where `0) Exit` closes the application. Yes/No answers remain probabilities; the application does not impose a boolean threshold. Decisions refusals are shown explicitly. End-of-input at any prompt exits cleanly.
-
-### Football Game Probability Foreacast
-
-The first advanced example forecasts an Atlanta Falcons at Green Bay Packers game from a halftime snapshot: Atlanta leads 17–7, Green Bay is the home team, and Green Bay was the pregame favorite at −7.5 points. It preserves the supplied statistics and submits three questions of mixed types in a single local SystemOne request. Answers are displayed in the order of the questions in `questions.json`, with numbered labels and a blank line between each result.
-
-| Question | Type | Forecast |
+| Option | Example | What it demonstrates |
 | --- | --- | --- |
-| Final Game Winner | `choice` | Atlanta Falcons, Green Bay Packers, or Tie, including any overtime. |
-| Packers Cover -7.5 | `noul` | Probability that Green Bay wins by at least 8 points, including any overtime. |
-| Final Total Points Band | `score` | Combined final points, including any overtime: under 30, 30–39, 40–49, 50–59, or 60 or more. |
+| 1 | Local (SystemOne API) - Choice | Routes a customer's report of two charges for one purchase to Billing, Technical, or Shipping. Shows the recommended department and its probability distribution. |
+| 2 | Local (SystemOne API) - Yes/No (noul) | Evaluates whether a customer reports being charged twice for the same purchase. Shows the probability of Yes without applying a boolean threshold. |
+| 3 | Local (SystemOne API) - Score | Rates a CSV export failure in Safari when Chrome provides a working alternative. Shows a probability-weighted severity score across Cosmetic, Workaround Available, and Fully Blocked levels. |
+| 4 | Local (Decisions API) - Choice | Routes a customer's report of two charges for one purchase to Billing, Technical, or Shipping. Shows the recommended department and its probability distribution. |
+| 5 | Local (Decisions API) - Yes/No (predicate) | Evaluates whether a customer reports being charged twice for the same purchase. Shows the probability of Yes without applying a boolean threshold. |
+| 6 | Local (Decisions API) - Score | Rates a CSV export failure in Safari when Chrome provides a working alternative. Shows a probability-weighted severity score across Cosmetic, Workaround Available, and Fully Blocked levels. |
+| 7 | Foundry (SystemOne API) - Choice | Routes a customer's report of two charges for one purchase to Billing, Technical, or Shipping. Shows the recommended department and its probability distribution. |
+| 8 | Foundry (SystemOne API) - Yes/No (noul) | Evaluates whether a customer reports being charged twice for the same purchase. Shows the probability of Yes without applying a boolean threshold. |
+| 9 | Foundry (SystemOne API) - Score | Rates a CSV export failure in Safari when Chrome provides a working alternative. Shows a probability-weighted severity score across Cosmetic, Workaround Available, and Fully Blocked levels. |
 
-The total-points answer is a probability-weighted band index from 0 to 4 and may be fractional; it is not a predicted point total. The scenario does not supply a game date, second-half kickoff possession, injuries, or additional statistics.
+## Advanced Decision Examples
 
-### Football Total Points Cumulative Probability
-
-The second advanced example reuses the same halftime snapshot and sends one `score` question, **Final Total Points Band**, in one local SystemOne request. Its bands align with the threshold of strictly more than 40 combined final points, including any overtime:
-
-| Index | Final combined points |
-| --- | --- |
-| 0 | Under 30 |
-| 1 | 30–40 |
-| 2 | 41–49 |
-| 3 | 50–59 |
-| 4 | 60 or more |
-
-The score is a probability-weighted band index, not a point total. The application uses the individual band probabilities to calculate `P(total points > 40) = P(2) + P(3) + P(4)`. Exactly 40 belongs to band 1 and is excluded; band 2 contributes fully. The application adds raw probabilities before rounding and displays the result and arithmetic beneath the score chart, without another model call.
-
-For an illustrative fixture distribution `[0.10, 0.25, 0.30, 0.20, 0.15]`, every band probability is below 40%, yet their combined probability above the point threshold is 65%:
-
-```text
-Chance of more than 40 total points: 65.00 %
-30.00 % + 20.00 % + 15.00 % = 65.00 %
-```
-
-This aggregation example requires the configured band order and all five returned indices, with finite probabilities from 0 to 1 whose sum is within `1e-6` of one. Invalid distributions are reported as errors. These additional checks apply to this example.
-
-### Shipment Arrival Evidence with Bayesian updating
-
-The third advanced example forecasts fictional shipment **GFM-427** to Grayford Manufacturing in three automatic local SystemOne requests: **Initial information**, **Carrier records**, and **Verified delivery readiness**. Each request uses the same **Shipment Arrival Window** choice question and a cumulative evidence state. All forecasts use the fixed timestamp **November 17, 2026, 09:00 UTC**; later stages reveal records created before that timestamp. The clock does not advance, and earlier requests do not receive later evidence or earlier model answers.
-
-The initial state supplies fragmented tracking, a broad supplier estimate of Tuesday or Wednesday, and historical counts of 22, 18, 24, 16, and 20 comparable shipments across the five arrival windows. Carrier records verify customs release and terminal availability and introduce a tentative Wednesday delivery booking. Final records verify the correct, undamaged pallet at the last depot, confirm a vehicle and driver allocation, and establish a destination appointment. The receiving dock is staffed continuously. Arrival means signed receipt of the correct, undamaged pallet; an attempted delivery does not qualify.
-
-| Choice | Arrival window, all times UTC |
-| --- | --- |
-| Tuesday daytime | November 17, 09:00 up to but excluding 18:00. |
-| Tuesday night | November 17, 18:00 up to but excluding November 18, 06:00. |
-| Wednesday daytime | November 18, 06:00 up to but excluding 18:00. |
-| Wednesday night | November 18, 18:00 up to but excluding November 19, 06:00. |
-| Thursday or later | November 19, 06:00 onward, or no successful receipt. |
-
-The example displays each stage's cumulative input, answer, confidence, chart, timing, and response JSON. Answers are labeled `1 of 3)`, `2 of 3)`, and `3 of 3)`. Stages 2 and 3 explicitly note that new evidence was added and the forecast time is unchanged. After all three succeed, **Evidence Stage Comparison:** shows the five choice probabilities, **Entropy (bits)** to four decimal places, and a **Confidence Score** row directly below entropy containing each stage's actual API confidence as a percentage. Lower entropy means a more concentrated arrival-window distribution. Each transition reports whether entropy and the separate API confidence increased, decreased, or stayed unchanged on the same line; the two changes are calculated independently. Every distribution comes from the live model; the application does not prescribe probabilities, force narrowing, or equate the separate confidence field with distribution concentration.
-
-The scenario and evidence files are loaded before the first request. This example requires one shared valid choice question with nonblank criteria, the same question ID and answer type at every stage, an allowed selected choice, finite confidence and probabilities from 0 to 1, probability labels exactly matching the shared question's criteria, and a probability sum within `1e-6` of one. Charts and comparisons retain rubric order even when response keys are shuffled. A failed request or invalid stage response stops the remaining requests, identifies the failed stage, and preserves earlier results without presenting a completed three-stage comparison.
-
-### Customer Subscription Brier Score and Calibration
-
-The fourth advanced example evaluates live local SystemOne probability forecasts against **200 recorded term-deposit subscription outcomes** from the real [UCI Bank Marketing dataset](https://archive.ics.uci.edu/dataset/222/bank+marketing): 100 representative customers and a separate diagnostic cohort of 100 customers with a successful previous campaign. It uses the older `bank-full.csv`, containing 45,211 records. Dataset credit belongs to S. Moro, P. Rita, and P. Cortez; the source is distributed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-
-The representative cohort retains the original 100 profiles: rank the one-based CSV data-row numbers by `SHA256("customer-subscription-v1:{row}")` and choose the first 100. For the diagnostic cohort, first restrict eligibility to `poutcome = success`, exclude the representative rows, then rank the eligible rows by `SHA256("customer-subscription-prior-success-v1:{row}")` and choose the first 100. Both selections are fixed without consulting current-campaign outcomes or model predictions. Previous-campaign success is a known prior feature, distinct from the current subscription outcome. The representative cohort runs first, followed by the diagnostic cohort, with source-row order preserved within each.
-
-The remaining **45,011 records** form one disjoint reference group, excluding the union of both evaluation cohorts. Its **5,213 subscriptions** give a common context and constant-probability baseline of **`5213/45011 = 0.1158161338339517`** for both cohorts. Evaluation outcomes remain local and never appear in a model request. Provenance records the source, checksums, both selection methods, cohort membership, and reference counts.
-
-Each request contains the same single `noul` question and common context plus one customer's allowlisted pre-contact features: `age`, `job`, `marital`, `education`, `default`, `balance`, `housing`, `loan`, `pdays`, `previous`, and `poutcome`. Balance is the average yearly balance in euros; `pdays = -1` means no contact in a previous campaign. Current-campaign contact fields, call duration, the target `y`, case IDs, and source-row identifiers are excluded. No previous prediction or answer is carried into another request.
-
-The example sends **200 sequential local POSTs**, using `LocalSystemOneAPI` and `LocalDecisionModel`, with a separate 60-second timeout per request. It validates all case/outcome assets and creates a writable report directory before the first call. Compact progress identifies the cohort and shows each completed forecast, recorded outcome, Brier loss, and response time in milliseconds. Each returned probability must be finite and between 0 and 1. Only after all 200 forecasts succeed does the application show two independent cohort summaries containing aggregate metrics, without calibration graphs or bin tables:
-
-| Measure | Calculation and meaning |
-| --- | --- |
-| Brier score | `mean((p - y)^2)`, using each raw Yes probability and local binary outcome (`yes = 1`, `no = 0`). Lower is better. |
-| Baseline Brier score | The same calculation within each cohort using the common reference-group rate for every case. This compares both cohorts against the same global reference probability. |
-| Brier skill score | `1 - model Brier / baseline Brier`. Positive means improvement over the baseline; negative means worse. A zero baseline score gives N/A. |
-| Expected calibration error (ECE) | `sum((bin count / cohort count) * abs(mean predicted Yes probability - observed Yes frequency))` across the ten fixed bins. Empty bins contribute zero. Lower means smaller empirical calibration gaps. It is shown as a raw value to four decimal places and in percentage points, for example `0.0345 (3.45 pp)`. |
-| Observed subscription rate | `mean(y)` within the cohort, displayed as a percentage. |
-
-ECE uses the existing ten fixed 10-percentage-point bins, from `[0, 0.1)` through `[0.9, 1]`. Each bin includes its lower boundary and excludes its upper boundary, except the last includes 1. Saved JSON retains bin counts, mean predictions, observed subscription rates, and signed gaps in percentage points where available. ECE is calculated from full-precision values before formatting, using the Yes probability and observed Yes frequency.
-
-API requests and existing Brier calculations are unchanged. These are raw forecasts: the application fits no calibrator, adjusts no probabilities, and imposes no expected result. ECE depends on the chosen bins and this finite sample; zero means the chosen bin averages match, rather than proving calibration at every probability.
-
-The diagnostic cohort explores forecasts for customers with previous-campaign success; its scores do not estimate performance across the full customer population, and the application does not pool the cohorts into one overall score. Higher-probability bins are not guaranteed to fill, and sparse bins remain uncertain. Both 100-case evaluations are descriptive. This public, retrospective sample does not establish future performance or that the model has never encountered the source data.
-
-Full details are saved under the current working directory in `Results/CustomerSubscription/{UTC timestamp}-{unique ID}/results.json`, with case scores also tabulated in `results.csv`. Each completed case updates the checkpoints with its cohort ID, composed input, raw response, probability, outcome, loss, and timing; headers and secrets are excluded. A completed JSON report contains ordered cohort summaries, including the added `expectedCalibrationError` value on the raw 0-to-1 scale and full-precision bin diagnostics. The CSV remains a per-case table with a cohort column. Every run creates its own directory, preserving existing reports unchanged. A failed request, invalid response, or report-write failure stops further calls, preserves completed records, marks the run incomplete, and omits both final cohort summaries. Saved outputs identify the failed case and cohort and retain available failure details. The normal end-of-example Enter prompt remains; there are no pauses between cases.
-
-### Apple Watch Step Goal with 10,000 Step Decision Rule
-
-The fifth advanced example uses a fictional Apple Watch readout at **17:00 today**: **5000 current steps**, a **10000-step daily goal**, and **5000 steps remaining**. It sends one Microsoft Foundry SystemOne request with three separate `noul` questions, displayed in this order:
-
-| Question | Completed activity plan | Historical additional steps |
+| Option | Example | What it demonstrates |
 | --- | --- | --- |
-| Park with Kids | 90 minutes of mixed walking and play. | 1800, 2200, 2500, 2800, 3100, 3400, 3700, 4100, 4700, 5200. |
-| Take a Walk | A 50-minute walk. | 4400, 4600, 4800, 4900, 5000, 5100, 5200, 5400, 5500, 5700. |
-| Go for a Long Run | A 60-minute run. | 7200, 7600, 7900, 8100, 8400, 8700, 9000, 9300, 9600, 9900. |
+| 1 | Local (SystemOne API) - Football Game Probability Foreacast | Forecasts an Atlanta Falcons at Green Bay Packers game from a halftime snapshot. One request estimates the winner, Green Bay's chance of covering the spread, and final total-points bands. |
+| 2 | Local (SystemOne API) - Football Total Points Cumulative Probability | Forecasts combined final points from the same football halftime snapshot. Adds probabilities across the relevant score bands to show the chance of strictly more than 40 points. |
+| 3 | Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating | Forecasts a fictional shipment's arrival using three successive evidence updates at a fixed forecast time. Compares live arrival-window distributions, entropy, and confidence as more information becomes available. |
+| 4 | Local (SystemOne API) - Customer Subscription Brier Score and Calibration | Predicts term-deposit subscriptions for 200 recorded customers from UCI Bank Marketing. Scores representative and previous-success groups separately with Brier score and ECE, and saves complete results. |
+| 5 | Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule | Compares visiting the park, taking a walk, or running from a 5,000-step starting point. Reports an independent Yes/No probability for each activity reaching the 10,000-step goal. |
+| 6 | Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing | Recommends a fictional solar-and-battery investment strategy through Creativity, Caution, and Benefits thinking hats. Three isolated requests compare recommendation distributions using the same project facts and strategy choices. |
+| 7 | Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix | Classifies eight operations-manager tasks by urgency and importance using separate requests. Shows the returned actions in a summary and an Eisenhower Matrix: Do Now, Schedule, Delegate, or Eliminate. |
+| 8 | Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation? | Chooses whether a regular restaurant customer should try an unfamiliar dish or order a familiar favorite. One request evaluates the strategy and both conditional dish choices, then displays the strategy and its matching recommendation. |
 
-Each answer estimates the probability of reaching the goal assuming that activity is completed today and supplies all new steps. **Yes** means `5000 + activity steps >= 10000`; **No** means a final total below 10000. Exactly 5000 additional steps is enough. Plans and histories inform live model estimates without forcing historical success fractions or guaranteed outcomes.
-
-The results are three separate conditional probabilities, each with its own Yes/No Bernoulli chart. They need not sum to one, and the application does not multiply them or normalize them across activities. They do not represent the probability of choosing an activity or a joint outcome. This example uses the existing `MicrosoftFoundrySystemOneAPI`, `MicrosoftFoundryDecisionModelDeploymentName`, and `MicrosoftFoundryAPIKey` settings.
-
-### Energy Plant Investment Strategy with Decision Framing
-
-The sixth advanced example asks fictional **Meridian Energy** how to pursue a **100 MW solar plant plus a 50 MW / 200 MWh battery** while seeking attractive long-term value, reliable electricity, and manageable capital exposure. The shared fact sheet includes $160 million of available capital, a $150 million full-project construction estimate with possible 20% cost increases, outstanding permits and grid approval, an unsigned customer agreement, and uncertain market revenue. Illustrative full-project annual operating cash flows before financing and tax are $18 million base, $11 million adverse, and $25 million favorable, with no probabilities assigned to these cases.
-
-**Same facts; different thinking frames.** Three sequential isolated Foundry SystemOne POSTs evaluate **Creativity Hat (Green)**, **Caution Hat (Black)**, and **Benefits Hat (Yellow)** in that order. Each request sends exactly one `choice` question and a state composed from the neutral shared `input.txt` plus only its current frame file. Other frame instructions and prior model answers are not carried into a request. Green considers possibilities and inventive approaches, Black examines risks and difficulties, and Yellow examines supported value and advantages, following the [De Bono Group's Six Thinking Hats descriptions](https://www.debonogroup.com/services/core-programs/six-thinking-hats/).
-
-All three frames use identical strategy definitions and the same choice order:
-
-| Strategy | Proposed investment and timing |
-| --- | --- |
-| Full Build Now | Authorize the estimated $150 million full project, contingent on approvals; retain full ownership and exposure, with planned commissioning at month 24. |
-| Phased Investment | Authorize a $38 million first phase of 20 MW solar plus 10 MW / 40 MWh battery, targeting commissioning at month 18; review expansion after 12 operating months with separate approval. Estimated combined cost is $155 million and full commissioning around month 48 if expanded. |
-| Joint Venture | Pursue a 50/50 full project with an estimated $75 million Meridian contribution and equally shared returns and risks; allow six additional negotiation months, with commitment and governance unresolved. |
-| Defer Investment | Spend up to $2 million over six months on engineering, permits, grid studies, and customer negotiations, then reconsider construction; preserve capital while facing quotation changes and delay. |
-
-Each result is a recommendation distribution under its own frame, accompanied by the selected strategy, actual API confidence, and a probability chart. It does not represent probabilities of profitability, financial success, or the cash-flow cases. Probabilities sum to one within each frame, and are not multiplied or normalized across frames. No probabilities or different winners are forced; all three frames may select the same strategy. All project facts and financial inputs are fictional, and planned spending is not binding or guaranteed.
-
-A **Frame 1 of 3**, **Frame 2 of 3**, or **Frame 3 of 3** heading identifies each evaluation. Its composed input, validated answer, probability chart, request timing, and response JSON are displayed separately. After all three succeed, the **Decision Framing Comparison:** table uses columns **Creativity**, **Caution**, and **Benefits**, with four strategy-probability rows followed by a dashed separator, **Selected Strategy**, and **Confidence Score**. It displays no entropy or final combined winner. The existing API contract supplies choice, confidence, and probabilities without generated rationale; the public request and response schemas are unchanged.
-
-This example opts into an internal frame-comparison configuration. Before the first API call, the application loads every shared and frame input and checks the configured frame IDs and three choice definitions with identical ordered strategy criteria. It sends only the active definition from `questions.json` on each call; all three definitions use neutral instructions referring to the active frame in the request state. Each returned distribution must pass strict validation before its answer summary or chart is displayed: exactly the requested question ID and type, exactly the requested probability labels, a selected strategy from the criteria, finite confidence and probabilities from 0 to 1, and a probability sum within `1e-6` of one. Charts and table rows retain criterion order even if response keys arrive shuffled. A failed request or invalid response identifies the failed frame, stops subsequent calls, preserves completed results and available response JSON, and omits the comparison. The example uses the existing Foundry endpoint, deployment name, and API key, with a 60-second timeout per request, so the three calls can take up to three minutes.
-
-### Work Queue Prioritization with the Eisenhower Matrix
-
-The seventh advanced example classifies eight fictional work items for the operations manager at **Meridian Cloud** at the fixed decision time **November 17, 2026, 09:00 UTC**. It adapts the Eisenhower prioritization framework described in Bart Czernicki's [Decision Intelligence with AI, Chapter 1A](https://www.decisionintelligencebook.ai/chapters/1a-introducing-the-decision-intelligence-framework.html). The company, tasks, and operational rubric are created for this example.
-
-The manager's objectives are reliable service, meeting committed customer obligations, and improving future operations. A task is **important** when it materially supports these objectives or prevents substantial consequences. It is **urgent** when action is required within the next 24 hours, **including November 18, 2026, 09:00 UTC**. An optional activity is not urgent merely because it occurs soon. The fixed time does not advance between requests.
-
-| Choice, in rubric order | Classification |
-| --- | --- |
-| Do Now | Important and urgent; recommend ensuring prompt action, including coordination where appropriate. |
-| Schedule | Important and not urgent. |
-| Delegate | Urgent but low importance to the manager, with a qualified and authorized delegate available. |
-| Eliminate | Not important and not urgent. |
-
-The tasks run in their file order:
-
-| Task | Supplied facts |
-| --- | --- |
-| Restore customer login | An ongoing incident blocks 20% of customer accounts; immediate coordination is required, engineering is on call, and the manager needs 30 minutes. |
-| Review customer launch readiness | A committed customer launch is at 16:00 UTC today; the manager owns a 90-minute readiness review before launch. |
-| Plan outage-prevention work | A two-hour proposal addresses recurring incidents, is due November 24 at 12:00 UTC, and requires no action within the next day. |
-| Improve customer onboarding | A three-hour plan addresses repeated customer difficulties and is due November 26 at 12:00 UTC. |
-| Confirm routine supply delivery | A standard office-supply confirmation is due today at 12:00 UTC; an authorized coordinator can handle the 10-minute task. |
-| Send meeting logistics | Room and joining details are due today at 15:00 UTC; the agenda is approved and an authorized coordinator needs 15 minutes. |
-| Watch optional vendor webinar | An optional November 20 webinar concerns an unused product and is unrelated to current objectives. |
-| Polish archived slide formatting | Cosmetic work on a closed project takes 45 minutes, with no deadline or planned reuse. |
-
-Eight sequential isolated Foundry SystemOne POSTs use the same single **Work Queue Action** `choice` question. Each state contains the shared role, time, objectives, and rubric followed by only the current task's title and details. Other task profiles and prior model answers are excluded; task IDs stay local. Each task's heading, composed input, selected action, API confidence, four-choice probability chart, response time in milliseconds, and response JSON are shown. The returned probabilities are recommendation distributions, rather than task-completion or success probabilities, and no quadrant assignments or counts are forced.
-
-After all eight requests succeed, a task summary and a **two-by-two Eisenhower Matrix** group the actual selected actions. Urgency forms the columns and importance the rows; task-file order is preserved within each quadrant, and empty quadrants are identified. This classifies work without optimizing a schedule or ranking tasks within a quadrant. Recommendations do not execute work, send messages, assign staff, or delete tasks.
-
-Before the first request, the application loads and validates all four assets, including eight unique ordered task IDs, nonblank titles and details, and the shared four-choice question. Responses must contain exactly the requested question and choice keys, an allowed selected action, finite confidence and probabilities in `[0,1]`, and probabilities summing to one within `1e-6`. Charts retain rubric order when response keys are shuffled. A failed request or invalid response identifies the task, preserves completed output and available current response JSON, stops subsequent calls, and omits the final summary and matrix. It uses the existing Foundry endpoint, deployment name, and API key, with a separate 60-second timeout per request. There are no pauses between tasks; the normal end-of-example Enter prompt remains.
-
-### Restaurant Choice: Decision Exploration or Exploitation?
-
-The eighth advanced example asks fictional **Alex** to choose an entree at **Harbor Table**, balancing a satisfying dinner, good value, and discovering a possible future favorite. It adapts exploration and exploitation from Bart Czernicki's [Decision Intelligence with AI, Chapter 1F](https://www.decisionintelligencebook.ai/chapters/1f-decision-execution-with-decision-rules.html). Alex, the restaurant, menu, prices, preferences, and rating histories are created for this example.
-
-Alex has an entree budget of **$25 USD before tax and tip**, likes savory flavors, mushrooms, and herbs, prefers mild to medium heat, and has no dietary restrictions. Hunger is 7 out of 10 and willingness to try something novel is 6 out of 10. Novelty willingness is a preference, not a probability or a required exploration rate. Alex returns about monthly, making information about an unfamiliar dish useful for future visits. All six entrees are available and within budget.
-
-| Dish | Price, USD | Portion | Heat | Alex's personal satisfaction history here, out of 10 |
-| --- | --- | --- | --- | --- |
-| Lemon Herb Chicken | $20 | Generous | Mild | 8, 9, 8; three visits. |
-| Mushroom Risotto | $19 | Medium | Mild | 9, 8, 9, 9; four visits. |
-| Roasted Vegetable Pasta | $18 | Generous | Mild | 7, 8; two visits. |
-| Ginger Soy Salmon | $24 | Generous | Medium | Never tried; rating unknown. |
-| Smoky Chickpea Bowl | $17 | Generous | Medium | Never tried; rating unknown. |
-| Spinach and Ricotta Ravioli | $21 | Medium | Mild | Never tried; rating unknown. |
-
-Familiar means Alex has previously eaten that exact dish at Harbor Table. Familiar ingredients or experience elsewhere do not make it familiar here. The familiar-dish comparison considers the supplied histories and sample counts alongside appetite, preferences, and value. Untried-dish ratings remain unknown; the questions do not invent ratings, force a winner, or impose an exploration frequency.
-
-One Foundry SystemOne POST sends these three `choice` questions together, in this order:
-
-| Question | Choices, in criterion order | Meaning |
-| --- | --- | --- |
-| Dining Strategy | Explore; Exploit. | Recommend trying an unfamiliar dish or choosing a familiar dish using the full context. |
-| Dish if Exploring | Ginger Soy Salmon; Smoky Chickpea Bowl; Spinach and Ricotta Ravioli. | Recommend a dish assuming Explore, independently of the other generated answers. |
-| Dish if Exploiting | Lemon Herb Chicken; Mushroom Risotto; Roasted Vegetable Pasta. | Recommend a dish assuming Exploit, independently of the other generated answers. |
-
-Each question has its own recommendation distribution, rather than meal-satisfaction or success probabilities. The application does not multiply or normalize probabilities across questions. The selected strategy determines which conditional dish answer is displayed. Two numbered answers show the strategy and active dish, each with its own API confidence and probability chart, followed by a final recommendation identifying **Explore with an unfamiliar dish** or **Exploit with a familiar dish**. The inactive branch remains in the full three-answer response JSON. One response time covers the single request.
-
-Before the call, the application loads and validates all three assets and the ordered question definitions. All three answers, including the inactive branch, must pass strict validation before any answer or chart is displayed: exactly the requested question IDs and types, exact probability labels, an allowed selected choice, finite confidence and probabilities in `[0,1]`, and probabilities summing to one within `1e-6` for each question. Charts preserve criterion order when keys arrive shuffled. A failed request or invalid response reports the error and retains available response JSON without a final recommendation. The example uses the existing Foundry endpoint, deployment name, and API key, with the standard 60-second timeout and end-of-example Enter prompt. Recommendations do not place an order.
-
-## Run
+## Run the Console Application
 
 Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–4, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9 and Advanced options 5–8, configure the Foundry settings below. Run from the repository root:
 
@@ -230,7 +52,7 @@ dotnet run --project SystemOneDecisionsConsole
 
 Use a terminal that supports ANSI RGB colors to display the cyan banner and gold menu.
 
-## Download LM Studio and a decision model
+## Download LM Studio and a Decision Model
 
 For local examples (Basic options 1–6 and Advanced options 1–4), install LM Studio and load a decision model such as Clef or Clef-Flash:
 
@@ -288,52 +110,15 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder groups seventeen examples by category: nine in **Basic Decision Examples** and eight in **Advanced Decision Examples**:
-
-```text
-Decisions/
-  Basic Decision Examples/
-    LocalSystemOne-Choice/
-    LocalSystemOne-YesNo/
-    LocalSystemOne-Score/
-    LocalDecisions-Choice/
-    LocalDecisions-YesNo/
-    LocalDecisions-Score/
-    FoundrySystemOne-Choice/
-    FoundrySystemOne-YesNo/
-    FoundrySystemOne-Score/
-  Advanced Decision Examples/
-    LocalSystemOne-FootballGamePrediction/
-    LocalSystemOne-FootballTotalPointsProbability/
-    LocalSystemOne-ShipmentArrivalEvidenceUpdates/
-    LocalSystemOne-CustomerSubscriptionCalibration/
-    FoundrySystemOne-AppleWatchStepGoal/
-    FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming/
-    FoundrySystemOne-WorkQueueEisenhowerMatrix/
-    FoundrySystemOne-RestaurantExploreExploit/
-    .gitkeep
-```
-
-Each example contains the following three common files. The shipment example adds two evidence files, the customer subscription example adds three evaluation-data files, the energy example adds three isolated frame files, and the work-queue example adds one task file, giving seventeen examples and 60 example files in total. The existing Advanced category `.gitkeep` is retained.
+The repository-root `Decisions` folder contains **17 examples** and **60 scenario assets**, grouped into Basic and Advanced categories.
 
 | File | Purpose |
 | --- | --- |
-| `ScenarioDescription.txt` | Decision Scenario explanation. Never included in the API request. |
-| `input.txt` | Input/state supplied to the model; for the customer subscription example, common context combined with one case's features; for the energy example, shared facts and neutral rules combined with only the current frame file; for the work-queue example, shared role and rubric combined with only the current task's title and details. |
-| `questions.json` | Question definitions (choices, yes/no, score); the energy example sends only its active question definition on each call; the restaurant example sends its strategy and both conditional dish questions together. |
-| `evidence-2.txt` | Shipment example only: carrier records appended to the initial state for stage 2. |
-| `evidence-3.txt` | Shipment example only: delivery-readiness records appended to both earlier evidence sets for stage 3. |
-| `cases.json` | Customer subscription example only: 200 selected customers' allowlisted features, local case IDs, and cohort IDs. |
-| `outcomes.json` | Customer subscription example only: binary outcomes paired by case ID and retained locally for scoring. |
-| `provenance.json` | Customer subscription example only: source attribution, checksums, representative and diagnostic selection, cohort membership, and disjoint reference-group counts/rate. |
-| `frame-creativity.txt` | Energy example only: Creativity Hat (Green) instructions appended to the shared state for the first request. |
-| `frame-caution.txt` | Energy example only: Caution Hat (Black) instructions appended to the shared state for the second request. |
-| `frame-benefits.txt` | Energy example only: Benefits Hat (Yellow) instructions appended to the shared state for the third request. |
-| `tasks.json` | Work-queue example only: eight ordered local IDs, titles, and task details for isolated classifications. |
+| `ScenarioDescription.txt` | Scenario explanation displayed in the console; excluded from the API request. |
+| `input.txt` | Input/state supplied to the model. |
+| `questions.json` | Question definitions for choice, Yes/No, or score answers. |
 
-Basic examples each demonstrate one question type. Advanced option 1 combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers. Advanced option 2 demonstrates how to derive a cumulative probability from one score distribution. Advanced option 3 compares three live choice distributions as cumulative evidence is revealed. Advanced option 4 scores 200 local single-customer `noul` forecasts and inspects raw calibration separately for representative and previous-campaign-success diagnostic cohorts. Advanced option 5 sends three separate goal-reaching `noul` questions in one Foundry SystemOne request. Advanced option 6 compares recommendation distributions over the same investment strategies using three isolated single-question Foundry requests, each with its own thinking frame. Advanced option 7 independently classifies eight work items into an Eisenhower Matrix using eight isolated single-question Foundry requests. Advanced option 8 sends a dining strategy and two conditional dish questions in one Foundry request, then displays the strategy and its active dish branch. Aggregation, evidence-stage, evaluation, frame-comparison, work-queue, and restaurant display settings are internal application metadata and do not change the API request or response schemas.
-
-Edit the repository-root files to change the scenarios, then rebuild or run again. 
+Some advanced examples include additional evidence, evaluation, decision-frame, or task assets. Edit the repository-root files, then rebuild or run again.
 
 ## JSON formats
 
@@ -364,7 +149,6 @@ Decisions follows the [OpenAI Decisions API reference](https://developers.openai
 ]
 ```
 
-
 ## Build and publish
 
 ```sh
@@ -372,7 +156,7 @@ dotnet build SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Release -o ./publish
 ```
 
-Build and publish copy all 60 example files, including the shipment evidence files, all six customer subscription files, Apple Watch scenario, all six energy investment files, all four work-queue files, and all three restaurant files, while retaining the nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` paths beside the application. User Secrets remain machine-local and are not copied during publishing. Generated `Results` reports are separate from scenario assets and are not copied during publishing. The root `.gitignore` excludes generated reports, Visual Studio settings, and .NET build artifacts.
+Build and publish copy all 60 scenario assets and retain their nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` folders beside the application. User Secrets remain machine-local and are not copied during publishing. Generated `Results` reports are separate and are not copied during publishing. The root `.gitignore` excludes generated reports, Visual Studio settings, and .NET build artifacts.
 
 ## Validation
 
@@ -382,3 +166,10 @@ Build first, then run the standard-library Python integration checks:
 python3 tests/verify_console.py
 python3 tests/verify_console.py --include-timeout
 ```
+
+## Sources
+
+- Customer data: [UCI Bank Marketing](https://archive.ics.uci.edu/dataset/222/bank+marketing) by S. Moro, P. Rita, and P. Cortez, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Decision framing: [De Bono Group's Six Thinking Hats](https://www.debonogroup.com/services/core-programs/six-thinking-hats/).
+- Work queue: Bart Czernicki's [Decision Intelligence with AI, Chapter 1A](https://www.decisionintelligencebook.ai/chapters/1a-introducing-the-decision-intelligence-framework.html).
+- Restaurant exploration/exploitation: Bart Czernicki's [Decision Intelligence with AI, Chapter 1F](https://www.decisionintelligencebook.ai/chapters/1f-decision-execution-with-decision-rules.html).
