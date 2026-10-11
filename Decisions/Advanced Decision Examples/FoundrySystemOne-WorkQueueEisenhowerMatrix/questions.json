@@ -1,0 +1,12 @@
+{
+  "Work Queue Action": {
+    "type": "choice",
+    "instructions": "Classify only the current task using the supplied manager objectives, fixed decision time, and Eisenhower Matrix definitions. Select the recommended action and provide its four-choice recommendation distribution. Keep importance and urgency distinct. Do not compare with other tasks, optimize a schedule, or infer completion probabilities.",
+    "criteria": {
+      "Do Now": "Important and urgent: materially supports the stated objectives or prevents substantial consequences, with action required within the defined 24-hour interval. Recommend ensuring prompt action, including coordination where appropriate.",
+      "Schedule": "Important and not urgent: materially supports the stated objectives or prevents substantial consequences, with no action required within the defined 24-hour interval.",
+      "Delegate": "Urgent but low importance to the manager's stated objectives: does not meet the stated importance definition, but action is required within the defined 24-hour interval and a qualified and authorized delegate is available. Recommend delegation using the supplied assistance facts.",
+      "Eliminate": "Not important and not urgent: does not meet the stated importance definition and requires no action within the defined 24-hour interval."
+    }
+  }
+}

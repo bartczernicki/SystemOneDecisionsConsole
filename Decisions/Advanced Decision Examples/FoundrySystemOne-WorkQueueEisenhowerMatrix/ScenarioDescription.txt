@@ -1,0 +1,15 @@
+Foundry SystemOne - Work Queue Prioritization with the Eisenhower Matrix
+
+Classify eight fictional work items for the operations manager at Meridian Cloud using the Eisenhower Matrix. The fixed decision time is November 17, 2026, 09:00 UTC. The manager's objectives are reliable service, meeting committed customer obligations, and improving future operations.
+
+Importance means that a task materially supports those objectives or prevents substantial consequences. Urgency means that action is required within the next 24 hours, including the boundary at November 18, 2026, 09:00 UTC. An optional activity does not become urgent simply because it occurs soon.
+
+The example makes eight sequential Microsoft Foundry SystemOne requests in the task-file order. Each request uses the same single Work Queue Action choice question and receives the shared role, time, objectives, and rubric plus only the current task's title and details. Other task profiles and earlier model answers are excluded. All task facts are known at the fixed decision time, and the clock does not advance between calls.
+
+The four possible recommendations are Do Now, Schedule, Delegate, and Eliminate, corresponding to the four combinations of urgency and importance. Do Now recommends ensuring prompt action, including coordination where appropriate. Delegate applies to urgent work of low importance to the manager when a qualified and authorized delegate is available. Each task's composed input, selected action, API confidence, four-choice probability chart, response time in milliseconds, and response JSON are shown. The probabilities describe the model's recommendation distribution; they are not probabilities that the task will be completed or succeed.
+
+After all eight responses succeed, a task summary and a two-by-two Eisenhower Matrix group the actual selected actions. Task-file order is retained within each quadrant, and an empty quadrant is shown explicitly. The matrix classifies the queue; it does not optimize a schedule or rank tasks within a quadrant. No classifications, quadrant counts, or probabilities are prescribed.
+
+All assets are checked before the first request. A missing or invalid asset prevents calls. A failed request or invalid response identifies the current task, preserves completed output and available current response details, stops later requests, and omits the final summary and matrix. The existing 60-second timeout applies separately to each request, with no pauses between tasks and the normal Enter prompt at the end.
+
+All company facts and work items are fictional. Recommendations do not execute work, send messages, assign staff, or delete tasks. The framework is adapted from Bart Czernicki's Decision Intelligence with AI, Chapter 1A: https://www.decisionintelligencebook.ai/chapters/1a-introducing-the-decision-intelligence-framework.html

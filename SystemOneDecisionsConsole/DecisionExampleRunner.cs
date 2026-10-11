@@ -27,9 +27,12 @@ internal sealed record DecisionBinaryEvaluation(
     string QuestionId, string CasesFile, string OutcomesFile, string ProvenanceFile, int CaseCount,
     IReadOnlyList<DecisionEvaluationCohort> Cohorts);
 
+internal sealed record DecisionTaskClassification(string QuestionId, string TasksFile, int TaskCount);
+
 internal sealed record DecisionExample(string Label, string Folder, DecisionBackend Backend, string QuestionType,
     ScoreProbabilityAggregation? Aggregation = null, IReadOnlyList<DecisionEvidenceStage>? EvidenceStages = null,
-    IReadOnlyList<DecisionFrame>? Frames = null, DecisionBinaryEvaluation? Evaluation = null);
+    IReadOnlyList<DecisionFrame>? Frames = null, DecisionBinaryEvaluation? Evaluation = null,
+    DecisionTaskClassification? Tasks = null);
 
 internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
 {
@@ -72,7 +75,7 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
                     new("representative", "Representative holdout", 100),
                     new("prior-success", "Previous campaign success diagnostic", 100)
                 ])),
-        new("Foundry SystemOne - Apple Watch Step Goal with Decision Rule",
+        new("Foundry SystemOne - Apple Watch Step Goal with 10,000 Step Decision Rule",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-AppleWatchStepGoal"),
             DecisionBackend.FoundrySystemOne, "noul"),
         new("Foundry SystemOne - Energy Plant Investment Strategy with Decision Framing",
@@ -82,7 +85,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
                 new("Creativity Hat (Green)", "Creativity", "frame-creativity.txt"),
                 new("Caution Hat (Black)", "Caution", "frame-caution.txt"),
                 new("Benefits Hat (Yellow)", "Benefits", "frame-benefits.txt")
-            ])
+            ]),
+        new("Foundry SystemOne - Work Queue Prioritization with the Eisenhower Matrix",
+            Path.Combine("Advanced Decision Examples", "FoundrySystemOne-WorkQueueEisenhowerMatrix"),
+            DecisionBackend.FoundrySystemOne, "choice", Tasks: new("Work Queue Action", "tasks.json", 8))
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -99,6 +105,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
         string? responseBody = null;
         try
         {
+            if (example.Tasks is not null)
+            {
+                ValidateTaskClassificationMetadata(example);
+            }
             if (example.Evaluation is not null)
             {
                 ValidateEvaluationMetadata(example);
@@ -140,6 +150,11 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
                 {
                     model = "clef-flash";
                 }
+            }
+            if (example.Tasks is not null)
+            {
+                await RunTaskClassificationAsync(example, folder, uri, model, apiKey);
+                return;
             }
             if (example.Evaluation is not null)
             {

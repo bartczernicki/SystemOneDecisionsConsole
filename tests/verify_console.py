@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Integration checks: build first; --include-timeout adds three one-minute timeout checks."""
+"""Integration checks: build first; --include-timeout adds four one-minute timeout checks."""
 import argparse
+import copy
 import csv
 from datetime import datetime
 import hashlib
@@ -62,6 +63,16 @@ ENERGY_FILES = ["ScenarioDescription.txt", "input.txt", "questions.json", *ENERG
 ENERGY_CHOICES = ["Full Build Now", "Phased Investment", "Joint Venture", "Defer Investment"]
 ENERGY_PROBABILITIES = [(0.15, 0.50, 0.30, 0.05), (0.10, 0.25, 0.15, 0.50), (0.55, 0.20, 0.20, 0.05)]
 ENERGY_CONFIDENCES = (0.72, 0.78, 0.75)
+WORK_QUEUE_FOLDER = "FoundrySystemOne-WorkQueueEisenhowerMatrix"
+WORK_QUEUE_MENU = "7) Foundry SystemOne - Work Queue Prioritization with the Eisenhower Matrix"
+WORK_QUEUE_QUESTION = "Work Queue Action"
+WORK_QUEUE_FILES = ["ScenarioDescription.txt", "input.txt", "questions.json", "tasks.json"]
+WORK_QUEUE_CHOICES = ["Do Now", "Schedule", "Delegate", "Eliminate"]
+WORK_QUEUE_PROBABILITIES = [(0.61, 0.19, 0.12, 0.08), (0.10, 0.62, 0.18, 0.10),
+                            (0.09, 0.16, 0.63, 0.12), (0.08, 0.13, 0.15, 0.64),
+                            (0.65, 0.15, 0.11, 0.09), (0.08, 0.66, 0.14, 0.12),
+                            (0.07, 0.13, 0.67, 0.13), (0.09, 0.10, 0.13, 0.68)]
+WORK_QUEUE_CONFIDENCES = (0.72, 0.73, 0.74, 0.75, 0.76, 0.77, 0.78, 0.79)
 FOOTBALL_QUESTIONS = {
     "Final Game Winner": "choice",
     "Packers Cover -7.5": "noul",
@@ -97,7 +108,7 @@ TIMING = re.compile(r"Response time: (\d+) ms")
 CHART_ROW = re.compile(r"^  (?P<label>.{0,25}) \|(?P<bar>[ █▏▎▍▌▋▊▉]{40})\| (?P<percent>\d+\.\d{2}) %$",
                        re.MULTILINE)
 CHART_HEADINGS = ("Probability Distribution:", "Bernoulli Distribution (Yes/No):")
-SECTION_END = re.compile(r"^(?:Scenario Description:|Input:|Stage \d+ of \d+:|Frame \d+ of \d+:|Calling (?:local|Foundry) API\.\.\.).*$",
+SECTION_END = re.compile(r"^(?:Scenario Description:|Input:|Stage \d+ of \d+:|Frame \d+ of \d+:|Task \d+ of \d+:|Calling (?:local|Foundry) API\.\.\.).*$",
                          re.MULTILINE)
 
 
@@ -410,6 +421,119 @@ def energy_answers(payload, distributions=ENERGY_PROBABILITIES, confidences=ENER
     return {"model": payload["model"], "answers": dict(reversed(list(answers.items())))}
 
 
+def work_queue_answers(payload, index=None, probabilities=None, confidence=None, selected=None):
+    if index is None:
+        tasks = json.loads((ROOT / "Decisions" / ADVANCED_CATEGORY / WORK_QUEUE_FOLDER / "tasks.json").read_text(encoding="utf-8"))
+        index = next(index for index, task in enumerate(tasks) if f"Task: {task['title']}\n" in payload["state"])
+    probabilities = WORK_QUEUE_PROBABILITIES[index] if probabilities is None else probabilities
+    confidence = WORK_QUEUE_CONFIDENCES[index] if confidence is None else confidence
+    selected = WORK_QUEUE_CHOICES[max(range(4), key=probabilities.__getitem__)] if selected is None else selected
+    answer = {"type": "choice", "choice": selected, "confidence": confidence,
+              "probabilities": {WORK_QUEUE_CHOICES[position]: probabilities[position] for position in (3, 1, 0, 2)}}
+    return {"model": payload["model"], "answers": {WORK_QUEUE_QUESTION: answer}}
+
+
+def work_queue_sections(text):
+    headings = list(re.finditer(r"^Task (\d+) of 8: ([^\n]+)$", text, re.MULTILINE))
+    sections = []
+    for index, heading in enumerate(headings):
+        end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
+        for marker in ("Work Queue Summary:\n", "Press Enter to return to the menu:"):
+            position = text.find(marker, heading.end(), end)
+            if position >= 0:
+                end = position
+        sections.append(text[heading.start():end])
+    return sections
+
+
+def assert_work_queue_task(section, index, task, probabilities, confidence, selected):
+    assert section.startswith(f"Task {index + 1} of 8: {task['title']}\n"), section
+    label = f"{index + 1} of 8) {WORK_QUEUE_QUESTION}: {selected}"
+    assert label in section and f"Confidence: {confidence * 100:.2f} %" in section, section
+    assert section.index(label) < section.index("Probability Distribution:\n") < section.index("Response JSON:\n"), section
+    assert_distribution(section, [(choice, f"{probability * 100:.2f}") for choice, probability in zip(WORK_QUEUE_CHOICES, probabilities)])
+
+
+def assert_eisenhower_matrix(lines, titles, selected_choices):
+    assert lines and all(len(line) <= 80 and line.isascii() for line in lines), lines
+    rows = []
+    for line in lines:
+        if line.startswith("|"):
+            assert len(line) == 75 and line[37] == line[-1] == "|", line
+            rows.append((line[1:37].strip(), line[38:74].strip()))
+    assert rows[0] == ("Urgent", "Not urgent"), rows
+    important = rows.index(("Important: Do Now", "Important: Schedule"))
+    unimportant = rows.index(("Not important: Delegate", "Not important: Eliminate"))
+    assert important < unimportant, rows
+    quadrants = [rows[important + 1:unimportant], rows[unimportant + 1:]]
+    for index, choice in enumerate(WORK_QUEUE_CHOICES):
+        cells = [row[index % 2] for row in quadrants[index // 2]]
+        content = re.sub(r"\s", "", "".join(cells))
+        expected = [(position + 1, title) for position, (title, selected) in enumerate(zip(titles, selected_choices)) if selected == choice]
+        if expected:
+            wanted = "".join(re.sub(r"\s", "", f"{position}. {title}") for position, title in expected)
+            assert content == wanted, (choice, cells, expected)
+        else:
+            assert content == "None", (choice, cells)
+
+
+def assert_work_queue_summary(lines, titles, selected_choices, confidences, timings):
+    assert all(len(line) <= 80 and line.isascii() for line in lines), lines
+    rows = [tuple(cell.strip() for cell in line.split("|")) for line in lines if "|" in line]
+    assert rows[0] == ("Task", "Selected action", "Confidence", "Response time"), rows
+    entries = []
+    for row in rows[1:]:
+        assert len(row) == 4, row
+        if any(row[1:]):
+            assert all(row[1:]), row
+            entries.append([row[0], *row[1:]])
+        else:
+            assert entries, rows
+            entries[-1][0] += row[0]
+    assert len(entries) == len(titles), entries
+    for index, (row, title, selected, confidence, elapsed) in enumerate(zip(entries, titles, selected_choices, confidences, timings)):
+        assert re.sub(r"\s", "", row[0]) == re.sub(r"\s", "", f"{index + 1}. {title}"), row
+        assert row[1:] == [selected, f"{100 * confidence:.2f} %", f"{elapsed} ms"], row
+
+
+def assert_work_queue_output(text, tasks, distributions=WORK_QUEUE_PROBABILITIES,
+                             confidences=WORK_QUEUE_CONFIDENCES, selected_choices=None):
+    if selected_choices is None:
+        selected_choices = [WORK_QUEUE_CHOICES[max(range(4), key=distribution.__getitem__)] for distribution in distributions]
+    sections = work_queue_sections(text)
+    assert len(sections) == 8 and text.count("Probability Distribution:\n") == 8, text
+    assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 8, text
+    for index, (section, task, distribution, confidence, selected) in enumerate(zip(sections, tasks, distributions, confidences, selected_choices)):
+        assert_work_queue_task(section, index, task, distribution, confidence, selected)
+    assert text.index("Work Queue Summary:\n") > text.rindex("Response JSON:\n"), text
+    table = text.split("Work Queue Summary:\n", 1)[1].split("Eisenhower Matrix:\n", 1)[0]
+    assert_work_queue_summary(table.splitlines(), [task["title"] for task in tasks], selected_choices, confidences, TIMING.findall(text))
+    matrix = text.rsplit("\nEisenhower Matrix:\n", 1)[1].split("Press Enter to return to the menu:", 1)[0].strip("\n").splitlines()
+    assert_eisenhower_matrix(matrix, [task["title"] for task in tasks], selected_choices)
+
+
+def assert_work_queue_harness(temporary, assembly):
+    harness = Path(temporary) / "work-queue-checks"
+    harness.mkdir()
+    (harness / "WorkQueueChecks.csproj").write_text(
+        '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType>'
+        '<TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings>'
+        '<Nullable>enable</Nullable></PropertyGroup></Project>', encoding="utf-8")
+    shutil.copyfile(ROOT / "tests/WorkQueueHarness.cs", harness / "Program.cs")
+    result = subprocess.run(["dotnet", "run", "--project", str(harness / "WorkQueueChecks.csproj"), "--", str(assembly)],
+                            capture_output=True, text=True, encoding="utf-8", cwd=temporary, timeout=60)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "PASS: incompatible work queue metadata rejected" in result.stdout, result.stdout
+    matrices = [json.loads(line[len("MATRIX:"):]) for line in result.stdout.splitlines() if line.startswith("MATRIX:")]
+    assert [item["name"] for item in matrices] == ["mixed", "all-schedule", "long-titles", "empty"], result.stdout
+    for item in matrices:
+        assert item["lines"] == item["repeated"], item
+        assert_eisenhower_matrix(item["lines"], item["titles"], item["selected"])
+        assert_work_queue_summary(item["summary"], item["titles"], item["selected"],
+                                  [.31 + index * .03 for index in range(len(item["titles"]))],
+                                  [17 + index for index in range(len(item["titles"]))])
+
+
 def framing_sections(text):
     headings = list(re.finditer(r"^Frame (\d) of 3: ([^\n]+)$", text, re.MULTILINE))
     sections = []
@@ -599,6 +723,8 @@ def answers_for(payload, path):
         return customer_answers(payload)
     if system_one and questions and all(name in ENERGY_QUESTIONS for name in questions):
         return energy_answers(payload)
+    if system_one and list(questions) == [WORK_QUEUE_QUESTION]:
+        return work_queue_answers(payload)
     items = questions.items() if system_one else ((q["name"], q) for q in questions)
     answers = {} if system_one else []
     for name, question in items:
@@ -740,6 +866,12 @@ def main():
 
             def energy_input():
                 return "2\n6\n\n0\n0\n"
+
+            def work_queue_folder():
+                return output / "Decisions" / ADVANCED_CATEGORY / WORK_QUEUE_FOLDER
+
+            def work_queue_input():
+                return "2\n7\n\n0\n0\n"
 
             def check_failure(label, input_text=None, overrides=None, timeout=15, timed=True):
                 nonlocal checks
@@ -1958,6 +2090,233 @@ def main():
                 finally:
                     file.write_bytes(original)
 
+            # Eight isolated tasks share one rubric; each request contains only the current task.
+            work_queue = work_queue_folder()
+            for filename in WORK_QUEUE_FILES:
+                assert (work_queue / filename).read_bytes() == \
+                       (ROOT / "Decisions" / ADVANCED_CATEGORY / WORK_QUEUE_FOLDER / filename).read_bytes(), filename
+            queue_questions = json.loads((work_queue / "questions.json").read_text(encoding="utf-8"))
+            queue_tasks = json.loads((work_queue / "tasks.json").read_text(encoding="utf-8"))
+            assert list(queue_questions) == [WORK_QUEUE_QUESTION], queue_questions
+            assert queue_questions[WORK_QUEUE_QUESTION]["type"] == "choice", queue_questions
+            assert list(queue_questions[WORK_QUEUE_QUESTION]["criteria"]) == WORK_QUEUE_CHOICES, queue_questions
+            assert [task["id"] for task in queue_tasks] == [f"task-{index:03}" for index in range(1, 9)], queue_tasks
+            queue_shared = (work_queue / "input.txt").read_text(encoding="utf-8").strip()
+            queue_description = (work_queue / "ScenarioDescription.txt").read_text(encoding="utf-8").strip()
+            queue_states = [f"{queue_shared}\n\nTask: {task['title']}\n{task['details']}" for task in queue_tasks]
+            queue_payloads = [{"model": FOUNDRY_MODEL, "state": state, "questions": queue_questions} for state in queue_states]
+            server.status, server.response = 200, None
+            text = run(work_queue_input(), {"LocalSystemOneAPI": "", "LocalDecisionsAPI": "", "LocalDecisionModel": "unused-local"})
+            assert "Error:" not in text and len(server.requests) == 8, text
+            assert text.count("Calling Foundry API...\n") == 8 and "Calling local API..." not in text, text
+            assert text.count("Scenario Description:\n") == text.count("Press Enter to return to the menu:") == 1, text
+            assert text.count("Input:\n") == 8, text
+            _, displayed = displayed_section(text, "Scenario Description:")
+            assert re.sub(r"\s", "", displayed) == re.sub(r"\s", "", queue_description), displayed
+            assert_work_queue_output(text, queue_tasks)
+            for index, ((path, payload), section) in enumerate(zip(server.requests, work_queue_sections(text))):
+                assert path == FOUNDRY_PATH and set(payload) == {"model", "state", "questions"}, payload
+                assert payload == queue_payloads[index] and list(payload["questions"]) == [WORK_QUEUE_QUESTION], payload
+                headers = server.request_headers[index]
+                assert headers.get("api-key") == FOUNDRY_KEY, headers
+                assert "authorization" not in headers and "ocp-apim-subscription-key" not in headers, headers
+                assert queue_description not in payload["state"] and queue_tasks[index]["id"] not in payload["state"], payload
+                assert all(task["title"] not in payload["state"] and task["details"] not in payload["state"]
+                           for position, task in enumerate(queue_tasks) if position != index), payload
+                assert all(key not in payload["state"] for key in ('"answers"', '"probabilities"', '"confidence"')), payload
+                input_start, displayed = displayed_section(section, "Input:")
+                assert " ".join(displayed.split()) == " ".join(queue_states[index].split()), section
+                assert input_start < section.index("Calling Foundry API...") < section.index("Response time:"), section
+                response, _ = json.JSONDecoder().raw_decode(section.split("Response JSON:\n", 1)[1].lstrip())
+                assert response == work_queue_answers(payload, index), response
+                assert list(response["answers"][WORK_QUEUE_QUESTION]["probabilities"]) == \
+                       [WORK_QUEUE_CHOICES[position] for position in (3, 1, 0, 2)], response
+            checks += 1
+
+            # All selected actions remain valid even when probability argmax favors another action.
+            for selected in WORK_QUEUE_CHOICES:
+                distributions = [(1, 0, 0, 0)] * 8
+                confidences = (0, 1, .5, .31, .72, .18, .95, .44)
+                server.response = lambda payload, path, number, selected=selected: work_queue_answers(
+                    payload, number - 1, distributions[number - 1], confidences[number - 1], selected)
+                text = run(work_queue_input())
+                assert "Error:" not in text and len(server.requests) == 8, text
+                assert_work_queue_output(text, queue_tasks, distributions, confidences, [selected] * 8)
+                checks += 1
+            assert_work_queue_harness(temporary, output / "SystemOneDecisionsConsole.dll")
+            checks += 1
+
+            def check_queue_failure(label, failed_task, response, http_status=None):
+                nonlocal checks
+                def respond(payload, path, number):
+                    server.status = http_status if number == failed_task and http_status is not None else 200
+                    return response if number == failed_task else work_queue_answers(payload, number - 1)
+                server.response = respond
+                text = run(work_queue_input())
+                assert len(server.requests) == failed_task and [payload for _, payload in server.requests] == queue_payloads[:failed_task], (label, text)
+                assert f"Error: Task {failed_task} of 8 ({queue_tasks[failed_task - 1]['title']}):" in text, (label, text)
+                assert "Work queue incomplete; later tasks were not run." in text, (label, text)
+                assert "Work Queue Summary:" not in text and "\nEisenhower Matrix:\n" not in text, (label, text)
+                assert text.count("Probability Distribution:\n") == failed_task - 1, (label, text)
+                assert text.count("Response JSON:\n") == failed_task, (label, text)
+                assert len(TIMING.findall(text)) == failed_task and text.count("Press Enter to return to the menu:") == 1, (label, text)
+                sections = work_queue_sections(text)
+                assert len(sections) == failed_task, (label, text)
+                for index, section in enumerate(sections[:-1]):
+                    selected = WORK_QUEUE_CHOICES[max(range(4), key=WORK_QUEUE_PROBABILITIES[index].__getitem__)]
+                    assert_work_queue_task(section, index, queue_tasks[index], WORK_QUEUE_PROBABILITIES[index], WORK_QUEUE_CONFIDENCES[index], selected)
+                    current, _ = json.JSONDecoder().raw_decode(section.split("Response JSON:\n", 1)[1].lstrip())
+                    assert current == work_queue_answers(queue_payloads[index], index), (label, current)
+                failed = sections[-1]
+                assert "Confidence:" not in failed and "Probability Distribution:" not in failed, (label, failed)
+                assert not re.search(r"^\d+ of 8\) Work Queue Action:", failed, re.MULTILINE), (label, failed)
+                current = failed.split("Response JSON:\n", 1)[1].lstrip()
+                if isinstance(response, str):
+                    try:
+                        expected, _ = json.JSONDecoder().raw_decode(response)
+                    except json.JSONDecodeError:
+                        displayed_body = current.split("Work queue incomplete; later tasks were not run.", 1)[0].strip()
+                        assert displayed_body == response, (label, displayed_body)
+                    else:
+                        actual, _ = json.JSONDecoder().raw_decode(current)
+                        assert actual == expected, (label, current)
+                        assert "duplicate" in failed.lower(), (label, failed)
+                else:
+                    actual, _ = json.JSONDecoder().raw_decode(current)
+                    assert json.dumps(actual, sort_keys=True) == json.dumps(response, sort_keys=True), (label, actual)
+                if http_status is not None:
+                    assert f"HTTP {http_status}" in failed, (label, failed)
+                    assert response["error"] in failed, (label, failed)
+                checks += 1
+
+            for failed_task in (1, 4, 8):
+                payload = queue_payloads[failed_task - 1]
+                for label, modify in (
+                    ("missing task answer", lambda value: value["answers"].pop(WORK_QUEUE_QUESTION)),
+                    ("extra task answer", lambda value: value["answers"].update(Other={"type": "noul", "noul": .5})),
+                    ("wrong task answer ID", lambda value: value["answers"].update(Other=value["answers"].pop(WORK_QUEUE_QUESTION))),
+                    ("wrong task answer type", lambda value: value["answers"].update({WORK_QUEUE_QUESTION: {"type": "noul", "noul": .5}})),
+                    ("missing task model", lambda value: value.pop("model")),
+                    ("null task model", lambda value: value.update(model=None)),
+                ):
+                    response = work_queue_answers(payload, failed_task - 1)
+                    modify(response)
+                    check_queue_failure(label, failed_task, response)
+                for label, response in (("malformed task JSON", "{"), ("missing task answers", {"model": FOUNDRY_MODEL}),
+                                        ("null task answers", {"model": FOUNDRY_MODEL, "answers": None})):
+                    check_queue_failure(label, failed_task, response)
+                for status in (401, 500, 503):
+                    check_queue_failure(f"task HTTP {status}", failed_task, {"error": f"task-{failed_task} HTTP failure"}, status)
+            for label, modify in (
+                ("missing task probability", lambda answer: answer["probabilities"].pop("Eliminate")),
+                ("extra task probability", lambda answer: answer["probabilities"].update(Other=0)),
+                ("negative task probability", lambda answer: answer["probabilities"].update(Eliminate=-.01)),
+                ("negative task probability with normalized sum", lambda answer: answer.update(
+                    probabilities=dict(zip(WORK_QUEUE_CHOICES, (-.01, .35, .35, .31))))),
+                ("task probability over one", lambda answer: answer["probabilities"].update(Eliminate=1.01)),
+                ("NaN task probability", lambda answer: answer["probabilities"].update(Eliminate=float("nan"))),
+                ("infinite task probability", lambda answer: answer["probabilities"].update(Eliminate=float("inf"))),
+                ("null task probability", lambda answer: answer["probabilities"].update(Eliminate=None)),
+                ("task sum low", lambda answer: answer["probabilities"].update(Eliminate=.63)),
+                ("task sum high", lambda answer: answer["probabilities"].update(Eliminate=.65)),
+                ("missing task probabilities", lambda answer: answer.pop("probabilities")),
+                ("null task probabilities", lambda answer: answer.update(probabilities=None)),
+                ("empty task probabilities", lambda answer: answer.update(probabilities={})),
+                ("invalid task choice", lambda answer: answer.update(choice="Unknown")),
+                ("blank task choice", lambda answer: answer.update(choice=" ")),
+                ("null task choice", lambda answer: answer.update(choice=None)),
+                ("missing task choice", lambda answer: answer.pop("choice")),
+                ("negative task confidence", lambda answer: answer.update(confidence=-.01)),
+                ("task confidence over one", lambda answer: answer.update(confidence=1.01)),
+                ("NaN task confidence", lambda answer: answer.update(confidence=float("nan"))),
+                ("infinite task confidence", lambda answer: answer.update(confidence=float("inf"))),
+                ("null task confidence", lambda answer: answer.update(confidence=None)),
+                ("missing task confidence", lambda answer: answer.pop("confidence")),
+            ):
+                response = work_queue_answers(queue_payloads[3], 3)
+                modify(response["answers"][WORK_QUEUE_QUESTION])
+                check_queue_failure(label, 4, response)
+            raw_response = json.dumps(work_queue_answers(queue_payloads[3], 3))
+            for needle, duplicate in (('"confidence":', '"confidence": 0.2, "confidence":'),
+                                      ('"Eliminate":', '"Eliminate": 0, "Eliminate":'),
+                                      ('"Work Queue Action":', '"Work Queue Action": {}, "Work Queue Action":')):
+                check_queue_failure("duplicate task response property", 4, raw_response.replace(needle, duplicate, 1))
+            server.status, server.response = 200, None
+
+            # Validate all eight task records before any network request, including the final record.
+            def check_queue_preflight(label, overrides=None):
+                check_failure(label, work_queue_input(), overrides, timed=False)
+                assert not server.requests and not TIMING.search(raw_text), (label, raw_text)
+                assert not work_queue_sections(ANSI.sub("", raw_text)), (label, raw_text)
+                assert "Work Queue Summary:" not in raw_text and "\nEisenhower Matrix:\n" not in ANSI.sub("", raw_text), (label, raw_text)
+            for filename in WORK_QUEUE_FILES:
+                file = work_queue / filename
+                original = file.read_bytes()
+                try:
+                    file.unlink()
+                    check_queue_preflight(f"missing work queue {filename}")
+                    file.write_text(" \n", encoding="utf-8")
+                    check_queue_preflight(f"empty work queue {filename}")
+                finally:
+                    file.write_bytes(original)
+            task_file = work_queue / "tasks.json"
+            original = task_file.read_bytes()
+            try:
+                for label, modify in (
+                    ("missing last task", lambda value: value.pop()),
+                    ("extra task", lambda value: value.append(value[0])),
+                    ("duplicate last task ID", lambda value: value[-1].update(id=value[0]["id"])),
+                    ("blank last task ID", lambda value: value[-1].update(id=" ")),
+                    ("blank last task title", lambda value: value[-1].update(title=" ")),
+                    ("blank last task details", lambda value: value[-1].update(details=" ")),
+                    ("missing last task details", lambda value: value[-1].pop("details")),
+                    ("wrong last task title type", lambda value: value[-1].update(title=1)),
+                    ("null last task", lambda value: value.__setitem__(-1, None)),
+                    ("unknown last task field", lambda value: value[-1].update(extra="unexpected")),
+                ):
+                    value = copy.deepcopy(queue_tasks)
+                    modify(value)
+                    task_file.write_text(json.dumps(value), encoding="utf-8")
+                    check_queue_preflight(label)
+                for content in ("{", "null", "{}", original.decode("utf-8").replace('"id":', '"id": "duplicate", "id":', 1)):
+                    task_file.write_text(content, encoding="utf-8")
+                    check_queue_preflight("malformed/duplicate task asset")
+            finally:
+                task_file.write_bytes(original)
+            questions_file = work_queue / "questions.json"
+            original = questions_file.read_bytes()
+            try:
+                for label, modify in (
+                    ("missing work queue question", lambda value: value.pop(WORK_QUEUE_QUESTION)),
+                    ("extra work queue question", lambda value: value.update(Other=value[WORK_QUEUE_QUESTION])),
+                    ("wrong work queue question ID", lambda value: value.update(Other=value.pop(WORK_QUEUE_QUESTION))),
+                    ("wrong work queue question type", lambda value: value[WORK_QUEUE_QUESTION].update(type="noul")),
+                    ("blank work queue instructions", lambda value: value[WORK_QUEUE_QUESTION].update(instructions=" ")),
+                    ("missing work queue instructions", lambda value: value[WORK_QUEUE_QUESTION].pop("instructions")),
+                    ("reordered work queue criteria", lambda value: value[WORK_QUEUE_QUESTION].update(criteria=dict(reversed(list(value[WORK_QUEUE_QUESTION]["criteria"].items()))))),
+                    ("missing work queue criterion", lambda value: value[WORK_QUEUE_QUESTION]["criteria"].pop("Eliminate")),
+                    ("blank work queue criterion", lambda value: value[WORK_QUEUE_QUESTION]["criteria"].update(Eliminate=" ")),
+                ):
+                    value = copy.deepcopy(queue_questions)
+                    modify(value)
+                    questions_file.write_text(json.dumps(value), encoding="utf-8")
+                    check_queue_preflight(label)
+                questions_file.write_text(original.decode("utf-8").replace('"type":', '"type": "choice", "type":', 1), encoding="utf-8")
+                check_queue_preflight("duplicate work queue question property")
+            finally:
+                questions_file.write_bytes(original)
+            for setting in ("MicrosoftFoundrySystemOneAPI", "MicrosoftFoundryDecisionModelDeploymentName", "MicrosoftFoundryAPIKey"):
+                for value in ("", " "):
+                    check_queue_preflight(f"work queue missing {setting}", {setting: value})
+                    assert setting in raw_text, raw_text
+            check_queue_preflight("invalid work queue Foundry endpoint", {"MicrosoftFoundrySystemOneAPI": "not-an-endpoint"})
+            check_failure("invalid work queue key header", work_queue_input(),
+                          {"MicrosoftFoundryAPIKey": FOUNDRY_KEY + "\ninvalid-header"}, timed=False)
+            assert not server.requests and not TIMING.search(raw_text), raw_text
+            assert len(work_queue_sections(ANSI.sub("", raw_text))) == 1, raw_text
+            assert "MicrosoftFoundryAPIKey" in raw_text and "Work queue incomplete; later tasks were not run." in raw_text, raw_text
+            assert "Response JSON:" not in raw_text and "Work Queue Summary:" not in raw_text, raw_text
+
             # Publish must include the same scenario files, using the existing project content glob.
             publish = Path(temporary) / "publish"
             result = subprocess.run(["dotnet", "publish", str(ROOT / "SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj"),
@@ -1967,20 +2326,20 @@ def main():
             scenarios = [(BASIC_CATEGORY, name) for name in FOLDERS] + \
                         [(ADVANCED_CATEGORY, FOOTBALL_FOLDER), (ADVANCED_CATEGORY, TOTAL_POINTS_FOLDER),
                          (ADVANCED_CATEGORY, SHIPMENT_FOLDER), (ADVANCED_CATEGORY, CUSTOMER_FOLDER), (ADVANCED_CATEGORY, APPLE_WATCH_FOLDER),
-                         (ADVANCED_CATEGORY, ENERGY_FOLDER)]
-            assert len(scenarios) == 15, scenarios
+                         (ADVANCED_CATEGORY, ENERGY_FOLDER), (ADVANCED_CATEGORY, WORK_QUEUE_FOLDER)]
+            assert len(scenarios) == 16, scenarios
             expected_file_count = 0
             for category, scenario in scenarios:
                 published_folder = publish / "Decisions" / category / scenario
                 scenario_source = ROOT / "Decisions" / category / scenario
-                filenames = SHIPMENT_FILES if scenario == SHIPMENT_FOLDER else CUSTOMER_FILES if scenario == CUSTOMER_FOLDER else ENERGY_FILES if scenario == ENERGY_FOLDER else \
+                filenames = SHIPMENT_FILES if scenario == SHIPMENT_FOLDER else CUSTOMER_FILES if scenario == CUSTOMER_FOLDER else ENERGY_FILES if scenario == ENERGY_FOLDER else WORK_QUEUE_FILES if scenario == WORK_QUEUE_FOLDER else \
                     ("ScenarioDescription.txt", "input.txt", "questions.json")
                 expected_file_count += len(filenames)
                 for filename in filenames:
                     assert (published_folder / filename).read_bytes() == (scenario_source / filename).read_bytes(), (scenario, filename)
-            assert expected_file_count == 53, expected_file_count
+            assert expected_file_count == 57, expected_file_count
             published_assets = [file for file in (publish / "Decisions").rglob("*") if file.suffix in (".txt", ".json")]
-            assert len(published_assets) == 53, published_assets
+            assert len(published_assets) == 57, published_assets
             checks += 1
 
             text = run("1\n7\n\n1\n\n4\n\n0\n0\n")
@@ -2129,8 +2488,9 @@ def main():
             assert "2) Local SystemOne - Football Total Points Cumulative Probability" in text, text
             assert "3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating" in text, text
             assert CUSTOMER_MENU in text, text
-            assert "5) Foundry SystemOne - Apple Watch Step Goal with Decision Rule" in text, text
+            assert "5) Foundry SystemOne - Apple Watch Step Goal with 10,000 Step Decision Rule" in text, text
             assert ENERGY_MENU in text, text
+            assert WORK_QUEUE_MENU in text, text
             assert "Calling local API..." not in text and not TIMING.search(text), text
             if os.name != "nt":
                 colored_menus = "\n".join(re.findall(
@@ -2145,8 +2505,9 @@ def main():
                               "2) Local SystemOne - Football Total Points Cumulative Probability",
                               "3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating",
                               CUSTOMER_MENU,
-                              "5) Foundry SystemOne - Apple Watch Step Goal with Decision Rule",
+                              "5) Foundry SystemOne - Apple Watch Step Goal with 10,000 Step Decision Rule",
                               ENERGY_MENU,
+                              WORK_QUEUE_MENU,
                               "0) Exit", "0) Back"):
                     assert label in colored_menus, (label, raw_text)
             checks += 1
@@ -2216,7 +2577,7 @@ def main():
 
             text = run(apple_watch_input())
             pause = text.index("Press Enter to return to the menu:")
-            returned_to_advanced = text.index("5) Foundry SystemOne - Apple Watch Step Goal with Decision Rule", pause)
+            returned_to_advanced = text.index("5) Foundry SystemOne - Apple Watch Step Goal with 10,000 Step Decision Rule", pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 1 and text.count("Press Enter to return to the menu:") == 1, text
@@ -2228,6 +2589,12 @@ def main():
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 3 and text.count("Press Enter to return to the menu:") == 1, text
+            checks += 1
+
+            text = run(work_queue_input())
+            pause = text.index("Press Enter to return to the menu:")
+            assert text.index(WORK_QUEUE_MENU, pause) < text.index("1) Basic Decision Examples", pause), text
+            assert len(server.requests) == 8 and text.count("Press Enter to return to the menu:") == 1, text
             checks += 1
 
             text = run("2\n 1 \n\n1\n\n0\n1\n2\n\n0\n0\n")
@@ -2290,10 +2657,23 @@ def main():
             assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 7, text
             checks += 1
 
+            text = run("2\n 7 \n\n1\n\n7\n\n0\n0\n")
+            assert "Error:" not in text and len(server.requests) == 17, text
+            assert [payload for _, payload in server.requests[:8]] == [payload for _, payload in server.requests[9:]] == queue_payloads, server.requests
+            assert [path for path, _ in server.requests] == [FOUNDRY_PATH] * 8 + ["/v1/systemone"] + [FOUNDRY_PATH] * 8, server.requests
+            assert all(headers.get("api-key") == FOUNDRY_KEY for index, headers in enumerate(server.request_headers) if index != 8), server.request_headers
+            assert "api-key" not in server.request_headers[8], server.request_headers
+            assert text.count("Work Queue Summary:\n") == text.count("\nEisenhower Matrix:\n") == 2, text
+            assert text.count("Press Enter to return to the menu:") == 3, text
+            assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 17, text
+            assert re.findall(r"^\d+ of 8\) Work Queue Action:", text, re.MULTILINE) == \
+                   [f"{index} of 8) Work Queue Action:" for index in range(1, 9)] * 2, text
+            checks += 1
+
             for input_text, message, count in (
                 ("bad\n\n3\n 0 \n", "Please enter 0, 1, or 2", 3),
                 ("1\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4),
-                ("2\nbad\n\n7\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, or 6", 4),
+                ("2\nbad\n\n8\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, or 7", 4),
             ):
                 text = run(input_text)
                 assert text.count(message) == count, text
@@ -2301,10 +2681,11 @@ def main():
                 checks += 1
 
             for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n", "1\n7\n",
-                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n", "2\n4\n", "2\n4\n\n", "2\n5\n", "2\n5\n\n", "2\n6\n", "2\n6\n\n"):
+                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n", "2\n4\n", "2\n4\n\n", "2\n5\n", "2\n5\n\n", "2\n6\n", "2\n6\n\n", "2\n7\n", "2\n7\n\n"):
                 text = run(input_text, timeout=60)
                 assert "Error:" not in text, text
                 expected_requests = CUSTOMER_CASE_COUNT if input_text in ("2\n4\n", "2\n4\n\n") else \
+                    8 if input_text in ("2\n7\n", "2\n7\n\n") else \
                     3 if input_text in ("2\n3\n", "2\n3\n\n", "2\n6\n", "2\n6\n\n") else \
                     1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n5\n", "2\n5\n\n") else 0
                 assert len(server.requests) == expected_requests, text
@@ -2421,8 +2802,18 @@ def main():
                                                 [], failed_case=1, failed_response=None)
                 assert report["records"][0]["elapsedMilliseconds"] >= 59000, report
                 checks += 1
+                text = run(work_queue_input(), timeout=70)
+                assert len(server.requests) == 1 and server.requests[0] == (FOUNDRY_PATH, queue_payloads[0]), text
+                assert f"Error: Task 1 of 8 ({queue_tasks[0]['title']}): API request timed out after 60 seconds." in text, text
+                assert "Work queue incomplete; later tasks were not run." in text, text
+                assert len(work_queue_sections(text)) == 1 and text.count("Press Enter to return to the menu:") == 1, text
+                assert "Response JSON:" not in text and len(TIMING.findall(text)) == 1, text
+                assert int(TIMING.search(text)[1]) >= 59000, text
+                assert "Work Queue Summary:" not in text and "\nEisenhower Matrix:\n" not in text, text
+                assert all(heading not in text for heading in CHART_HEADINGS), text
+                checks += 1
                 server.delay = 0
-            print(f"PASS: {checks} console integration scenarios (nine Basic examples and six Advanced examples included).")
+            print(f"PASS: {checks} console integration scenarios (nine Basic examples and seven Advanced examples included).")
     finally:
         server.shutdown()
         server.server_close()

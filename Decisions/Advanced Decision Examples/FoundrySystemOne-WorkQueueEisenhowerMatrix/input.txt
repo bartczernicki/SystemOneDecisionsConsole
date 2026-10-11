@@ -1,0 +1,24 @@
+Meridian Cloud work-queue decision context
+
+You are the operations manager of fictional Meridian Cloud. The fixed decision time is November 17, 2026, 09:00 UTC. All supplied facts are known at that time. Keep that clock fixed for this classification.
+
+Your objectives are:
+- Maintain reliable service.
+- Meet committed customer obligations.
+- Improve future operations.
+
+Classify the current task independently using these definitions:
+- Important: the task materially supports one or more of these objectives or prevents substantial consequences.
+- Not important: the task does not meet that importance definition for the manager's stated objectives.
+- Urgent: action is required within the next 24 hours, including the boundary at November 18, 2026, 09:00 UTC. Ongoing incidents requiring immediate coordination also satisfy this definition.
+- Not urgent: action is not required within that interval. An optional activity is not urgent merely because it occurs soon.
+
+Apply the Eisenhower Matrix:
+- Do Now: important and urgent. Recommend ensuring prompt action, including coordination where appropriate.
+- Schedule: important and not urgent.
+- Delegate: urgent but low importance to the manager's stated objectives, with a qualified and authorized delegate available. Recommend delegation to that person.
+- Eliminate: not important and not urgent.
+
+Task duration is context, not an automatic measure of importance or urgency. The task details describe ownership and available authorized assistance where relevant. Recommend an action from the rubric without assuming that any work has been executed. This is individual task classification, not schedule optimization, allocation of capacity, or ranking against other tasks.
+
+Use only the current task's supplied facts and this shared context. Do not invent missing obligations, deadlines, dependencies, or other task profiles. The answer probabilities concern the recommended action, not task-completion probabilities.

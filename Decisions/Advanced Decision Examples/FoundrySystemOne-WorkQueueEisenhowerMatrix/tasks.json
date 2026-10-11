@@ -1,0 +1,42 @@
+[
+  {
+    "id": "task-001",
+    "title": "Restore customer login",
+    "details": "An ongoing incident blocks login for 20% of customer accounts. Immediate coordination is required. Engineering is on call, and the manager needs to spend 30 minutes coordinating the response."
+  },
+  {
+    "id": "task-002",
+    "title": "Review customer launch readiness",
+    "details": "A committed customer launch is scheduled for November 17, 2026, at 16:00 UTC. The manager owns the readiness review and needs 90 minutes for it before the launch."
+  },
+  {
+    "id": "task-003",
+    "title": "Plan outage-prevention work",
+    "details": "Prepare a two-hour proposal addressing recurring service incidents. It is due November 24, 2026, at 12:00 UTC. No action is required within the next 24 hours."
+  },
+  {
+    "id": "task-004",
+    "title": "Improve customer onboarding",
+    "details": "Prepare a three-hour plan addressing repeated customer onboarding difficulties. It is due November 26, 2026, at 12:00 UTC."
+  },
+  {
+    "id": "task-005",
+    "title": "Confirm routine supply delivery",
+    "details": "A standard office-supply delivery confirmation is due November 17, 2026, at 12:00 UTC. It takes 10 minutes, and an authorized coordinator can handle it."
+  },
+  {
+    "id": "task-006",
+    "title": "Send meeting logistics",
+    "details": "Send the meeting room and joining details by November 17, 2026, at 15:00 UTC. The agenda is already approved. An authorized coordinator can complete the logistics in 15 minutes."
+  },
+  {
+    "id": "task-007",
+    "title": "Watch optional vendor webinar",
+    "details": "An optional vendor webinar is scheduled for November 20, 2026. It concerns a product Meridian Cloud does not use and is unrelated to the manager's current objectives."
+  },
+  {
+    "id": "task-008",
+    "title": "Polish archived slide formatting",
+    "details": "Make cosmetic formatting changes to slides from a closed project. There is no deadline or planned reuse. The work would take 45 minutes."
+  }
+]
