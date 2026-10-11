@@ -37,14 +37,15 @@ A .NET 10 console application demonstrating decisions through Local (SystemOne A
 | 2 | Local (SystemOne API) - Football Total Points Cumulative Probability | Forecasts combined final points from the same football halftime snapshot. Adds probabilities across the relevant score bands to show the chance of strictly more than 40 points. |
 | 3 | Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating | Forecasts a fictional shipment's arrival using three successive evidence updates at a fixed forecast time. Compares live arrival-window distributions, entropy, and confidence as more information becomes available. |
 | 4 | Local (SystemOne API) - Customer Subscription Brier Score and Calibration | Predicts term-deposit subscriptions for 200 recorded customers from UCI Bank Marketing. Scores representative and previous-success groups separately with Brier score and ECE, and saves complete results. |
-| 5 | Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule | Compares visiting the park, taking a walk, or running from a 5,000-step starting point. Reports an independent Yes/No probability for each activity reaching the 10,000-step goal. |
-| 6 | Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing | Recommends a fictional solar-and-battery investment strategy through Creativity, Caution, and Benefits thinking hats. Three isolated requests compare recommendation distributions using the same project facts and strategy choices. |
-| 7 | Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix | Classifies eight operations-manager tasks by urgency and importance using separate requests. Shows the returned actions in a summary and an Eisenhower Matrix: Do Now, Schedule, Delegate, or Eliminate. |
-| 8 | Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation? | Chooses whether a regular restaurant customer should try an unfamiliar dish or order a familiar favorite. One request evaluates the strategy and both conditional dish choices, then displays the strategy and its matching recommendation. |
+| 5 | Local (Decisions API) - Courier Logistics Package Shipping Decision | Evaluates two package photographs in separate requests against a fictional Express Delivery policy. Shows six Pass/Fail/Unknown shipping checks and an overall Ship, Repack or Relabel, or Needs Inspection decision for each package. |
+| 6 | Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule | Compares visiting the park, taking a walk, or running from a 5,000-step starting point. Reports an independent Yes/No probability for each activity reaching the 10,000-step goal. |
+| 7 | Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing | Recommends a fictional solar-and-battery investment strategy through Creativity, Caution, and Benefits thinking hats. Three isolated requests compare recommendation distributions using the same project facts and strategy choices. |
+| 8 | Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix | Classifies eight operations-manager tasks by urgency and importance using separate requests. Shows the returned actions in a summary and an Eisenhower Matrix: Do Now, Schedule, Delegate, or Eliminate. |
+| 9 | Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation? | Chooses whether a regular restaurant customer should try an unfamiliar dish or order a familiar favorite. One request evaluates the strategy and both conditional dish choices, then displays the strategy and its matching recommendation. |
 
 ## Run the Console Application
 
-Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–4, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9 and Advanced options 5–8, configure the Foundry settings below. Run from the repository root:
+Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–5, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9 and Advanced options 6–9, configure the Foundry settings below. Run from the repository root:
 
 ```sh
 dotnet run --project SystemOneDecisionsConsole
@@ -54,7 +55,7 @@ Use a terminal that supports ANSI RGB colors to display the cyan banner and gold
 
 ## Download LM Studio and a Decision Model
 
-For local examples (Basic options 1–6 and Advanced options 1–4), install LM Studio and load a decision model such as Clef or Clef-Flash:
+For local examples (Basic options 1–6 and Advanced options 1–5), install LM Studio and load a decision model such as Clef or Clef-Flash:
 
 1. Download the installer for your operating system from the [LM Studio download page](https://lmstudio.ai/download) and install the application.
 2. Open **Discover** and search for `Clef` or `Clef-Flash`. For a concrete download, paste the [ggml-org/Clef-Flash-GGUF model URL](https://huggingface.co/ggml-org/Clef-Flash-GGUF) into the search bar. LM Studio supports searching by model name or Hugging Face URL; see its [model download guide](https://lmstudio.ai/docs/app/basics/download-model).
@@ -62,9 +63,9 @@ For local examples (Basic options 1–6 and Advanced options 1–4), install LM 
 4. Load the downloaded model in LM Studio and note its model identifier. Use that exact identifier for `LocalDecisionModel` in the User Secrets section below; the console defaults to `clef-flash`.
 5. Open the **Developer** tab and turn on **Start server**. The usual local address is `http://localhost:1234`; use the address and port shown by your server. See the [LM Studio server guide](https://lmstudio.ai/docs/developer/core/server).
 
-**Note:** For the multi-question examples, increase LM Studio's **Physical Batch Size** setting from `512` to a larger value such as `3000` so the input and questions can be processed together in one shot.
+**Note:** For multi-question and image examples, both **Eval Batch Size** and **Physical Batch Size** must accommodate the combined input and questions. The effective physical batch is capped by Eval Batch Size. Start with `4096` for both and reload the model after changing load settings; if a request exceeds that limit, increase both to accommodate it. Larger physical batches require more working memory. See the [llama.cpp batch limit implementation](https://github.com/ggml-org/llama.cpp/blob/master/src/llama-context.cpp).
 
-Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. Foundry examples (Basic options 7–9 and Advanced options 5–8) use the hosted deployment and do not require a local model.
+Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. The courier example (Advanced #5) also requires image-capable Clef/Clef-Flash support and its matching vision adapter (`mmproj`). Foundry examples (Basic options 7–9 and Advanced options 6–9) use the hosted deployment and do not require a local model.
 
 ## User Secrets for local APIs and Microsoft Foundry
 
@@ -81,7 +82,7 @@ The project has a `UserSecretsId` configured and loads these settings with `Micr
 
 Run the following commands from the repository root for the backend you use.
 
-For **local examples (Basic options 1–6 and Advanced options 1–4)**, these endpoints assume LM Studio runs on the same machine. If it runs on another computer, enable [Serve on Local Network](https://lmstudio.ai/docs/developer/core/server/serve-on-network) and replace `localhost:1234` with the server's address and port, such as `10.0.0.37:1234`:
+For **local examples (Basic options 1–6 and Advanced options 1–5)**, these endpoints assume LM Studio runs on the same machine. If it runs on another computer, enable [Serve on Local Network](https://lmstudio.ai/docs/developer/core/server/serve-on-network) and replace `localhost:1234` with the server's address and port, such as `10.0.0.37:1234`:
 
 ```sh
 dotnet user-secrets set "LocalSystemOneAPI" "http://localhost:1234/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
@@ -94,7 +95,7 @@ If the loaded model's identifier differs from `clef-flash`, replace `your-loaded
 dotnet user-secrets set "LocalDecisionModel" "your-loaded-model-id" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 ```
 
-For **Foundry examples (Basic options 7–9 and Advanced options 5–8)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
+For **Foundry examples (Basic options 7–9 and Advanced options 6–9)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
 
 ```sh
 dotnet user-secrets set "MicrosoftFoundrySystemOneAPI" "https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
@@ -110,15 +111,18 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder contains **17 examples** and **60 scenario assets**, grouped into Basic and Advanced categories.
+The repository-root `Decisions` folder contains **18 examples** and **65 scenario assets**, grouped into Basic and Advanced categories.
 
 | File | Purpose |
 | --- | --- |
 | `ScenarioDescription.txt` | Scenario explanation displayed in the console; excluded from the API request. |
 | `input.txt` | Input/state supplied to the model. |
 | `questions.json` | Question definitions for choice, Yes/No, or score answers. |
+| `*.png` | Package photographs supplied as inline images by the courier example. |
 
 Some advanced examples include additional evidence, evaluation, decision-frame, or task assets. Edit the repository-root files, then rebuild or run again.
+
+The courier example contains the two original package PNGs and uses the same fictional policy and inspection record for both. The stated measurements (30 x 20 x 15 cm, 1.09 kg) and internal cushioning are demonstration facts, not measurements inferred from a photograph. Each package gets its own request, response, timing, checklist, and shipping recommendation. Package failures are reported independently, and the other package is still processed. Filenames and reference outcomes are excluded from model input; actual model answers are shown even when they differ from the references.
 
 ## JSON formats
 
@@ -137,7 +141,7 @@ Both local and Foundry SystemOne examples follow the [Jev SystemOne schema](http
 }
 ```
 
-Decisions follows the [OpenAI Decisions API reference](https://developers.openai.com/api/reference/resources/decisions/methods/create). Its `questions.json` is an array of named questions. The application builds `{ "model": "...", "input": "...", "questions": [ ... ] }`. Choice uses `choices` with `value`/`description`, Yes/No uses `type: "predicate"`, and Score uses ordered `levels` with `label`/`description`. For example:
+Decisions follows the [OpenAI Decisions API reference](https://developers.openai.com/api/reference/resources/decisions/methods/create). Its `questions.json` is an array of named questions. Text examples build `{ "model": "...", "input": "...", "questions": [ ... ] }`. Choice uses `choices` with `value`/`description`, Yes/No uses `type: "predicate"`, and Score uses ordered `levels` with `label`/`description`. For example:
 
 ```json
 [
@@ -149,6 +153,35 @@ Decisions follows the [OpenAI Decisions API reference](https://developers.openai
 ]
 ```
 
+The courier example uses a typed multimodal request instead of a string `input`. Each request contains one user message with the shared policy and inspection text plus exactly one PNG. This excerpt shows the final shipping question; the scenario sends all seven questions:
+
+```json
+{
+  "model": "clef-flash",
+  "input": [
+    {
+      "role": "user",
+      "content": [
+        { "type": "input_text", "text": "<courier policy and inspection record>" },
+        { "type": "input_image", "image_url": "data:image/png;base64,<PNG bytes>" }
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "name": "Shipping Decision",
+      "type": "choice",
+      "instructions": "Apply all courier requirements to this parcel.",
+      "choices": [
+        { "value": "Ship", "description": "Every requirement is satisfied." },
+        { "value": "Repack or Relabel", "description": "At least one requirement fails." },
+        { "value": "Needs Inspection", "description": "No failure is established, but required evidence is missing." }
+      ]
+    }
+  ]
+}
+```
+
 ## Build and publish
 
 ```sh
@@ -156,7 +189,7 @@ dotnet build SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Release -o ./publish
 ```
 
-Build and publish copy all 60 scenario assets and retain their nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` folders beside the application. User Secrets remain machine-local and are not copied during publishing. Generated `Results` reports are separate and are not copied during publishing. The root `.gitignore` excludes generated reports, Visual Studio settings, and .NET build artifacts.
+Build and publish copy all 65 scenario assets, including both courier PNGs, and retain their nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` folders beside the application. User Secrets remain machine-local and are not copied during publishing. Generated `Results` reports are separate and are not copied during publishing. The root `.gitignore` excludes generated reports, Visual Studio settings, and .NET build artifacts.
 
 ## Validation
 

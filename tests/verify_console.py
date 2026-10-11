@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Integration checks: build first; --include-timeout adds five one-minute timeout checks."""
+"""Integration checks: build first; --include-timeout adds request timeout checks."""
 import argparse
+import base64
 import copy
 import csv
 from datetime import datetime
@@ -23,8 +24,19 @@ BUILD = ROOT / "SystemOneDecisionsConsole/bin/Debug/net10.0"
 FOLDERS = [f"Local{api}-{mode}" for api in ("SystemOne", "Decisions")
            for mode in ("Choice", "YesNo", "Score")]
 FOLDERS += [f"FoundrySystemOne-{mode}" for mode in ("Choice", "YesNo", "Score")]
+# Keep the nine Basic fixture triplets together in menu order.
+LEGACY_BASIC_OPTIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9)
 BASIC_CATEGORY = "Basic Decision Examples"
 ADVANCED_CATEGORY = "Advanced Decision Examples"
+COURIER_FOLDER = "LocalDecisions-CourierLogisticsPackageShippingDecision"
+COURIER_MENU = "5) Local (Decisions API) - Courier Logistics Package Shipping Decision"
+COURIER_IMAGES = ["Express Delivery - Valid Courier Package.png", "Express Delivery - Invalid Courier Package.png"]
+COURIER_FILES = ["ScenarioDescription.txt", "input.txt", "questions.json", *COURIER_IMAGES]
+COURIER_QUESTIONS = ["Size and Weight", "Shipping Label", "Packaging Material", "Exterior Condition",
+                     "Sealing", "Internal Protection", "Shipping Decision"]
+COURIER_VALUES = [["Pass", "Fail", "Unknown"]] * 6 + [["Ship", "Repack or Relabel", "Needs Inspection"]]
+COURIER_SELECTED = [["Pass"] * 6 + ["Ship"],
+                    ["Pass", "Fail", "Pass", "Fail", "Fail", "Pass", "Repack or Relabel"]]
 FOOTBALL_FOLDER = "LocalSystemOne-FootballGamePrediction"
 TOTAL_POINTS_FOLDER = "LocalSystemOne-FootballTotalPointsProbability"
 TOTAL_POINTS_QUESTION = "Final Total Points Band"
@@ -55,7 +67,7 @@ APPLE_WATCH_HISTORIES = [(1800, 2200, 2500, 2800, 3100, 3400, 3700, 4100, 4700, 
                          (4400, 4600, 4800, 4900, 5000, 5100, 5200, 5400, 5500, 5700),
                          (7200, 7600, 7900, 8100, 8400, 8700, 9000, 9300, 9600, 9900)]
 ENERGY_FOLDER = "FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming"
-ENERGY_MENU = "6) Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing"
+ENERGY_MENU = "7) Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing"
 ENERGY_QUESTIONS = ["Creativity Hat (Green)", "Caution Hat (Black)", "Benefits Hat (Yellow)"]
 ENERGY_FRAME_LABELS = ["Creativity", "Caution", "Benefits"]
 ENERGY_FRAME_FILES = ["frame-creativity.txt", "frame-caution.txt", "frame-benefits.txt"]
@@ -64,7 +76,7 @@ ENERGY_CHOICES = ["Full Build Now", "Phased Investment", "Joint Venture", "Defer
 ENERGY_PROBABILITIES = [(0.15, 0.50, 0.30, 0.05), (0.10, 0.25, 0.15, 0.50), (0.55, 0.20, 0.20, 0.05)]
 ENERGY_CONFIDENCES = (0.72, 0.78, 0.75)
 WORK_QUEUE_FOLDER = "FoundrySystemOne-WorkQueueEisenhowerMatrix"
-WORK_QUEUE_MENU = "7) Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix"
+WORK_QUEUE_MENU = "8) Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix"
 WORK_QUEUE_QUESTION = "Work Queue Action"
 WORK_QUEUE_FILES = ["ScenarioDescription.txt", "input.txt", "questions.json", "tasks.json"]
 WORK_QUEUE_CHOICES = ["Do Now", "Schedule", "Delegate", "Eliminate"]
@@ -74,7 +86,7 @@ WORK_QUEUE_PROBABILITIES = [(0.61, 0.19, 0.12, 0.08), (0.10, 0.62, 0.18, 0.10),
                             (0.07, 0.13, 0.67, 0.13), (0.09, 0.10, 0.13, 0.68)]
 WORK_QUEUE_CONFIDENCES = (0.72, 0.73, 0.74, 0.75, 0.76, 0.77, 0.78, 0.79)
 RESTAURANT_FOLDER = "FoundrySystemOne-RestaurantExploreExploit"
-RESTAURANT_MENU = "8) Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation?"
+RESTAURANT_MENU = "9) Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation?"
 RESTAURANT_QUESTIONS = ["Dining Strategy", "Dish if Exploring", "Dish if Exploiting"]
 RESTAURANT_CHOICES = [["Explore", "Exploit"],
                       ["Ginger Soy Salmon", "Smoky Chickpea Bowl", "Spinach and Ricotta Ravioli"],
@@ -778,10 +790,56 @@ def assert_shipment_comparison(text, distributions, confidences=None):
         assert transition in text.splitlines(), text
 
 
+def courier_answers(payload, package_index=None):
+    """Return distinct, normalized seven-question image case fixtures."""
+    if package_index is None:
+        valid_image = ROOT / "Decisions" / ADVANCED_CATEGORY / COURIER_FOLDER / COURIER_IMAGES[0]
+        image_bytes = base64.b64decode(payload["input"][0]["content"][1]["image_url"].split(",", 1)[1], validate=True)
+        package_index = 0 if image_bytes == valid_image.read_bytes() else 1
+    answers = []
+    for index, (question, selected) in enumerate(zip(payload["questions"], COURIER_SELECTED[package_index])):
+        values = [choice["value"] for choice in question["choices"]]
+        probability = 0.72 + index * 0.02 + package_index * 0.01
+        probabilities = [{"value": value, "probability": probability if value == selected else (1 - probability) / 2}
+                         for value in reversed(values)]
+        answers.append({"name": question["name"], "type": "choice", "choice": selected,
+                        "confidence": 0.61 + index * 0.03 + package_index * 0.01,
+                        "probabilities": probabilities})
+    return {"model": payload["model"], "answers": answers}
+
+
+def courier_sections(text):
+    headings = list(re.finditer(r"^Image case (\d+) of 2: Package ([AB])$", text, re.MULTILINE))
+    assert len(headings) == 2, text
+    assert [(heading[1], heading[2]) for heading in headings] == [("1", "A"), ("2", "B")], text
+    return [text[heading.start():headings[index + 1].start() if index == 0 else
+                 text.index("Press Enter to return to the menu:", heading.start())]
+            for index, heading in enumerate(headings)]
+
+
+def assert_courier_case(section, response):
+    assert "Error:" not in section, section
+    assert len(TIMING.findall(section)) == section.count("Response JSON:\n") == 1, section
+    assert [f"{index}) {answer['name']}: {answer['choice']}"
+            for index, answer in enumerate(response["answers"], 1)] == \
+           re.findall(r"^\d+\) [^\n]+$", section, re.MULTILINE), section
+    assert re.findall(r"^Confidence: [^\n]+$", section, re.MULTILINE) == \
+           [f"Confidence: {answer['confidence'] * 100:.2f} %" for answer in response["answers"]], section
+    rows = [row for distribution in section.split("Probability Distribution:\n")[1:]
+            for row in chart_rows(distribution)]
+    assert [(label, percent) for label, _, percent in rows] == \
+           [(probability["value"], f"{probability['probability'] * 100:.2f}")
+            for answer in response["answers"] for probability in answer["probabilities"]], section
+    assert section.count("Probability Distribution:\n") == 7, section
+    assert f'"model": "{response["model"]}"' in section, section
+
+
 def answers_for(payload, path):
     """Return representative responses, including deliberately fractional scores."""
     system_one = path in ("/v1/systemone", FOUNDRY_PATH)
     questions = payload["questions"]
+    if not system_one and [question["name"] for question in questions] == COURIER_QUESTIONS:
+        return courier_answers(payload)
     if system_one and list(questions) == list(FOOTBALL_QUESTIONS):
         return football_answers(payload)
     if system_one and list(questions) == [TOTAL_POINTS_QUESTION]:
@@ -837,12 +895,16 @@ class FixtureServer(ThreadingHTTPServer):
         self.response = None
         self.status = 200
         self.delay = 0
+        self.active_requests = 0
+        self.maximum_active_requests = 0
         self.thread = threading.Thread(target=self.serve_forever, daemon=True)
         self.thread.start()
 
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
+        self.server.active_requests += 1
+        self.server.maximum_active_requests = max(self.server.maximum_active_requests, self.server.active_requests)
         payload = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         self.server.requests.append((self.path, payload))
         self.server.request_headers.append({key.lower(): value for key, value in self.headers.items()})
@@ -856,6 +918,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         time.sleep(self.server.delay)
+        self.server.active_requests -= 1
         try:
             self.wfile.write(body)
         except (BrokenPipeError, ConnectionResetError):
@@ -889,6 +952,7 @@ def main():
                 nonlocal raw_text
                 server.requests.clear()
                 server.request_headers.clear()
+                server.maximum_active_requests = 0
                 result = subprocess.run(["dotnet", str(output / "SystemOneDecisionsConsole.dll")],
                                         input=input_text, capture_output=True, text=True,
                                         encoding="utf-8",
@@ -903,6 +967,12 @@ def main():
 
             def basic_input(option):
                 return f"1\n{option}\n\n0\n0\n"
+
+            def courier_folder():
+                return output / "Decisions" / ADVANCED_CATEGORY / COURIER_FOLDER
+
+            def courier_input():
+                return "2\n5\n\n0\n0\n"
 
             def football_folder():
                 return output / "Decisions" / ADVANCED_CATEGORY / FOOTBALL_FOLDER
@@ -932,25 +1002,25 @@ def main():
                 return output / "Decisions" / ADVANCED_CATEGORY / APPLE_WATCH_FOLDER
 
             def apple_watch_input():
-                return "2\n5\n\n0\n0\n"
+                return "2\n6\n\n0\n0\n"
 
             def energy_folder():
                 return output / "Decisions" / ADVANCED_CATEGORY / ENERGY_FOLDER
 
             def energy_input():
-                return "2\n6\n\n0\n0\n"
+                return "2\n7\n\n0\n0\n"
 
             def work_queue_folder():
                 return output / "Decisions" / ADVANCED_CATEGORY / WORK_QUEUE_FOLDER
 
             def work_queue_input():
-                return "2\n7\n\n0\n0\n"
+                return "2\n8\n\n0\n0\n"
 
             def restaurant_folder():
                 return output / "Decisions" / ADVANCED_CATEGORY / RESTAURANT_FOLDER
 
             def restaurant_input():
-                return "2\n8\n\n0\n0\n"
+                return "2\n9\n\n0\n0\n"
 
             def check_failure(label, input_text=None, overrides=None, timeout=15, timed=True):
                 nonlocal checks
@@ -963,7 +1033,7 @@ def main():
                 checks += 1
 
             def response_for(option, answer):
-                questions = json.loads((basic_folder(option - 1) / "questions.json").read_text(encoding="utf-8"))
+                questions = json.loads((basic_folder(LEGACY_BASIC_OPTIONS.index(option)) / "questions.json").read_text(encoding="utf-8"))
                 system_one = option <= 3 or option >= 7
                 name = next(iter(questions)) if system_one else questions[0]["name"]
                 return {"model": "fixture", "answers": {name: answer} if system_one else [{"name": name, **answer}]}
@@ -1043,6 +1113,227 @@ def main():
             assert text.count("Department: Billing") == 3 and text.count("Score: 1.375") == 3, text
             assert text.count("Probability of yes: 87.50") == 3, text
             checks += 1
+
+            # Two independently evaluated images share policy and questions, without leaking expected outcomes.
+            folder = courier_folder()
+            source_folder = ROOT / "Decisions" / ADVANCED_CATEGORY / COURIER_FOLDER
+            for filename in COURIER_FILES:
+                assert (folder / filename).read_bytes() == (source_folder / filename).read_bytes(), filename
+            courier_questions = json.loads((folder / "questions.json").read_text(encoding="utf-8"))
+            courier_policy = (folder / "input.txt").read_text(encoding="utf-8-sig").strip()
+            assert [question["name"] for question in courier_questions] == COURIER_QUESTIONS, courier_questions
+            assert [question["type"] for question in courier_questions] == ["choice"] * 7, courier_questions
+            assert [[choice["value"] for choice in question["choices"]] for question in courier_questions] == COURIER_VALUES
+            assert "fictional" in courier_policy.lower() and "30 cm" in courier_policy and "1.09 kg" in courier_policy
+            assert "60 cm" in courier_policy and "20 kg" in courier_policy and "adequate internal cushioning" in courier_policy
+
+            def check_courier_requests(count=2, model="console-test-model", check_sequential=True):
+                assert len(server.requests) == count, (len(server.requests), [path for path, _ in server.requests])
+                for index, (path, payload) in enumerate(server.requests):
+                    assert path == "/v1/decisions" and set(payload) == {"model", "input", "questions"}, payload.keys()
+                    assert payload["model"] == model and payload["questions"] == courier_questions
+                    assert len(payload["input"]) == 1 and set(payload["input"][0]) == {"role", "content"}
+                    assert payload["input"][0]["role"] == "user"
+                    content = payload["input"][0]["content"]
+                    assert len(content) == 2 and content[0] == {
+                        "type": "input_text", "text": f"Package: Package {'AB'[index]}\n\n{courier_policy}"}, content[0]
+                    assert set(content[1]) == {"type", "image_url"} and content[1]["type"] == "input_image"
+                    data_url = content[1]["image_url"]
+                    assert data_url.startswith("data:image/png;base64,")
+                    assert base64.b64decode(data_url.split(",", 1)[1], validate=True) == (source_folder / COURIER_IMAGES[index]).read_bytes()
+                    assert "Valid Courier" not in content[0]["text"] and "Invalid Courier" not in content[0]["text"]
+                    assert not any(name in server.request_headers[index]
+                                   for name in ("api-key", "authorization", "ocp-apim-subscription-key")), server.request_headers
+                if check_sequential:
+                    assert server.maximum_active_requests == 1, server.maximum_active_requests
+
+            server.delay = 0.03
+            text = run(courier_input())
+            server.delay = 0
+            check_courier_requests()
+            assert "Error:" not in text and text.count("Input:\n") == text.count("Scenario Description:\n") == 1, text
+            assert text.count("Calling local API...\n") == 2 and text.count("Press Enter to return to the menu:") == 1, text
+            sections = courier_sections(text)
+            for index, section in enumerate(sections):
+                assert f"Image: {COURIER_IMAGES[index]}" in section, section
+                assert_courier_case(section, courier_answers(server.requests[index][1], index))
+            assert "data:image/png;base64," not in raw_text and "iVBORw0KGgo" not in raw_text, raw_text
+            pause = text.index("Press Enter to return to the menu:")
+            assert text.index(COURIER_MENU, pause) < text.index("1) Basic Decision Examples", pause), text
+            checks += 1
+
+            text = run("2\n5\n\n1\n\n5\n\n0\n0\n")
+            assert "Error:" not in text and len(server.requests) == 5, text
+            assert [path for path, _ in server.requests] == ["/v1/decisions"] * 2 + ["/v1/systemone"] + ["/v1/decisions"] * 2
+            assert [payload for _, payload in server.requests[:2]] == [payload for _, payload in server.requests[3:]]
+            assert server.requests[2][1]["state"] == (football_folder() / "input.txt").read_text(encoding="utf-8-sig").strip()
+            assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 5, text
+            assert text.count("Press Enter to return to the menu:") == 3, text
+            checks += 1
+
+            def check_courier_preflight(label, overrides=None):
+                nonlocal checks
+                text = run(courier_input(), overrides)
+                assert "Error:" in text and not server.requests, (label, text)
+                assert "Image case " not in text and not TIMING.search(text) and "Response JSON:" not in text, (label, text)
+                assert all(heading not in text for heading in CHART_HEADINGS), (label, text)
+                assert text.count("Press Enter to return to the menu:") == 1, (label, text)
+                checks += 1
+
+            for filename in COURIER_FILES:
+                asset = folder / filename
+                original = asset.read_bytes()
+                try:
+                    asset.unlink()
+                    check_courier_preflight(f"courier missing {filename}")
+                finally:
+                    asset.write_bytes(original)
+            for filename in COURIER_IMAGES:
+                asset = folder / filename
+                original = asset.read_bytes()
+                damaged_crc = bytearray(original)
+                damaged_crc[29] ^= 1
+                for damaged in (b"", b"not a PNG", original[:40], bytes(damaged_crc)):
+                    try:
+                        asset.write_bytes(damaged)
+                        check_courier_preflight(f"courier empty/corrupt {filename}")
+                    finally:
+                        asset.write_bytes(original)
+            question_file = folder / "questions.json"
+            original = question_file.read_bytes()
+            bad_question_sets = [None, [], [{"name": "Wrong", "type": "predicate", "instructions": "Wrong type"}]]
+            for mutate in (
+                lambda value: value[0].update(name=" "),
+                lambda value: value[1].update(name=value[0]["name"]),
+                lambda value: value[0].update(instructions=" "),
+                lambda value: value[0].update(choices=[]),
+                lambda value: value[0]["choices"][0].update(value=" "),
+                lambda value: value[0]["choices"][0].update(value=True),
+                lambda value: value[0]["choices"][1].update(value=value[0]["choices"][0]["value"]),
+                lambda value: value[0]["choices"][0].update(description=" "),
+            ):
+                value = copy.deepcopy(courier_questions)
+                mutate(value)
+                bad_question_sets.append(value)
+            for bad_questions in ["{", *[json.dumps(value) for value in bad_question_sets]]:
+                try:
+                    question_file.write_text(bad_questions, encoding="utf-8")
+                    check_courier_preflight("courier malformed questions")
+                finally:
+                    question_file.write_bytes(original)
+            check_courier_preflight("courier missing LocalDecisionsAPI", {"LocalDecisionsAPI": " "})
+            check_courier_preflight("courier invalid endpoint", {"LocalDecisionsAPI": "not-an-endpoint"})
+            text = run(courier_input(), {"LocalDecisionModel": " "})
+            check_courier_requests(model="clef-flash")
+            for index, section in enumerate(courier_sections(text)):
+                assert_courier_case(section, courier_answers(server.requests[index][1], index))
+            checks += 1
+            original_questions = courier_questions
+            try:
+                courier_questions = copy.deepcopy(original_questions)
+                courier_questions[0].update(name="Measured Package Limits", instructions="Apply the measured limits in the shared policy.")
+                question_file.write_text(json.dumps(courier_questions), encoding="utf-8")
+                server.response = lambda payload, path, number: courier_answers(payload)
+                text = run(courier_input())
+                check_courier_requests()
+                for index, section in enumerate(courier_sections(text)):
+                    assert_courier_case(section, courier_answers(server.requests[index][1], index))
+                checks += 1
+            finally:
+                courier_questions = original_questions
+                question_file.write_bytes(original)
+                server.response = None
+
+            fixture_payload = {"model": "console-test-model", "questions": courier_questions}
+            courier_response = courier_answers(fixture_payload, 0)
+            duplicate_model_response = json.dumps(courier_response).replace('"model": "console-test-model"',
+                '"model": "console-test-model", "model": "duplicate"', 1)
+            malformed_courier_responses = ["{", {}, {"model": "fixture", "answers": []}, duplicate_model_response]
+            for mutate in (
+                lambda value: value.update(model=" "),
+                lambda value: value.update(answers=None),
+                lambda value: value["answers"].pop(),
+                lambda value: value["answers"].reverse(),
+                lambda value: value["answers"][-1].update(name=value["answers"][0]["name"]),
+                lambda value: value["answers"][-1].update(type="predicate", probability=0.8),
+                lambda value: value["answers"][-1].update(choice="Ship immediately"),
+                lambda value: value["answers"][-1].update(choice=True),
+                lambda value: value["answers"][-1].pop("confidence"),
+                lambda value: value["answers"][-1].update(confidence=-0.1),
+                lambda value: value["answers"][-1].update(confidence=1.1),
+                lambda value: value["answers"][-1].update(confidence=float("nan")),
+                lambda value: value["answers"][-1].update(probabilities=None),
+                lambda value: value["answers"][-1]["probabilities"].pop(),
+                lambda value: value["answers"][-1]["probabilities"][1].update(value=value["answers"][-1]["probabilities"][0]["value"]),
+                lambda value: value["answers"][-1]["probabilities"][1].update(value="Unrecognized"),
+                lambda value: value["answers"][-1]["probabilities"][1].update(probability=-0.1),
+                lambda value: value["answers"][-1]["probabilities"][1].update(probability=1.1),
+                lambda value: value["answers"][-1]["probabilities"][1].update(probability=float("inf")),
+                lambda value: value["answers"][-1]["probabilities"][1].update(probability=0.3),
+            ):
+                value = copy.deepcopy(courier_response)
+                mutate(value)
+                malformed_courier_responses.append(value)
+            for malformed in malformed_courier_responses:
+                server.response = lambda payload, path, number, bad=malformed: bad if number == 1 else courier_answers(payload, 1)
+                text = run(courier_input())
+                check_courier_requests()
+                first, second = courier_sections(text)
+                assert "Error: Package A:" in first and "Probability Distribution:" not in first, first
+                assert not re.search(r"^\d+\) ", first, re.MULTILINE), first
+                assert len(TIMING.findall(first)) == first.count("Response JSON:\n") == 1, first
+                assert_courier_case(second, courier_answers(server.requests[1][1], 1))
+                checks += 1
+            for status in (400, 500):
+                def courier_http_failure(payload, path, number, failing_status=status):
+                    server.status = failing_status if number == 1 else 200
+                    return {"error": "fixture package failure"} if number == 1 else courier_answers(payload, 1)
+                server.response = courier_http_failure
+                text = run(courier_input())
+                check_courier_requests()
+                first, second = courier_sections(text)
+                assert f"HTTP {status}" in first and "Error: Package A:" in first, first
+                assert "Probability Distribution:" not in first, first
+                assert len(TIMING.findall(first)) == first.count("Response JSON:\n") == 1, first
+                assert_courier_case(second, courier_answers(server.requests[1][1], 1))
+                checks += 1
+            def courier_second_http_failure(payload, path, number):
+                server.status = 500 if number == 2 else 200
+                return {"error": "fixture second package failure"} if number == 2 else courier_answers(payload, 0)
+            server.response = courier_second_http_failure
+            text = run(courier_input())
+            check_courier_requests()
+            first, second = courier_sections(text)
+            assert_courier_case(first, courier_answers(server.requests[0][1], 0))
+            assert "Error: Package B:" in second and "HTTP 500" in second and "Probability Distribution:" not in second, second
+            assert len(TIMING.findall(second)) == second.count("Response JSON:\n") == 1, second
+            checks += 1
+            server.status = 200
+            refusal = copy.deepcopy(courier_response)
+            refusal["answers"][3] = {"name": COURIER_QUESTIONS[3], "type": "refusal"}
+            server.response = lambda payload, path, number: refusal if number == 1 else courier_answers(payload, 1)
+            text = run(courier_input())
+            check_courier_requests()
+            first, second = courier_sections(text)
+            assert "Error:" not in first and "4) Exterior Condition: Refused:" in first, first
+            assert first.count("Probability Distribution:\n") == 6 and len(TIMING.findall(first)) == 1, first
+            assert_courier_case(second, courier_answers(server.requests[1][1], 1))
+            checks += 1
+            for echo_style in ("plain value", "escaped value", "escaped property name"):
+                def courier_echo_failure(payload, path, number, style=echo_style):
+                    server.status = (400 if style == "plain value" else 500) if number == 1 else 200
+                    if number != 1:
+                        return courier_answers(payload, 1)
+                    image_url = payload["input"][0]["content"][1]["image_url"]
+                    echo = {image_url: "fixture error"} if style == "escaped property name" else {"error": image_url}
+                    return echo if style == "plain value" else json.dumps(echo).replace("/", "\\/")
+                server.response = courier_echo_failure
+                text = run(courier_input())
+                check_courier_requests()
+                assert "[image data omitted]" in text and "data:image/png;base64," not in text and "data:image\\/png;base64," not in text and "iVBORw0KGgo" not in text, f"Image data redaction failed: {echo_style}"
+                assert_courier_case(courier_sections(text)[1], courier_answers(server.requests[1][1], 1))
+                checks += 1
+            server.status, server.response = 200, None
 
             # One advanced request combines three decisions and preserves the supplied evidence.
             folder = football_folder()
@@ -2623,24 +2914,30 @@ def main():
                                      "--no-restore", "-c", "Debug", "-o", str(publish)],
                                     capture_output=True, text=True, encoding="utf-8", cwd=ROOT, timeout=60)
             assert result.returncode == 0, result.stdout + result.stderr
-            scenarios = [(BASIC_CATEGORY, name) for name in FOLDERS] + \
+            scenarios = [(BASIC_CATEGORY, name) for name in FOLDERS] + [(ADVANCED_CATEGORY, COURIER_FOLDER)] + \
                         [(ADVANCED_CATEGORY, FOOTBALL_FOLDER), (ADVANCED_CATEGORY, TOTAL_POINTS_FOLDER),
                          (ADVANCED_CATEGORY, SHIPMENT_FOLDER), (ADVANCED_CATEGORY, CUSTOMER_FOLDER), (ADVANCED_CATEGORY, APPLE_WATCH_FOLDER),
                          (ADVANCED_CATEGORY, ENERGY_FOLDER), (ADVANCED_CATEGORY, WORK_QUEUE_FOLDER),
                          (ADVANCED_CATEGORY, RESTAURANT_FOLDER)]
-            assert len(scenarios) == 17, scenarios
+            assert len(scenarios) == 18, scenarios
+            for assets_root in (ROOT / "Decisions", output / "Decisions"):
+                scenario_directories = [directory for category in (BASIC_CATEGORY, ADVANCED_CATEGORY)
+                                        for directory in (assets_root / category).iterdir()
+                                        if directory.is_dir() and (directory / "questions.json").is_file()]
+                assets = [file for file in assets_root.rglob("*") if file.suffix in (".txt", ".json", ".png")]
+                assert len(scenario_directories) == 18 and len(assets) == 65, (assets_root, scenario_directories, assets)
             expected_file_count = 0
             for category, scenario in scenarios:
                 published_folder = publish / "Decisions" / category / scenario
                 scenario_source = ROOT / "Decisions" / category / scenario
-                filenames = SHIPMENT_FILES if scenario == SHIPMENT_FOLDER else CUSTOMER_FILES if scenario == CUSTOMER_FOLDER else ENERGY_FILES if scenario == ENERGY_FOLDER else WORK_QUEUE_FILES if scenario == WORK_QUEUE_FOLDER else \
+                filenames = COURIER_FILES if scenario == COURIER_FOLDER else SHIPMENT_FILES if scenario == SHIPMENT_FOLDER else CUSTOMER_FILES if scenario == CUSTOMER_FOLDER else ENERGY_FILES if scenario == ENERGY_FOLDER else WORK_QUEUE_FILES if scenario == WORK_QUEUE_FOLDER else \
                     ("ScenarioDescription.txt", "input.txt", "questions.json")
                 expected_file_count += len(filenames)
                 for filename in filenames:
                     assert (published_folder / filename).read_bytes() == (scenario_source / filename).read_bytes(), (scenario, filename)
-            assert expected_file_count == 60, expected_file_count
-            published_assets = [file for file in (publish / "Decisions").rglob("*") if file.suffix in (".txt", ".json")]
-            assert len(published_assets) == 60, published_assets
+            assert expected_file_count == 65, expected_file_count
+            published_assets = [file for file in (publish / "Decisions").rglob("*") if file.suffix in (".txt", ".json", ".png")]
+            assert len(published_assets) == 65, published_assets
             checks += 1
 
             text = run("1\n7\n\n1\n\n4\n\n0\n0\n")
@@ -2789,7 +3086,8 @@ def main():
             assert "2) Local (SystemOne API) - Football Total Points Cumulative Probability" in text, text
             assert "3) Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating" in text, text
             assert CUSTOMER_MENU in text, text
-            assert "5) Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule" in text, text
+            assert COURIER_MENU in text, text
+            assert "6) Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule" in text, text
             assert ENERGY_MENU in text, text
             assert WORK_QUEUE_MENU in text, text
             assert RESTAURANT_MENU in text, text
@@ -2807,7 +3105,8 @@ def main():
                               "2) Local (SystemOne API) - Football Total Points Cumulative Probability",
                               "3) Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating",
                               CUSTOMER_MENU,
-                              "5) Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule",
+                              COURIER_MENU,
+                              "6) Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule",
                               ENERGY_MENU,
                               WORK_QUEUE_MENU,
                               RESTAURANT_MENU,
@@ -2880,7 +3179,7 @@ def main():
 
             text = run(apple_watch_input())
             pause = text.index("Press Enter to return to the menu:")
-            returned_to_advanced = text.index("5) Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule", pause)
+            returned_to_advanced = text.index("6) Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule", pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 1 and text.count("Press Enter to return to the menu:") == 1, text
@@ -2935,7 +3234,7 @@ def main():
             assert len(TIMING.findall(text)) == 7 and text.count("Response JSON:\n") == 7, text
             checks += 1
 
-            text = run("2\n 5 \n\n1\n\n5\n\n0\n0\n")
+            text = run("2\n 6 \n\n1\n\n6\n\n0\n0\n")
             assert "Error:" not in text and len(server.requests) == 3, text
             assert [list(payload["questions"]) for _, payload in server.requests] == \
                    [APPLE_WATCH_QUESTIONS, list(FOOTBALL_QUESTIONS), APPLE_WATCH_QUESTIONS], server.requests
@@ -2951,7 +3250,7 @@ def main():
             assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 3, text
             checks += 1
 
-            text = run("2\n 6 \n\n1\n\n6\n\n0\n0\n")
+            text = run("2\n 7 \n\n1\n\n7\n\n0\n0\n")
             assert "Error:" not in text and len(server.requests) == 7, text
             assert [list(payload["questions"]) for _, payload in server.requests] == \
                    [[name] for name in ENERGY_QUESTIONS] + [list(FOOTBALL_QUESTIONS)] + [[name] for name in ENERGY_QUESTIONS], server.requests
@@ -2966,7 +3265,7 @@ def main():
             assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 7, text
             checks += 1
 
-            text = run("2\n 7 \n\n1\n\n7\n\n0\n0\n")
+            text = run("2\n 8 \n\n1\n\n8\n\n0\n0\n")
             assert "Error:" not in text and len(server.requests) == 17, text
             assert [payload for _, payload in server.requests[:8]] == [payload for _, payload in server.requests[9:]] == queue_payloads, server.requests
             assert [path for path, _ in server.requests] == [FOUNDRY_PATH] * 8 + ["/v1/systemone"] + [FOUNDRY_PATH] * 8, server.requests
@@ -2981,7 +3280,7 @@ def main():
 
             server.response = lambda payload, path, number: restaurant_answers(payload, "Exploit" if number == 3 else "Explore") \
                 if list(payload["questions"]) == RESTAURANT_QUESTIONS else answers_for(payload, path)
-            text = run("2\n 8 \n\n1\n\n8\n\n0\n0\n")
+            text = run("2\n 9 \n\n1\n\n9\n\n0\n0\n")
             assert "Error:" not in text and len(server.requests) == 3, text
             assert server.requests[0][1] == server.requests[2][1] == restaurant_payload, server.requests
             assert [path for path, _ in server.requests] == [FOUNDRY_PATH, "/v1/systemone", FOUNDRY_PATH], server.requests
@@ -2998,7 +3297,7 @@ def main():
             for input_text, message, count in (
                 ("bad\n\n3\n 0 \n", "Please enter 0, 1, or 2", 3),
                 ("1\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4),
-                ("2\nbad\n\n9\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, or 8", 4),
+                ("2\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4),
             ):
                 text = run(input_text)
                 assert text.count(message) == count, text
@@ -3006,13 +3305,14 @@ def main():
                 checks += 1
 
             for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n", "1\n7\n",
-                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n", "2\n4\n", "2\n4\n\n", "2\n5\n", "2\n5\n\n", "2\n6\n", "2\n6\n\n", "2\n7\n", "2\n7\n\n", "2\n8\n", "2\n8\n\n"):
+                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n", "2\n4\n", "2\n4\n\n", "2\n5\n", "2\n5\n\n", "2\n6\n", "2\n6\n\n", "2\n7\n", "2\n7\n\n", "2\n8\n", "2\n8\n\n", "2\n9\n", "2\n9\n\n"):
                 text = run(input_text, timeout=60)
                 assert "Error:" not in text, text
                 expected_requests = CUSTOMER_CASE_COUNT if input_text in ("2\n4\n", "2\n4\n\n") else \
-                    8 if input_text in ("2\n7\n", "2\n7\n\n") else \
-                    3 if input_text in ("2\n3\n", "2\n3\n\n", "2\n6\n", "2\n6\n\n") else \
-                    1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n5\n", "2\n5\n\n", "2\n8\n", "2\n8\n\n") else 0
+                    8 if input_text in ("2\n8\n", "2\n8\n\n") else \
+                    2 if input_text in ("2\n5\n", "2\n5\n\n") else \
+                    3 if input_text in ("2\n3\n", "2\n3\n\n", "2\n7\n", "2\n7\n\n") else \
+                    1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n6\n", "2\n6\n\n", "2\n9\n", "2\n9\n\n") else 0
                 assert len(server.requests) == expected_requests, text
                 checks += 1
             check_failure("missing endpoint", overrides={"LocalSystemOneAPI": ""}, timed=False)
@@ -3051,7 +3351,7 @@ def main():
             questions.write_bytes(original)
             # Mixed-question support must not relax the basic examples' homogeneous contracts.
             for option in (1, 2, 3, 7, 8, 9):
-                questions = basic_folder(option - 1) / "questions.json"
+                questions = basic_folder(LEGACY_BASIC_OPTIONS.index(option)) / "questions.json"
                 original = questions.read_bytes()
                 wrong_question = ({"type": "choice", "criteria": {"A": "First", "B": "Second"}}
                                   if option in (2, 8) else {"type": "noul"})
@@ -3114,6 +3414,14 @@ def main():
                 server.delay = 61
                 check_failure("60-second timeout", timeout=70)
                 check_failure("Foundry 60-second timeout", basic_input(7), timeout=70)
+                text = run(courier_input(), timeout=135)
+                check_courier_requests(check_sequential=False)
+                for index, section in enumerate(courier_sections(text)):
+                    assert f"Error: Package {'AB'[index]}: API request timed out after 60 seconds." in section, section
+                    assert len(TIMING.findall(section)) == 1 and int(TIMING.search(section)[1]) >= 59000, section
+                    assert "Response JSON:" not in section and all(heading not in section for heading in CHART_HEADINGS), section
+                assert text.count("Press Enter to return to the menu:") == 1, text
+                checks += 1
                 before = report_directories()
                 text = run(customer_input(), timeout=70)
                 check_customer_requests(1)
@@ -3147,7 +3455,7 @@ def main():
                 assert text.count("Press Enter to return to the menu:") == 1, text
                 checks += 1
                 server.delay = 0
-            print(f"PASS: {checks} console integration scenarios (nine Basic examples and eight Advanced examples included).")
+            print(f"PASS: {checks} console integration scenarios (nine Basic examples and nine Advanced examples included).")
     finally:
         server.shutdown()
         server.server_close()

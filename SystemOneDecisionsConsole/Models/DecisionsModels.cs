@@ -15,6 +15,44 @@ internal sealed class DecisionsRequest
     public required List<DecisionQuestion> Questions { get; init; }
 }
 
+internal sealed class DecisionsMultimodalRequest
+{
+    [JsonPropertyName("model")]
+    public required string Model { get; init; }
+
+    [JsonPropertyName("input")]
+    public required List<DecisionInputMessage> Input { get; init; }
+
+    [JsonPropertyName("questions")]
+    public required List<DecisionQuestion> Questions { get; init; }
+}
+
+internal sealed class DecisionInputMessage
+{
+    [JsonPropertyName("role")]
+    public string Role { get; init; } = "user";
+
+    [JsonPropertyName("content")]
+    public required List<DecisionInputContent> Content { get; init; }
+}
+
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(DecisionInputText), "input_text")]
+[JsonDerivedType(typeof(DecisionInputImage), "input_image")]
+internal abstract class DecisionInputContent;
+
+internal sealed class DecisionInputText : DecisionInputContent
+{
+    [JsonPropertyName("text")]
+    public required string Text { get; init; }
+}
+
+internal sealed class DecisionInputImage : DecisionInputContent
+{
+    [JsonPropertyName("image_url")]
+    public required string ImageUrl { get; init; }
+}
+
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(DecisionChoiceQuestion), "choice")]
 [JsonDerivedType(typeof(DecisionPredicateQuestion), "predicate")]

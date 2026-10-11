@@ -1,0 +1,19 @@
+Express Delivery Standard parcel shipping: fictional demonstration policy.
+
+Evaluate only the attached parcel photograph and the inspection record below. Use the photograph for label, material, exterior condition, and sealing. Use the supplied warehouse measurements and inspection facts for size, weight, and internal protection. Do not infer measurements or hidden contents from appearance. Unknown means required evidence is missing or cannot be determined; it does not mean a visible defect should be ignored.
+
+Courier shipping requirements:
+- Size and weight: length <= 60 cm, width <= 40 cm, height <= 40 cm, gross weight <= 20 kg.
+- Shipping label: a readable label is attached, showing sender, recipient, tracking number, and barcode. A visible barcode is sufficient for this demonstration; no scan result is required.
+- Packaging material: a rigid corrugated cardboard shipping box is used.
+- Exterior condition: visible faces and corners remain structurally sound, without crushed corners, significant tears, or holes. Minor surface marks alone are acceptable.
+- Sealing: top flaps are closed, the main seam is secured with packing tape, and there are no open gaps or loose flaps.
+- Internal protection: contents are suitable for transport, immobilized, and cushioned against damage.
+
+Fictional warehouse inspection record for the photographed parcel:
+- Measured dimensions: length 30 cm, width 20 cm, height 15 cm.
+- Measured gross weight: 1.09 kg.
+- Contents: dry, non-hazardous textile goods.
+- An inspector verified that the contents are immobilized and protected with adequate internal cushioning.
+
+Overall decision rule: Ship when every requirement is satisfied. Choose Repack or Relabel when any requirement fails. Choose Needs Inspection when no failure is established but required evidence is missing. A known failure takes precedence over uncertainty. Apply the policy independently to this one parcel.

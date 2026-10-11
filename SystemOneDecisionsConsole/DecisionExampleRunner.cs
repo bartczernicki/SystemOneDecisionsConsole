@@ -32,10 +32,13 @@ internal sealed record DecisionTaskClassification(string QuestionId, string Task
 internal sealed record DecisionExplorationExploitation(
     string StrategyQuestionId, string ExploreQuestionId, string ExploitQuestionId);
 
+internal sealed record DecisionImageCase(string Label, string ImageFile);
+
 internal sealed record DecisionExample(string Label, string Folder, DecisionBackend Backend, string QuestionType,
     ScoreProbabilityAggregation? Aggregation = null, IReadOnlyList<DecisionEvidenceStage>? EvidenceStages = null,
     IReadOnlyList<DecisionFrame>? Frames = null, DecisionBinaryEvaluation? Evaluation = null,
-    DecisionTaskClassification? Tasks = null, DecisionExplorationExploitation? ExplorationExploitation = null);
+    DecisionTaskClassification? Tasks = null, DecisionExplorationExploitation? ExplorationExploitation = null,
+    IReadOnlyList<DecisionImageCase>? ImageCases = null);
 
 internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
 {
@@ -78,6 +81,13 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
                     new("representative", "Representative holdout", 100),
                     new("prior-success", "Previous campaign success diagnostic", 100)
                 ])),
+        new("Local (Decisions API) - Courier Logistics Package Shipping Decision",
+            Path.Combine("Advanced Decision Examples", "LocalDecisions-CourierLogisticsPackageShippingDecision"),
+            DecisionBackend.LocalDecisions, "choice", ImageCases:
+            [
+                new("Package A", "Express Delivery - Valid Courier Package.png"),
+                new("Package B", "Express Delivery - Invalid Courier Package.png")
+            ]),
         new("Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-AppleWatchStepGoal"),
             DecisionBackend.FoundrySystemOne, "noul"),
@@ -112,6 +122,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
         string? responseBody = null;
         try
         {
+            if (example.ImageCases is not null)
+            {
+                ValidateImageCasesMetadata(example);
+            }
             if (example.ExplorationExploitation is not null)
             {
                 ValidateExplorationExploitationMetadata(example);
@@ -161,6 +175,11 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
                 {
                     model = "clef-flash";
                 }
+            }
+            if (example.ImageCases is not null)
+            {
+                await RunImageCasesAsync(example, folder, uri, model);
+                return;
             }
             if (example.ExplorationExploitation is not null)
             {
@@ -377,7 +396,7 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
     }
 
     private async Task<string> SendAsync(Uri endpoint, object request, DecisionBackend backend, string? apiKey,
-        RequestCapture? capture = null, bool quiet = false)
+        RequestCapture? capture = null, bool quiet = false, Func<string, string>? responseSanitizer = null)
     {
         // Serialize and prepare content before timing so elapsed time measures the HTTP round trip.
         string json = JsonSerializer.Serialize(request, JsonOptions);
@@ -407,11 +426,15 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
             // ResponseContentRead includes the entire body in HttpClient's timeout and timing.
             using var response = await httpClient.SendAsync(message, HttpCompletionOption.ResponseContentRead);
             string body = await response.Content.ReadAsStringAsync();
+            stopwatch.Stop();
+            if (responseSanitizer is not null)
+            {
+                body = responseSanitizer(body);
+            }
             if (capture is not null)
             {
                 capture.Body = body;
             }
-            stopwatch.Stop();
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException($"HTTP {(int)response.StatusCode} ({response.ReasonPhrase}): {body}");

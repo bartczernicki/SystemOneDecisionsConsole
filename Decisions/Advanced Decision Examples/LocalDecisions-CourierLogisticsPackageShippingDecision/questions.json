@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Size and Weight",
+    "type": "choice",
+    "instructions": "Do the warehouse measurements meet the courier's size and weight limits? Use the supplied measurements, not a visual size estimate.",
+    "choices": [
+      { "value": "Pass", "description": "All measured dimensions and gross weight are within the limits." },
+      { "value": "Fail", "description": "At least one measured dimension or gross weight exceeds its limit." },
+      { "value": "Unknown", "description": "Required measurements are unavailable." }
+    ]
+  },
+  {
+    "name": "Shipping Label",
+    "type": "choice",
+    "instructions": "Does the photograph show an attached, readable shipping label with sender, recipient, tracking number, and barcode? Judge the photographed parcel only.",
+    "choices": [
+      { "value": "Pass", "description": "The required shipping label and fields are visible and readable." },
+      { "value": "Fail", "description": "The shown parcel has no shipping label, or its label is incomplete, obscured, or unreadable." },
+      { "value": "Unknown", "description": "The photograph does not provide enough evidence to assess the label." }
+    ]
+  },
+  {
+    "name": "Packaging Material",
+    "type": "choice",
+    "instructions": "Is the parcel packaged in a rigid corrugated cardboard shipping box? Assess material here; assess damage and sealing separately.",
+    "choices": [
+      { "value": "Pass", "description": "A rigid corrugated cardboard shipping box is used." },
+      { "value": "Fail", "description": "The packaging material does not meet that requirement." },
+      { "value": "Unknown", "description": "The packaging material cannot be determined." }
+    ]
+  },
+  {
+    "name": "Exterior Condition",
+    "type": "choice",
+    "instructions": "Are the box's visible faces and corners structurally sound, without crushed corners, significant tears, or holes? Minor surface marks alone are acceptable.",
+    "choices": [
+      { "value": "Pass", "description": "The visible exterior is structurally sound." },
+      { "value": "Fail", "description": "Visible crushing, significant tears, or holes weaken the box." },
+      { "value": "Unknown", "description": "The exterior cannot be assessed from the photograph." }
+    ]
+  },
+  {
+    "name": "Sealing",
+    "type": "choice",
+    "instructions": "Are the top flaps closed and the main seam securely taped, without open gaps or loose flaps? Tape crossing an open seam does not satisfy the requirement.",
+    "choices": [
+      { "value": "Pass", "description": "Flaps are closed and the main seam is securely taped with no open gaps." },
+      { "value": "Fail", "description": "An open gap, loose flap, or inadequate seam closure is visible." },
+      { "value": "Unknown", "description": "The photograph does not show enough of the closure." }
+    ]
+  },
+  {
+    "name": "Internal Protection",
+    "type": "choice",
+    "instructions": "Does the warehouse inspection record establish suitable contents, immobilization, and adequate internal cushioning? Do not invent internal details from the exterior photograph.",
+    "choices": [
+      { "value": "Pass", "description": "The inspection record confirms suitable, immobilized, cushioned contents." },
+      { "value": "Fail", "description": "The inspection record establishes unsuitable contents or inadequate internal protection." },
+      { "value": "Unknown", "description": "The required contents or internal protection inspection facts are absent." }
+    ]
+  },
+  {
+    "name": "Shipping Decision",
+    "type": "choice",
+    "instructions": "Apply all six courier requirements to this parcel. Should it ship now, require remediation, or require further inspection? A known failure takes precedence over missing evidence.",
+    "choices": [
+      { "value": "Ship", "description": "Every courier requirement is satisfied by the photograph and inspection record." },
+      { "value": "Repack or Relabel", "description": "At least one courier requirement fails; remediate before shipping." },
+      { "value": "Needs Inspection", "description": "No failure is established, but evidence for at least one required criterion is missing." }
+    ]
+  }
+]

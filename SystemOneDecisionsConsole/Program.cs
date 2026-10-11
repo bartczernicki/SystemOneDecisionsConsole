@@ -37,7 +37,7 @@ class Program
                 ? await ShowExamplesAsync(runner, DecisionExampleRunner.Examples, "Basic Decision Examples",
                     "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9")
                 : await ShowExamplesAsync(runner, DecisionExampleRunner.AdvancedExamples, "Advanced Decision Examples",
-                    "Please enter 0, 1, 2, 3, 4, 5, 6, 7, or 8");
+                    "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9");
             if (!returnToMain)
             {
                 return;

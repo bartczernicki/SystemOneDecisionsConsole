@@ -1,0 +1,9 @@
+Courier Logistics Package Shipping Decision
+
+A courier intake operator checks two parcels against a fictional Express Delivery Standard shipping policy. Each photograph is evaluated separately using the same policy, inspection record, and seven questions. Package A is the labeled, closed reference parcel; Package B is the damaged, open reference parcel that needs repacking and labeling.
+
+The six shipping checks cover size and weight, shipping label, packaging material, exterior condition, sealing, and internal protection. Each check returns Pass, Fail, or Unknown with its probability distribution. The final question recommends Ship, Repack or Relabel, or Needs Inspection.
+
+Measurements and internal packing cannot be established from these exterior photographs. This demonstration supplies fictional warehouse inspection facts for both parcels: 30 x 20 x 15 cm, 1.09 kg, dry non-hazardous textile contents, and verified cushioning that prevents movement. The model must inspect the photograph for the remaining exterior checks.
+
+The images' filenames and reference outcomes are shown to the operator but are not sent to the model. The model's actual answers are displayed even when they differ from the reference outcomes. This example requires a vision-capable local decision model and sufficient Eval Batch Size and Physical Batch Size to evaluate the image, policy, and questions together.
