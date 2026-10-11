@@ -34,8 +34,10 @@ class Program
             }
 
             bool returnToMain = category == 1
-                ? await ShowBasicExamplesAsync(runner)
-                : ShowAdvancedExamples();
+                ? await ShowExamplesAsync(runner, DecisionExampleRunner.Examples, "Basic Decision Examples",
+                    "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9")
+                : await ShowExamplesAsync(runner, DecisionExampleRunner.AdvancedExamples, "Advanced Decision Examples",
+                    "Please enter 0 or 1");
             if (!returnToMain)
             {
                 return;
@@ -43,13 +45,14 @@ class Program
         }
     }
 
-    private static async Task<bool> ShowBasicExamplesAsync(DecisionExampleRunner runner)
+    private static async Task<bool> ShowExamplesAsync(DecisionExampleRunner runner,
+        IReadOnlyList<DecisionExample> examples, string title, string invalidMessage)
     {
-        string[] labels = DecisionExampleRunner.Examples.Select(example => example.Label).ToArray();
+        string[] labels = examples.Select(example => example.Label).ToArray();
         while (true)
         {
-            WriteMenu("Basic Decision Examples", labels, "Back");
-            int? option = ReadMenuSelection(labels.Length, "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9");
+            WriteMenu(title, labels, "Back");
+            int? option = ReadMenuSelection(labels.Length, invalidMessage);
             if (option is null)
             {
                 return false;
@@ -59,19 +62,13 @@ class Program
                 return true;
             }
             Console.WriteLine();
-            await runner.RunAsync(DecisionExampleRunner.Examples[option.Value - 1]);
+            await runner.RunAsync(examples[option.Value - 1]);
             Console.Write("Press Enter to return to the menu: ");
             if (Console.ReadLine() is null)
             {
                 return false;
             }
         }
-    }
-
-    private static bool ShowAdvancedExamples()
-    {
-        WriteMenu("Advanced Decision Examples", [], "Back", "No advanced examples yet");
-        return ReadMenuSelection(0, "Please enter 0 to go back") is not null;
     }
 
     private static int? ReadMenuSelection(int maxOption, string invalidMessage)

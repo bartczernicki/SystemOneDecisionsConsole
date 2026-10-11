@@ -25,13 +25,32 @@ Basic Decision Examples
 0) Back
 ```
 
-Select an example to display its scenario description, call its configured API, and show a typed answer summary, available confidence, a horizontal probability chart, response time in milliseconds, and formatted response JSON. Press Enter after an example to return to the Basic submenu. Select `0) Back` in either submenu to return to the startup menu, where `0) Exit` closes the application. Yes/No answers remain probabilities; the application does not impose a boolean threshold. Decisions refusals are shown explicitly.
+Select **Advanced Decision Examples** to open its submenu:
 
-The **Advanced Decision Examples** submenu currently displays “No advanced examples yet” and offers `0) Back` without calling an API. End-of-input at any prompt exits cleanly.
+```text
+Advanced Decision Examples
+
+1) Local SystemOne - Football Game Prediction
+0) Back
+```
+
+Select an example to display its scenario description, call its configured API, and show a typed answer summary, available confidence, a horizontal probability chart, response time in milliseconds, and formatted response JSON. Press Enter after an example to return to its submenu. Select `0) Back` in either submenu to return to the startup menu, where `0) Exit` closes the application. Yes/No answers remain probabilities; the application does not impose a boolean threshold. Decisions refusals are shown explicitly. End-of-input at any prompt exits cleanly.
+
+### Football Game Prediction
+
+The first advanced example forecasts an Atlanta Falcons at Green Bay Packers game from a halftime snapshot: Atlanta leads 17–7, Green Bay is the home team, and Green Bay was the pregame favorite at −7.5 points. It preserves the supplied statistics and submits three questions of mixed types in a single local SystemOne request. Answers are displayed in the order of the questions in `questions.json`, with numbered labels and a blank line between each result.
+
+| Question | Type | Forecast |
+| --- | --- | --- |
+| Final Game Winner | `choice` | Atlanta Falcons, Green Bay Packers, or Tie, including any overtime. |
+| Packers Cover -7.5 | `noul` | Probability that Green Bay wins by at least 8 points, including any overtime. |
+| Final Total Points Band | `score` | Combined final points, including any overtime: under 30, 30–39, 40–49, 50–59, or 60 or more. |
+
+The total-points answer is a probability-weighted band index from 0 to 4 and may be fractional; it is not a predicted point total. The scenario does not supply a game date, second-half kickoff possession, injuries, or additional statistics.
 
 ## Run
 
-Install the .NET 10 SDK. For options 1–6, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For options 7–9, configure the Foundry settings below. Run from the repository root:
+Install the .NET 10 SDK. For Basic options 1–6 and Advanced option 1, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9, configure the Foundry settings below. Run from the repository root:
 
 ```sh
 dotnet run --project SystemOneDecisionsConsole
@@ -41,7 +60,7 @@ Use a terminal that supports ANSI RGB colors to display the cyan banner and gold
 
 ## Download LM Studio and a decision model
 
-For local examples (options 1–6), install LM Studio and load a decision model such as Clef or Clef-Flash:
+For local examples (Basic options 1–6 and Advanced option 1), install LM Studio and load a decision model such as Clef or Clef-Flash:
 
 1. Download the installer for your operating system from the [LM Studio download page](https://lmstudio.ai/download) and install the application.
 2. Open **Discover** and search for `Clef` or `Clef-Flash`. For a concrete download, paste the [ggml-org/Clef-Flash-GGUF model URL](https://huggingface.co/ggml-org/Clef-Flash-GGUF) into the search bar. LM Studio supports searching by model name or Hugging Face URL; see its [model download guide](https://lmstudio.ai/docs/app/basics/download-model).
@@ -49,7 +68,7 @@ For local examples (options 1–6), install LM Studio and load a decision model 
 4. Load the downloaded model in LM Studio and note its model identifier. Use that exact identifier for `LocalDecisionModel` in the User Secrets section below; the console defaults to `clef-flash`.
 5. Open the **Developer** tab and turn on **Start server**. The usual local address is `http://localhost:1234`; use the address and port shown by your server. See the [LM Studio server guide](https://lmstudio.ai/docs/developer/core/server).
 
-Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. Foundry examples (options 7–9) use the hosted deployment and do not require a local model.
+Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. Foundry examples (Basic options 7–9) use the hosted deployment and do not require a local model.
 
 ## User Secrets for local APIs and Microsoft Foundry
 
@@ -66,7 +85,7 @@ The project has a `UserSecretsId` configured and loads these settings with `Micr
 
 Run the following commands from the repository root for the backend you use.
 
-For **local examples (options 1–6)**, these endpoints assume LM Studio runs on the same machine. If it runs on another computer, enable [Serve on Local Network](https://lmstudio.ai/docs/developer/core/server/serve-on-network) and replace `localhost:1234` with the server's address and port, such as `10.0.0.37:1234`:
+For **local examples (Basic options 1–6 and Advanced option 1)**, these endpoints assume LM Studio runs on the same machine. If it runs on another computer, enable [Serve on Local Network](https://lmstudio.ai/docs/developer/core/server/serve-on-network) and replace `localhost:1234` with the server's address and port, such as `10.0.0.37:1234`:
 
 ```sh
 dotnet user-secrets set "LocalSystemOneAPI" "http://localhost:1234/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
@@ -79,7 +98,7 @@ If the loaded model's identifier differs from `clef-flash`, replace `your-loaded
 dotnet user-secrets set "LocalDecisionModel" "your-loaded-model-id" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 ```
 
-For **Foundry examples (options 7–9)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
+For **Foundry examples (Basic options 7–9)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
 
 ```sh
 dotnet user-secrets set "MicrosoftFoundrySystemOneAPI" "https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
@@ -95,7 +114,7 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder groups examples by category. All nine current examples are in **Basic Decision Examples**:
+The repository-root `Decisions` folder groups ten examples by category: nine in **Basic Decision Examples** and one in **Advanced Decision Examples**:
 
 ```text
 Decisions/
@@ -110,10 +129,11 @@ Decisions/
     FoundrySystemOne-YesNo/
     FoundrySystemOne-Score/
   Advanced Decision Examples/
+    LocalSystemOne-FootballGamePrediction/
     .gitkeep
 ```
 
-Each Basic example directory contains the following three files, for 27 example files in total. The empty Advanced category is retained in Git with `.gitkeep`.
+Each example directory contains the following three files, for 30 example files in total. The existing Advanced category `.gitkeep` is retained.
 
 | File | Purpose |
 | --- | --- |
@@ -121,7 +141,7 @@ Each Basic example directory contains the following three files, for 27 example 
 | `input.txt` | This is the input/state prompt that is passed into the decision model. |
 | `questions.json` | These are the questions (choices, yes/no, score) on howto process the decision input. |
 
-
+Basic examples each demonstrate one question type. The advanced football example combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers.
 
 Edit the repository-root files to change the scenarios, then rebuild or run again. 
 
@@ -162,7 +182,7 @@ dotnet build SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Release -o ./publish
 ```
 
-The published application retains the nested `Decisions/Basic Decision Examples/` examples beside it. User Secrets remain machine-local and are not copied during publishing. The root `.gitignore` excludes Visual Studio settings and .NET build artifacts.
+The published application retains the nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` examples beside it. User Secrets remain machine-local and are not copied during publishing. The root `.gitignore` excludes Visual Studio settings and .NET build artifacts.
 
 ## Validation
 

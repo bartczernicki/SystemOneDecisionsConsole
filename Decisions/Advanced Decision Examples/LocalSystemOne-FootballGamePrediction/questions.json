@@ -1,0 +1,30 @@
+{
+  "Final Game Winner": {
+    "type": "choice",
+    "instructions": "Forecast the final game winner from the supplied halftime evidence. The final result includes any overtime. Assess the outcome probabilities without assuming unprovided game details.",
+    "criteria": {
+      "Atlanta Falcons": "Atlanta finishes with more points than Green Bay, including any overtime.",
+      "Green Bay Packers": "Green Bay finishes with more points than Atlanta, including any overtime.",
+      "Tie": "Atlanta and Green Bay finish with equal points, including any overtime."
+    }
+  },
+  "Packers Cover -7.5": {
+    "type": "noul",
+    "instructions": "Forecast the probability that the home team, Green Bay, covers its pregame -7.5 point spread from the supplied halftime evidence. Green Bay must win by at least 8 points in the final result, including any overtime.",
+    "criteria": {
+      "true": "Green Bay wins by at least 8 points, including any overtime.",
+      "false": "Green Bay wins by 7 or fewer points, ties, or loses, including any overtime."
+    }
+  },
+  "Final Total Points Band": {
+    "type": "score",
+    "instructions": "Forecast the combined final points for Atlanta and Green Bay from the supplied halftime evidence, including first-half points and any overtime. Use the ordered bands with indices 0 through 4. The returned score is a probability-weighted band index and may be fractional; it is not a predicted point total.",
+    "criteria": [
+      "Under 30: The combined final score is fewer than 30 points, including any overtime (index 0).",
+      "30-39: The combined final score is 30 through 39 points, including any overtime (index 1).",
+      "40-49: The combined final score is 40 through 49 points, including any overtime (index 2).",
+      "50-59: The combined final score is 50 through 59 points, including any overtime (index 3).",
+      "60 or More: The combined final score is at least 60 points, including any overtime (index 4)."
+    ]
+  }
+}

@@ -20,6 +20,34 @@ FOLDERS = [f"Local{api}-{mode}" for api in ("SystemOne", "Decisions")
 FOLDERS += [f"FoundrySystemOne-{mode}" for mode in ("Choice", "YesNo", "Score")]
 BASIC_CATEGORY = "Basic Decision Examples"
 ADVANCED_CATEGORY = "Advanced Decision Examples"
+FOOTBALL_FOLDER = "LocalSystemOne-FootballGamePrediction"
+FOOTBALL_QUESTIONS = {
+    "Final Game Winner": "choice",
+    "Packers Cover -7.5": "noul",
+    "Final Total Points Band": "score",
+}
+FOOTBALL_STATISTICS = {
+    "Score": ("17", "7"),
+    "Offensive plays": ("40", "24"),
+    "Total yards": ("253", "108"),
+    "Calculated yards per play": ("6.325", "4.500"),
+    "Passing completions/attempts": ("13/20", "9/19"),
+    "Passing yards": ("114", "96"),
+    "Calculated yards per pass attempt": ("5.70", "5.05"),
+    "Rushing attempts/yards": ("20 / 139", "5 / 12"),
+    "Calculated yards per rush": ("6.95", "2.40"),
+    "First downs": ("15", "6"),
+    "First downs: passing / rushing / penalty": ("5 / 9 / 1", "3 / 1 / 2"),
+    "Third-down conversions": ("2/5", "1/6"),
+    "Fourth-down conversions": ("0/0", "0/0"),
+    "Red-zone results, as displayed": ("2/2", "1/1"),
+    "Turnovers": ("1 interception", "0"),
+    "Sacks / yards lost": ("0 / 0", "0 / 0"),
+    "Penalties / yards": ("4 / 69", "3 / 30"),
+    "Drives": ("7", "6"),
+    "Time of possession": ("19:53", "10:07"),
+    "Defensive/special-teams touchdowns": ("0", "0"),
+}
 FOUNDRY_PATH = "/gateway/providers/microsoft/v1/systemone?api-version=fixture"
 FOUNDRY_MODEL = "console-test-foundry-deployment"
 FOUNDRY_KEY = "console-test-foundry-key-do-not-print"
@@ -61,10 +89,27 @@ def assert_distribution(text, expected, heading="Probability Distribution:"):
     return rows
 
 
+def football_answers(payload):
+    """Send football-specific answers in reverse wire order to check display order."""
+    answers = {
+        "Final Game Winner": {"type": "choice", "choice": "Atlanta Falcons", "confidence": 0.76,
+                              "probabilities": {"Atlanta Falcons": 0.76, "Green Bay Packers": 0.22, "Tie": 0.02}},
+        "Packers Cover -7.5": {"type": "noul", "noul": 0.18},
+        "Final Total Points Band": {
+            "type": "score", "score": 2.15, "confidence": 0.6,
+            "probabilities": {"4": 0.05, "3": 0.30, "2": 0.45, "1": 0.15, "0": 0.05},
+            "legend": dict(enumerate(payload["questions"]["Final Total Points Band"]["criteria"])),
+        },
+    }
+    return {"model": payload["model"], "answers": dict(reversed(list(answers.items())))}
+
+
 def answers_for(payload, path):
     """Return representative responses, including deliberately fractional scores."""
     system_one = path in ("/v1/systemone", FOUNDRY_PATH)
     questions = payload["questions"]
+    if system_one and list(questions) == list(FOOTBALL_QUESTIONS):
+        return football_answers(payload)
     items = questions.items() if system_one else ((q["name"], q) for q in questions)
     answers = {} if system_one else []
     for name, question in items:
@@ -156,6 +201,7 @@ def main():
                 server.request_headers.clear()
                 result = subprocess.run(["dotnet", str(output / "SystemOneDecisionsConsole.dll")],
                                         input=input_text, capture_output=True, text=True,
+                                        encoding="utf-8",
                                         env={**env, **(overrides or {})}, cwd=temporary, timeout=timeout)
                 assert result.returncode == 0, result.stderr
                 assert FOUNDRY_KEY not in result.stdout and FOUNDRY_KEY not in result.stderr, result.stdout
@@ -168,6 +214,12 @@ def main():
             def basic_input(option):
                 return f"1\n{option}\n\n0\n0\n"
 
+            def football_folder():
+                return output / "Decisions" / ADVANCED_CATEGORY / FOOTBALL_FOLDER
+
+            def football_input():
+                return "2\n1\n\n0\n0\n"
+
             def check_failure(label, input_text=None, overrides=None, timeout=15, timed=True):
                 nonlocal checks
                 text = run(basic_input(1) if input_text is None else input_text, overrides, timeout)
@@ -179,7 +231,7 @@ def main():
                 checks += 1
 
             def response_for(option, answer):
-                questions = json.loads((basic_folder(option - 1) / "questions.json").read_text())
+                questions = json.loads((basic_folder(option - 1) / "questions.json").read_text(encoding="utf-8"))
                 system_one = option <= 3 or option >= 7
                 name = next(iter(questions)) if system_one else questions[0]["name"]
                 return {"model": "fixture", "answers": {name: answer} if system_one else [{"name": name, **answer}]}
@@ -211,14 +263,14 @@ def main():
             cursor = 0
             for index, (path, payload) in enumerate(server.requests):
                 folder = basic_folder(index)
-                expected = json.loads((folder / "questions.json").read_text())
-                description = (folder / "ScenarioDescription.txt").read_text().strip()
+                expected = json.loads((folder / "questions.json").read_text(encoding="utf-8"))
+                description = (folder / "ScenarioDescription.txt").read_text(encoding="utf-8").strip()
                 foundry = index >= 6
                 system_one = index < 3 or foundry
                 assert payload["model"] == (FOUNDRY_MODEL if foundry else "console-test-model"), payload
                 assert payload["questions"] == expected, payload
                 key = "state" if system_one else "input"
-                assert payload[key].strip() == (folder / "input.txt").read_text().strip(), payload
+                assert payload[key].strip() == (folder / "input.txt").read_bytes().decode("utf-8-sig").strip(), payload
                 assert set(payload) == {"model", key, "questions"}, payload
                 assert description not in json.dumps(payload), payload
                 assert path == (FOUNDRY_PATH if foundry else
@@ -234,6 +286,8 @@ def main():
                 assert start < input_start < text.index(status, start)
                 cursor = text.index("Press Enter to return to the menu:", start)
                 example_text = text[start:cursor]
+                name = next(iter(expected)) if system_one else expected[0]["name"]
+                assert re.search(rf"^1\) {re.escape(name)}:", example_text, re.MULTILINE), example_text
                 if index % 3 == 0:
                     expected_rows = [("Billing", "91.00"), ("Technical", "6.00"), ("Shipping", "3.00")]
                     heading, outcome = "Probability Distribution:", "Department: Billing"
@@ -256,6 +310,117 @@ def main():
                         assert f"\x1b[38;2;{color}m{bar}\x1b[39m|" in raw_text, (bar, color, raw_text)
             assert text.count("Department: Billing") == 3 and text.count("Score: 1.375") == 3, text
             assert text.count("Probability of yes: 87.50") == 3, text
+            checks += 1
+
+            # One advanced request combines three decisions and preserves the supplied evidence.
+            folder = football_folder()
+            source_folder = ROOT / "Decisions" / ADVANCED_CATEGORY / FOOTBALL_FOLDER
+            for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
+                assert (folder / filename).is_file(), filename
+                assert (folder / filename).read_bytes() == (source_folder / filename).read_bytes(), filename
+            expected = json.loads((folder / "questions.json").read_text(encoding="utf-8"))
+            assert list(expected) == list(FOOTBALL_QUESTIONS), expected
+            assert {name: question["type"] for name, question in expected.items()} == FOOTBALL_QUESTIONS, expected
+            assert list(expected["Final Game Winner"]["criteria"]) == ["Atlanta Falcons", "Green Bay Packers", "Tie"], expected
+            bands = expected["Final Total Points Band"]["criteria"]
+            band_titles = [band.split(": ", 1)[0] for band in bands]
+            assert band_titles == ["Under 30", "30-39", "40-49", "50-59", "60 or More"], bands
+            text = run(football_input())
+            assert "Error:" not in text and len(server.requests) == 1, text
+            path, payload = server.requests[0]
+            assert path == "/v1/systemone" and set(payload) == {"model", "state", "questions"}, payload
+            assert payload["model"] == "console-test-model" and payload["questions"] == expected, payload
+            assert "Second Half Winner" not in json.dumps(payload) and "Second Half Winner" not in text, text
+            state = payload["state"]
+            assert state == (folder / "input.txt").read_bytes().decode("utf-8-sig").strip(), state
+            assert "Atlanta leads 17-7 at halftime" in state, state
+            assert "Green Bay Packers are the home team" in state, state
+            assert "pregame favorite at -7.5 points" in state, state
+            rows = [tuple(cell.strip().replace("**", "") for cell in line.strip().strip("|").split("|"))
+                    for line in state.splitlines() if line.strip().startswith("|")]
+            statistics = {row[0]: row[1:] for row in rows if row[0] in FOOTBALL_STATISTICS}
+            assert statistics == FOOTBALL_STATISTICS, statistics
+            description = (folder / "ScenarioDescription.txt").read_text(encoding="utf-8").strip()
+            start, displayed_description = displayed_section(text, "Scenario Description:")
+            input_start, displayed_input = displayed_section(text, "Input:", start)
+            assert " ".join(displayed_description.split()) == " ".join(description.split())
+            assert " ".join(displayed_input.split()) == " ".join(state.split())
+            assert start < input_start < text.index("Calling local API..."), text
+            assert "api-key" not in server.request_headers[0], server.request_headers
+            assert text.count("Response JSON:\n") == len(TIMING.findall(text)) == 1, text
+            assert text.count("Press Enter to return to the menu:") == 1, text
+            names = list(FOOTBALL_QUESTIONS)
+            numbered_labels = [f"{index}) {name}:" for index, name in enumerate(names, start=1)]
+            assert re.findall(r"^\d+\) (?:Final Game Winner|Packers Cover -7\.5|Final Total Points Band):",
+                              text, re.MULTILINE) == numbered_labels, text
+            answer_starts = [text.index(label, input_start) for label in numbered_labels]
+            assert answer_starts == sorted(answer_starts), text
+            assert all(text[start - 2:start] == "\n\n" for start in answer_starts[1:]), text
+            response_start = text.index("Response JSON:\n")
+            response_json = json.loads(text[response_start + len("Response JSON:\n"):text.index("Press Enter", response_start)].strip())
+            assert list(response_json["answers"]) == list(reversed(names)), response_json
+            expected_distributions = [
+                [("Atlanta Falcons", "76.00"), ("Green Bay Packers", "22.00"), ("Tie", "2.00")],
+                [("Yes", "18.00"), ("No", "82.00")],
+                [(f"{index} ({title})", percent) for index, (title, percent) in
+                 enumerate(zip(band_titles, ("5.00", "15.00", "45.00", "30.00", "5.00")))],
+            ]
+            expected_outcomes = ["1) Final Game Winner: Atlanta Falcons",
+                                 "2) Packers Cover -7.5: Probability of yes: 18.00 %",
+                                 "3) Final Total Points Band: Score: 2.15"]
+            for index, start in enumerate(answer_starts):
+                end = answer_starts[index + 1] if index + 1 < len(names) else response_start
+                section = text[start:end]
+                heading = "Bernoulli Distribution (Yes/No):" if index == 1 else "Probability Distribution:"
+                assert expected_outcomes[index] in section, section
+                assert section.index(expected_outcomes[index]) < section.index(heading), section
+                assert_distribution(section + "Response JSON:\n", expected_distributions[index], heading)
+            checks += 1
+
+            # Invalid IDs and discriminators are rejected before any mixed answer charts are rendered.
+            football_payload = {"model": "fixture", "questions": expected}
+            for label, modify in (
+                ("missing advanced answer ID", lambda answers: answers.pop("Final Game Winner")),
+                ("extra advanced answer ID", lambda answers: answers.update(Unexpected={"type": "noul", "noul": 0.5})),
+                ("renamed advanced answer ID", lambda answers: answers.update(
+                    **{"Unknown Question": answers.pop("Final Game Winner")})),
+                ("mismatched advanced choice answer", lambda answers: answers.update(
+                    **{"Final Game Winner": {"type": "noul", "noul": 0.6}})),
+                ("mismatched advanced noul answer", lambda answers: answers.update(
+                    **{"Packers Cover -7.5": {"type": "choice", "choice": "Yes", "confidence": 0.7,
+                                             "probabilities": {"Yes": 0.7, "No": 0.3}}})),
+                ("mismatched advanced answer type", lambda answers: answers.update(
+                    **{"Final Total Points Band": {"type": "choice", "choice": "Under 30", "confidence": 0.7,
+                                                  "probabilities": {"Under 30": 0.7, "30-39": 0.3}}})),
+            ):
+                server.response = football_answers(football_payload)
+                modify(server.response["answers"])
+                check_failure(label, football_input())
+                assert len(server.requests) == 1, server.requests
+            server.response = None
+            questions_file = folder / "questions.json"
+            original = questions_file.read_bytes()
+            try:
+                for name, criteria in (("Final Game Winner", {"Atlanta Falcons": "Only one option."}),
+                                       ("Final Total Points Band", ["Only one band."])):
+                    invalid_questions = json.loads(original.decode("utf-8"))
+                    invalid_questions[name]["criteria"] = criteria
+                    questions_file.write_text(json.dumps(invalid_questions), encoding="utf-8")
+                    check_failure(f"invalid advanced {invalid_questions[name]['type']} criteria",
+                                  football_input(), timed=False)
+                    assert not server.requests, server.requests
+            finally:
+                questions_file.write_bytes(original)
+
+            # Publish must include the same scenario files, using the existing project content glob.
+            publish = Path(temporary) / "publish"
+            result = subprocess.run(["dotnet", "publish", str(ROOT / "SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj"),
+                                     "--no-restore", "-c", "Debug", "-o", str(publish)],
+                                    capture_output=True, text=True, encoding="utf-8", cwd=ROOT, timeout=60)
+            assert result.returncode == 0, result.stdout + result.stderr
+            published_folder = publish / "Decisions" / ADVANCED_CATEGORY / FOOTBALL_FOLDER
+            for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
+                assert (published_folder / filename).read_bytes() == (source_folder / filename).read_bytes(), filename
             checks += 1
 
             text = run("1\n7\n\n1\n\n4\n\n0\n0\n")
@@ -378,8 +543,8 @@ def main():
             description = "First paragraph describes the scenario. " * 4 + "\n\n" + "D" * 165
             input_content = "The customer reports a duplicate charge. " * 4 + "\n\n" + "I" * 165
             try:
-                description_file.write_text(description)
-                input_file.write_text(input_content)
+                description_file.write_text(description, encoding="utf-8", newline="\n")
+                input_file.write_text(input_content, encoding="utf-8", newline="\n")
                 text = run(basic_input(1))
                 assert "Error:" not in text, text
                 for label, source, long_word in (("Scenario Description:", description, "D"),
@@ -400,7 +565,7 @@ def main():
             assert text.count("1) Local SystemOne - Choice") == 1, text
             assert f"\n{BASIC_CATEGORY}\n" in text, text
             assert f"\n{ADVANCED_CATEGORY}\n" in text, text
-            assert "No advanced examples yet" in text and "0) Back" in text, text
+            assert "1) Local SystemOne - Football Game Prediction" in text and "0) Back" in text, text
             assert "Calling local API..." not in text and not TIMING.search(text), text
             if os.name != "nt":
                 colored_menus = "\n".join(re.findall(
@@ -411,6 +576,7 @@ def main():
                               "5) Local Decisions - Yes/No (predicate)", "6) Local Decisions - Score",
                               "7) Foundry SystemOne - Choice", "8) Foundry SystemOne - Yes/No (noul)",
                               "9) Foundry SystemOne - Score",
+                              "1) Local SystemOne - Football Game Prediction",
                               "0) Exit", "0) Back"):
                     assert label in colored_menus, (label, raw_text)
             checks += 1
@@ -423,20 +589,38 @@ def main():
             assert len(server.requests) == 1, text
             checks += 1
 
+            text = run(football_input())
+            pause = text.index("Press Enter to return to the menu:")
+            returned_to_advanced = text.index("1) Local SystemOne - Football Game Prediction", pause)
+            returned_to_startup = text.index("1) Basic Decision Examples", pause)
+            assert returned_to_advanced < returned_to_startup, text
+            assert len(server.requests) == 1, text
+            checks += 1
+
+            text = run("2\n 1 \n\n1\n\n0\n1\n2\n\n0\n0\n")
+            assert "Error:" not in text and len(server.requests) == 3, text
+            assert [list(payload["questions"]) for _, payload in server.requests[:2]] == [list(FOOTBALL_QUESTIONS)] * 2
+            assert re.findall(r"^\d+\) (?:Final Game Winner|Packers Cover -7\.5|Final Total Points Band):",
+                              text, re.MULTILINE) == numbered_labels * 2, text
+            assert "Second Half Winner" not in text, text
+            assert re.search(r"^1\) Duplicate Charge: Probability of yes: 87\.50 %$", text, re.MULTILINE), text
+            assert text.count("Press Enter to return to the menu:") == 3, text
+            checks += 1
+
             for input_text, message, count in (
                 ("bad\n\n3\n 0 \n", "Please enter 0, 1, or 2", 3),
                 ("1\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4),
-                ("2\nbad\n\n1\n 0 \n0\n", "Please enter 0 to go back", 3),
+                ("2\nbad\n\n2\n-1\n 0 \n0\n", "Please enter 0 or 1", 4),
             ):
                 text = run(input_text)
                 assert text.count(message) == count, text
                 assert "Error:" not in text and not server.requests, text
                 checks += 1
 
-            for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n", "1\n7\n"):
+            for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n"):
                 text = run(input_text)
                 assert "Error:" not in text, text
-                assert len(server.requests) == (1 if input_text in ("1\n1\n", "1\n7\n") else 0), text
+                assert len(server.requests) == (1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n") else 0), text
                 checks += 1
             check_failure("missing endpoint", overrides={"LocalSystemOneAPI": ""}, timed=False)
             assert not server.requests
@@ -472,6 +656,18 @@ def main():
             check_failure("unknown question discriminator", timed=False)
             assert not server.requests
             questions.write_bytes(original)
+            # Mixed-question support must not relax the basic examples' homogeneous contracts.
+            for option in (1, 2, 3, 7, 8, 9):
+                questions = basic_folder(option - 1) / "questions.json"
+                original = questions.read_bytes()
+                wrong_question = ({"type": "choice", "criteria": {"A": "First", "B": "Second"}}
+                                  if option in (2, 8) else {"type": "noul"})
+                try:
+                    questions.write_text(json.dumps({"Wrong Mode": wrong_question}), encoding="utf-8")
+                    check_failure("wrong basic question type", basic_input(option), timed=False)
+                    assert not server.requests, server.requests
+                finally:
+                    questions.write_bytes(original)
             for response in ("{", {}, {"model": "fixture", "answers": {}},
                              {"model": "fixture", "answers": None},
                              {"model": None, "answers": {"Department": {"type": "noul", "noul": 0.8}}}):
@@ -499,7 +695,7 @@ def main():
                 check_failure(f"Foundry HTTP {status}", basic_input(7))
                 assert f"HTTP {status}" in raw_text, raw_text
             server.status, server.response = 200, None
-            name = json.loads((basic_folder(3) / "questions.json").read_text())[0]["name"]
+            name = json.loads((basic_folder(3) / "questions.json").read_text(encoding="utf-8"))[0]["name"]
             server.response = {"model": "console-test-model", "answers": [{"name": name, "type": "refusal"}]}
             text = run(basic_input(4))
             assert "Refused:" in text and "Error:" not in text and TIMING.search(text), text
@@ -526,7 +722,7 @@ def main():
                 check_failure("60-second timeout", timeout=70)
                 check_failure("Foundry 60-second timeout", basic_input(7), timeout=70)
                 server.delay = 0
-            print(f"PASS: {checks} console integration scenarios (nine API examples included).")
+            print(f"PASS: {checks} console integration scenarios (nine Basic examples and advanced football included).")
     finally:
         server.shutdown()
         server.server_close()

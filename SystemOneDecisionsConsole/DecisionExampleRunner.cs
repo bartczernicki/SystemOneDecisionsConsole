@@ -31,6 +31,13 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
         new("Foundry SystemOne - Score", Path.Combine("Basic Decision Examples", "FoundrySystemOne-Score"), DecisionBackend.FoundrySystemOne, "score")
     ];
 
+    internal static IReadOnlyList<DecisionExample> AdvancedExamples { get; } =
+    [
+        new("Local SystemOne - Football Game Prediction",
+            Path.Combine("Advanced Decision Examples", "LocalSystemOne-FootballGamePrediction"),
+            DecisionBackend.LocalSystemOne, "mixed")
+    ];
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
@@ -95,9 +102,28 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
                 {
                     throw new InvalidDataException("Malformed response: answers must match the requested question IDs.");
                 }
-                foreach (var (name, answer) in response.Answers)
+                foreach (var (name, question) in questions)
                 {
-                    DisplaySystemOneAnswer(name, answer, example.QuestionType);
+                    bool matchingType = (question, response.Answers[name]) switch
+                    {
+                        (SystemOneChoiceQuestion, SystemOneChoiceAnswer) => true,
+                        (SystemOneNoulQuestion, SystemOneNoulAnswer) => true,
+                        (SystemOneScoreQuestion, SystemOneScoreAnswer) => true,
+                        _ => false
+                    };
+                    if (!matchingType)
+                    {
+                        throw new InvalidDataException($"Malformed response: expected a {SystemOneQuestionType(question)} answer for {name}.");
+                    }
+                }
+                int questionNumber = 1;
+                foreach (var (name, question) in questions)
+                {
+                    if (questionNumber > 1)
+                    {
+                        Console.WriteLine();
+                    }
+                    DisplaySystemOneAnswer(name, response.Answers[name], SystemOneQuestionType(question), questionNumber++);
                 }
             }
             else
@@ -118,7 +144,11 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
                     {
                         throw new InvalidDataException("Malformed response: answer names must match the requested questions.");
                     }
-                    DisplayDecisionAnswer(answer, example.QuestionType);
+                    if (index > 0)
+                    {
+                        Console.WriteLine();
+                    }
+                    DisplayDecisionAnswer(answer, example.QuestionType, index + 1);
                 }
             }
         }
@@ -260,6 +290,7 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
         {
             stopwatch.Stop();
             Console.WriteLine($"Response time: {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine();
         }
     }
 
@@ -271,19 +302,28 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
         }
         foreach (SystemOneQuestion question in questions.Values)
         {
-            bool valid = question switch
-            {
-                SystemOneChoiceQuestion choice => type == "choice" && choice.Criteria is { Count: >= 2 and <= 255 },
-                SystemOneNoulQuestion => type == "noul",
-                SystemOneScoreQuestion score => type == "score" && score.Criteria is { Count: >= 2 },
-                _ => false
-            };
+            bool valid = (type == "mixed" || type == SystemOneQuestionType(question)) &&
+                (question switch
+                {
+                    SystemOneChoiceQuestion choice => choice.Criteria is { Count: >= 2 and <= 255 },
+                    SystemOneNoulQuestion => true,
+                    SystemOneScoreQuestion score => score.Criteria is { Count: >= 2 },
+                    _ => false
+                });
             if (!valid)
             {
                 throw new InvalidDataException($"questions.json must contain valid {type} questions for this example.");
             }
         }
     }
+
+    private static string SystemOneQuestionType(SystemOneQuestion question) => question switch
+    {
+        SystemOneChoiceQuestion => "choice",
+        SystemOneNoulQuestion => "noul",
+        SystemOneScoreQuestion => "score",
+        _ => throw new InvalidDataException("Unsupported SystemOne question type.")
+    };
 
     private static void ValidateQuestions(List<DecisionQuestion> questions, string type)
     {
@@ -309,21 +349,22 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
         }
     }
 
-    private static void DisplaySystemOneAnswer(string name, SystemOneAnswer answer, string expectedType)
+    private static void DisplaySystemOneAnswer(string name, SystemOneAnswer answer, string expectedType, int questionNumber)
     {
+        string label = $"{questionNumber}) {name}";
         switch (answer)
         {
             case SystemOneChoiceAnswer choice when expectedType == "choice" && !string.IsNullOrEmpty(choice.Choice) && choice.Probabilities is { Count: > 0 }:
-                Console.WriteLine($"{name}: {choice.Choice}");
+                Console.WriteLine($"{label}: {choice.Choice}");
                 Console.WriteLine($"Confidence: {Probability(choice.Confidence)}");
                 ProbabilityDistributionRenderer.Display(choice.Probabilities.Select(option => new ProbabilityBar(option.Key, option.Value)));
                 break;
             case SystemOneNoulAnswer noul when expectedType == "noul":
-                Console.WriteLine($"{name}: Probability of yes: {Probability(noul.Noul)}");
+                Console.WriteLine($"{label}: Probability of yes: {Probability(noul.Noul)}");
                 ProbabilityDistributionRenderer.DisplayBernoulli(noul.Noul);
                 break;
             case SystemOneScoreAnswer score when expectedType == "score" && double.IsFinite(score.Score) && score.Probabilities is { Count: > 0 }:
-                Console.WriteLine($"{name}: Score: {Number(score.Score)}");
+                Console.WriteLine($"{label}: Score: {Number(score.Score)}");
                 Console.WriteLine($"Confidence: {Probability(score.Confidence)}");
                 ProbabilityDistributionRenderer.Display(score.Probabilities
                     .OrderBy(option => ScoreLevelOrder(option.Key))
@@ -334,15 +375,16 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
         }
     }
 
-    private static void DisplayDecisionAnswer(DecisionAnswer answer, string expectedType)
+    private static void DisplayDecisionAnswer(DecisionAnswer answer, string expectedType, int questionNumber)
     {
+        string label = $"{questionNumber}) {answer.Name ?? "Question"}";
         switch (answer)
         {
             case DecisionRefusalAnswer:
-                Console.WriteLine($"{answer.Name ?? "Question"}: Refused: the model declined to answer.");
+                Console.WriteLine($"{label}: Refused: the model declined to answer.");
                 break;
             case DecisionChoiceAnswer choice when expectedType == "choice" && choice.Choice.ValueKind is JsonValueKind.String or JsonValueKind.True or JsonValueKind.False && choice.Probabilities is { Count: > 0 }:
-                Console.WriteLine($"{answer.Name ?? "Choice"}: {choice.Choice}");
+                Console.WriteLine($"{label}: {choice.Choice}");
                 Console.WriteLine($"Confidence: {Probability(choice.Confidence)}");
                 ProbabilityDistributionRenderer.Display(choice.Probabilities.Select(option =>
                     option is not null && option.Value.ValueKind is JsonValueKind.String or JsonValueKind.True or JsonValueKind.False
@@ -350,11 +392,11 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
                         : throw new InvalidDataException("Malformed choice probabilities.")));
                 break;
             case DecisionPredicateAnswer predicate when expectedType == "predicate":
-                Console.WriteLine($"{answer.Name}: Probability of yes: {Probability(predicate.Probability)}");
+                Console.WriteLine($"{label}: Probability of yes: {Probability(predicate.Probability)}");
                 ProbabilityDistributionRenderer.DisplayBernoulli(predicate.Probability);
                 break;
             case DecisionScoreAnswer score when expectedType == "score" && double.IsFinite(score.Score) && score.Probabilities is { Count: > 0 }:
-                Console.WriteLine($"{answer.Name}: Score: {Number(score.Score)}");
+                Console.WriteLine($"{label}: Score: {Number(score.Score)}");
                 Console.WriteLine($"Confidence: {Probability(score.Confidence)}");
                 ProbabilityDistributionRenderer.Display(score.Probabilities
                     .Select(level => level ?? throw new InvalidDataException("Malformed score probabilities."))
