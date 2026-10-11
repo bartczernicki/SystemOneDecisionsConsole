@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "SystemOneDecisionsConsole/bin/Debug/net10.0"
 FOLDERS = [f"Local{api}-{mode}" for api in ("SystemOne", "Decisions")
            for mode in ("Choice", "YesNo", "Score")]
+BASIC_CATEGORY = "Basic Decision Examples"
+ADVANCED_CATEGORY = "Advanced Decision Examples"
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 TIMING = re.compile(r"Response time: (\d+) ms")
 SECTION_END = re.compile(r"^(?:Scenario Description:|Input:|Calling local API\.\.\.).*$",
@@ -29,7 +31,7 @@ def displayed_section(text, label, cursor=0):
     end = SECTION_END.search(text, content_start)
     assert end is not None, (label, text)
     content = text[content_start:end.start()].strip("\n")
-    assert all(len(line) <= 70 for line in content.splitlines()), (label, content)
+    assert all(len(line) <= 80 for line in content.splitlines()), (label, content)
     return start, content
 
 
@@ -127,16 +129,22 @@ def main():
                 raw_text = result.stdout
                 return ANSI.sub("", raw_text)
 
-            def check_failure(label, input_text="1\n\n0\n", overrides=None, timeout=15, timed=True):
+            def basic_folder(index):
+                return output / "Decisions" / BASIC_CATEGORY / FOLDERS[index]
+
+            def basic_input(option):
+                return f"1\n{option}\n\n0\n0\n"
+
+            def check_failure(label, input_text=None, overrides=None, timeout=15, timed=True):
                 nonlocal checks
-                text = run(input_text, overrides, timeout)
+                text = run(basic_input(1) if input_text is None else input_text, overrides, timeout)
                 assert "Error:" in text, (label, text)
                 assert "Press Enter to return to the menu:" in text, (label, text)
                 if timed:
                     assert TIMING.search(text), (label, text)
                 checks += 1
 
-            text = run("bad\n\n 1 \n\n2\n\n3\n\n4\n\n5\n\n6\n\n0\n")
+            text = run("1\nbad\n\n 1 \n\n2\n\n3\n\n4\n\n5\n\n6\n\n0\n0\n")
             assert "Error:" not in text, text
             assert len(server.requests) == 6, text
             assert text.count("Please enter") == 2, text
@@ -151,7 +159,7 @@ def main():
                 assert raw_text.count("\x1b[38;2;128;192;255mResponse JSON:\n") == 6, raw_text
             cursor = 0
             for index, (path, payload) in enumerate(server.requests):
-                folder = output / "Decisions" / FOLDERS[index]
+                folder = basic_folder(index)
                 expected = json.loads((folder / "questions.json").read_text())
                 description = (folder / "ScenarioDescription.txt").read_text().strip()
                 assert payload["model"] == "console-test-model", payload
@@ -171,38 +179,75 @@ def main():
             assert text.count("Probability of yes: 87.50") == 2, text
             checks += 1
 
-            folder = output / "Decisions" / FOLDERS[0]
+            folder = basic_folder(0)
             description_file, input_file = folder / "ScenarioDescription.txt", folder / "input.txt"
             original_description, original_input = description_file.read_bytes(), input_file.read_bytes()
-            description = "First paragraph describes the scenario. " * 4 + "\n\n" + "D" * 145
-            input_content = "The customer reports a duplicate charge. " * 4 + "\n\n" + "I" * 145
+            description = "First paragraph describes the scenario. " * 4 + "\n\n" + "D" * 165
+            input_content = "The customer reports a duplicate charge. " * 4 + "\n\n" + "I" * 165
             try:
                 description_file.write_text(description)
                 input_file.write_text(input_content)
-                text = run("1\n\n0\n")
+                text = run(basic_input(1))
                 assert "Error:" not in text, text
                 for label, source, long_word in (("Scenario Description:", description, "D"),
                                                 ("Input:", input_content, "I")):
                     _, displayed = displayed_section(text, label)
                     assert "\n\n" in displayed, (label, displayed)
                     assert re.sub(r"\s", "", displayed) == re.sub(r"\s", "", source), (label, displayed)
-                    assert displayed.splitlines()[-3:] == [long_word * 70, long_word * 70, long_word * 5]
+                    assert displayed.splitlines()[-3:] == [long_word * 80, long_word * 80, long_word * 5]
                 assert server.requests[0][1]["state"].strip() == input_content.strip(), server.requests
                 checks += 1
             finally:
                 description_file.write_bytes(original_description)
                 input_file.write_bytes(original_input)
 
-            for input_text in ("0\n", "", "1\n"):
+            text = run(" 1 \n 0 \n 2 \n 0 \n 0 \n")
+            assert "Error:" not in text and not server.requests, text
+            assert text.count("1) Basic Decision Examples") == 3, text
+            assert text.count("1) Local System One - Choice") == 1, text
+            assert f"\n{BASIC_CATEGORY}\n" in text, text
+            assert f"\n{ADVANCED_CATEGORY}\n" in text, text
+            assert "No advanced examples yet" in text and "0) Back" in text, text
+            assert "Calling local API..." not in text and not TIMING.search(text), text
+            if os.name != "nt":
+                colored_menus = "\n".join(re.findall(
+                    r"\x1b\[38;2;255;215;0m(.*?)\x1b\[39m", raw_text, re.DOTALL))
+                for label in ("1) Basic Decision Examples", "2) Advanced Decision Examples",
+                              "1) Local System One - Choice", "2) Local System One - Yes/No (noul)",
+                              "3) Local System One - Score", "4) Local Decisions - Choice",
+                              "5) Local Decisions - Yes/No (predicate)", "6) Local Decisions - Score",
+                              "0) Exit", "0) Back"):
+                    assert label in colored_menus, (label, raw_text)
+            checks += 1
+
+            text = run(basic_input(1))
+            pause = text.index("Press Enter to return to the menu:")
+            returned_to_basic = text.index("1) Local System One - Choice", pause)
+            returned_to_startup = text.index("1) Basic Decision Examples", pause)
+            assert returned_to_basic < returned_to_startup, text
+            assert len(server.requests) == 1, text
+            checks += 1
+
+            for input_text, message, count in (
+                ("bad\n\n3\n 0 \n", "Please enter 0, 1, or 2", 3),
+                ("1\nbad\n\n7\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, or 6", 4),
+                ("2\nbad\n\n1\n 0 \n0\n", "Please enter 0 to go back", 3),
+            ):
+                text = run(input_text)
+                assert text.count(message) == count, text
+                assert "Error:" not in text and not server.requests, text
+                checks += 1
+
+            for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n"):
                 text = run(input_text)
                 assert "Error:" not in text, text
-                assert len(server.requests) == (1 if input_text == "1\n" else 0), text
+                assert len(server.requests) == (1 if input_text == "1\n1\n" else 0), text
                 checks += 1
             check_failure("missing endpoint", overrides={"LocalSystemOneAPI": ""}, timed=False)
             assert not server.requests
-            check_failure("missing Decisions endpoint", "4\n\n0\n", {"LocalDecisionsAPI": ""}, timed=False)
+            check_failure("missing Decisions endpoint", basic_input(4), {"LocalDecisionsAPI": ""}, timed=False)
             assert not server.requests
-            folder = output / "Decisions" / FOLDERS[0]
+            folder = basic_folder(0)
             for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
                 file = folder / filename
                 original = file.read_bytes()
@@ -226,25 +271,25 @@ def main():
                 check_failure("malformed SystemOne response")
             for response in ({}, {"model": "fixture", "answers": []}, {"model": "fixture", "answers": None}):
                 server.response = response
-                check_failure("malformed Decisions response", "4\n\n0\n")
+                check_failure("malformed Decisions response", basic_input(4))
             payload = {"model": "fixture", "questions": {"Duplicate Charge": {"type": "noul"}}}
             server.response = answers_for(payload, "/v1/systemone")
             answer = server.response["answers"]["Duplicate Charge"]
             answer["type"] = answer.pop("type")  # Server metadata may follow the answer fields.
-            text = run("2\n\n0\n")
+            text = run(basic_input(2))
             assert "Error:" not in text and "Probability of yes: 87.50" in text, text
             checks += 1
             server.status, server.response = 500, {"error": "fixture failure"}
             check_failure("HTTP 500")
             server.status, server.response = 200, None
-            name = json.loads((output / "Decisions" / FOLDERS[3] / "questions.json").read_text())[0]["name"]
+            name = json.loads((basic_folder(3) / "questions.json").read_text())[0]["name"]
             server.response = {"model": "console-test-model", "answers": [{"name": name, "type": "refusal"}]}
-            text = run("4\n\n0\n")
+            text = run(basic_input(4))
             assert "Refused:" in text and "Error:" not in text and TIMING.search(text), text
             checks += 1
             server.response = None
             server.delay = 0.18
-            text = run("1\n\n0\n")
+            text = run(basic_input(1))
             assert int(TIMING.search(text)[1]) >= 150, text
             checks += 1
             server.delay = 0

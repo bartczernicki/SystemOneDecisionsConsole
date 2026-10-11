@@ -13,12 +13,12 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
 {
     internal static IReadOnlyList<DecisionExample> Examples { get; } =
     [
-        new("Local System One - Choice", "LocalSystemOne-Choice", true, "choice"),
-        new("Local System One - Yes/No (noul)", "LocalSystemOne-YesNo", true, "noul"),
-        new("Local System One - Score", "LocalSystemOne-Score", true, "score"),
-        new("Local Decisions - Choice", "LocalDecisions-Choice", false, "choice"),
-        new("Local Decisions - Yes/No (predicate)", "LocalDecisions-YesNo", false, "predicate"),
-        new("Local Decisions - Score", "LocalDecisions-Score", false, "score")
+        new("Local System One - Choice", Path.Combine("Basic Decision Examples", "LocalSystemOne-Choice"), true, "choice"),
+        new("Local System One - Yes/No (noul)", Path.Combine("Basic Decision Examples", "LocalSystemOne-YesNo"), true, "noul"),
+        new("Local System One - Score", Path.Combine("Basic Decision Examples", "LocalSystemOne-Score"), true, "score"),
+        new("Local Decisions - Choice", Path.Combine("Basic Decision Examples", "LocalDecisions-Choice"), false, "choice"),
+        new("Local Decisions - Yes/No (predicate)", Path.Combine("Basic Decision Examples", "LocalDecisions-YesNo"), false, "predicate"),
+        new("Local Decisions - Score", Path.Combine("Basic Decision Examples", "LocalDecisions-Score"), false, "score")
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -146,7 +146,7 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
     private static void DisplayTextSection(string label, string text, ConsoleColor color, string ansiCode)
     {
         DisplayColoredLine(label, color, ansiCode);
-        const int width = 70;
+        const int width = 80;
         foreach (string paragraph in text.ReplaceLineEndings("\n").Split('\n'))
         {
             var line = new StringBuilder();
@@ -159,7 +159,7 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
                 }
 
                 string remaining = word;
-                // Split long words too, so every displayed text line stays within 70 characters.
+                // Split long words too, so every displayed text line stays within 80 characters.
                 while (remaining.Length > width)
                 {
                     Console.WriteLine(remaining[..width]);

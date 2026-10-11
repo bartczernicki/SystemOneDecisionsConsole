@@ -3,16 +3,28 @@
 A .NET 10 console application with examples for local SystemOne and OpenAI-compatible Decisions APIs:
 
 ```text
+1) Basic Decision Examples
+2) Advanced Decision Examples
+0) Exit
+```
+
+Select **Basic Decision Examples** to open its submenu:
+
+```text
+Basic Decision Examples
+
 1) Local System One - Choice
 2) Local System One - Yes/No (noul)
 3) Local System One - Score
 4) Local Decisions - Choice
 5) Local Decisions - Yes/No (predicate)
 6) Local Decisions - Score
-7) Exit
+0) Back
 ```
 
-Select an example to display its scenario description, call the configured local API, and show a typed answer summary, available confidence/probabilities, response time in milliseconds, and formatted response JSON. Press Enter to return to the menu, or select `0` to exit. Yes/No answers remain probabilities; the application does not impose a boolean threshold. Decisions refusals are shown explicitly.
+Select an example to display its scenario description, call the configured local API, and show a typed answer summary, available confidence/probabilities, response time in milliseconds, and formatted response JSON. Press Enter after an example to return to the Basic submenu. Select `0) Back` in either submenu to return to the startup menu, where `0) Exit` closes the application. Yes/No answers remain probabilities; the application does not impose a boolean threshold. Decisions refusals are shown explicitly.
+
+The **Advanced Decision Examples** submenu currently displays “No advanced examples yet” and offers `0) Back` without calling an API. End-of-input at any prompt exits cleanly.
 
 ## Run
 
@@ -63,29 +75,32 @@ An empty endpoint override is treated as missing configuration. User Secrets are
 
 ## Example files
 
-The repository-root `Decisions` folder contains one directory per menu option:
+The repository-root `Decisions` folder groups examples by category. All six current examples are in **Basic Decision Examples**:
 
 ```text
 Decisions/
-  LocalSystemOne-Choice/
-  LocalSystemOne-YesNo/
-  LocalSystemOne-Score/
-  LocalDecisions-Choice/
-  LocalDecisions-YesNo/
-  LocalDecisions-Score/
+  Basic Decision Examples/
+    LocalSystemOne-Choice/
+    LocalSystemOne-YesNo/
+    LocalSystemOne-Score/
+    LocalDecisions-Choice/
+    LocalDecisions-YesNo/
+    LocalDecisions-Score/
+  Advanced Decision Examples/
+    .gitkeep
 ```
 
-Each directory contains the following files:
+Each Basic example directory contains the following files. The empty Advanced category is retained in Git with `.gitkeep`.
 
 | File | Purpose |
 | --- | --- |
-| `ScenarioDescription.txt` | Explanation displayed first under a magenta `Scenario Description:` label, wrapped at 70 characters. Never included in the API request. |
-| `input.txt` | Text evidence displayed under a green `Input:` label, wrapped at 70 characters, then sent as SystemOne `state` or Decisions `input`. Display wrapping does not change the submitted text. |
+| `ScenarioDescription.txt` | Explanation displayed first under a magenta `Scenario Description:` label, wrapped at 80 characters. Never included in the API request. |
+| `input.txt` | Text evidence displayed under a green `Input:` label, wrapped at 80 characters, then sent as SystemOne `state` or Decisions `input`. Display wrapping does not change the submitted text. |
 | `questions.json` | Questions deserialized into typed .NET objects before sending. |
 
 Choice examples route a duplicate-charge complaint to Billing, Technical, or Shipping. Yes/No examples detect a duplicate charge. Score examples rate a Safari export failure that has a Chrome workaround using ordered levels: Cosmetic (0), Workaround Available (1), Fully Blocked (2). Scores may be fractional.
 
-Edit the repository-root files to change the scenarios, then rebuild or run again. All example files are copied to build and publish output beneath `Decisions/`, and the application loads them relative to `AppContext.BaseDirectory`, so the current working directory does not affect loading.
+Edit the repository-root files to change the scenarios, then rebuild or run again. All example files are copied to build and publish output beneath `Decisions/Basic Decision Examples/`, preserving their nested directories. The application loads them relative to `AppContext.BaseDirectory`, so the current working directory does not affect loading. Display wrapping preserves paragraph breaks and splits words longer than 80 characters.
 
 ## JSON formats
 
@@ -129,7 +144,7 @@ dotnet build SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Release -o ./publish
 ```
 
-The published application retains the `Decisions/` examples beside it. User Secrets remain machine-local and are not copied during publishing. The root `.gitignore` excludes Visual Studio settings and .NET build artifacts.
+The published application retains the nested `Decisions/Basic Decision Examples/` examples beside it. User Secrets remain machine-local and are not copied during publishing. The root `.gitignore` excludes Visual Studio settings and .NET build artifacts.
 
 ## Validation
 

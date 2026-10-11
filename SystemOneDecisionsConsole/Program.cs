@@ -26,42 +26,96 @@ class Program
 
         while (true)
         {
-            Console.WriteLine();
-            SetColor(ConsoleColor.Yellow, "\u001b[38;2;255;215;0m");
-            for (int index = 0; index < DecisionExampleRunner.Examples.Count; index++)
-            {
-                Console.WriteLine($"{index + 1}) {DecisionExampleRunner.Examples[index].Label}");
-            }
-            Console.WriteLine("0) Exit");
-            RestoreColor(originalColor);
-
-            DecisionExample selectedExample;
-            while (true)
-            {
-                Console.Write("Select an option: ");
-                string? selection = Console.ReadLine()?.Trim();
-
-                if (selection is null or "0")
-                {
-                    return;
-                }
-
-                if (int.TryParse(selection, out int option) && option >= 1 && option <= DecisionExampleRunner.Examples.Count)
-                {
-                    selectedExample = DecisionExampleRunner.Examples[option - 1];
-                    break;
-                }
-
-                Console.WriteLine("Please enter 0, 1, 2, 3, 4, 5, or 6");
-            }
-
-            Console.WriteLine();
-            await runner.RunAsync(selectedExample);
-            Console.Write("Press Enter to return to the menu: ");
-            if (Console.ReadLine() is null)
+            WriteMenu(null, ["Basic Decision Examples", "Advanced Decision Examples"], "Exit");
+            int? category = ReadMenuSelection(2, "Please enter 0, 1, or 2");
+            if (category is null or 0)
             {
                 return;
             }
+
+            bool returnToMain = category == 1
+                ? await ShowBasicExamplesAsync(runner)
+                : ShowAdvancedExamples();
+            if (!returnToMain)
+            {
+                return;
+            }
+        }
+    }
+
+    private static async Task<bool> ShowBasicExamplesAsync(DecisionExampleRunner runner)
+    {
+        string[] labels = DecisionExampleRunner.Examples.Select(example => example.Label).ToArray();
+        while (true)
+        {
+            WriteMenu("Basic Decision Examples", labels, "Back");
+            int? option = ReadMenuSelection(labels.Length, "Please enter 0, 1, 2, 3, 4, 5, or 6");
+            if (option is null)
+            {
+                return false;
+            }
+            if (option == 0)
+            {
+                return true;
+            }
+            Console.WriteLine();
+            await runner.RunAsync(DecisionExampleRunner.Examples[option.Value - 1]);
+            Console.Write("Press Enter to return to the menu: ");
+            if (Console.ReadLine() is null)
+            {
+                return false;
+            }
+        }
+    }
+
+    private static bool ShowAdvancedExamples()
+    {
+        WriteMenu("Advanced Decision Examples", [], "Back", "No advanced examples yet");
+        return ReadMenuSelection(0, "Please enter 0 to go back") is not null;
+    }
+
+    private static int? ReadMenuSelection(int maxOption, string invalidMessage)
+    {
+        while (true)
+        {
+            Console.Write("Select an option: ");
+            string? selection = Console.ReadLine()?.Trim();
+            if (selection is null)
+            {
+                return null;
+            }
+            if (int.TryParse(selection, out int option) && option >= 0 && option <= maxOption)
+            {
+                return option;
+            }
+            Console.WriteLine(invalidMessage);
+        }
+    }
+
+    private static void WriteMenu(string? title, IReadOnlyList<string> options, string zeroLabel, string? emptyMessage = null)
+    {
+        Console.WriteLine();
+        ConsoleColor originalColor = Console.ForegroundColor;
+        try
+        {
+            SetColor(ConsoleColor.Yellow, "\u001b[38;2;255;215;0m");
+            if (title is not null)
+            {
+                Console.WriteLine(title);
+            }
+            for (int index = 0; index < options.Count; index++)
+            {
+                Console.WriteLine($"{index + 1}) {options[index]}");
+            }
+            if (emptyMessage is not null)
+            {
+                Console.WriteLine(emptyMessage);
+            }
+            Console.WriteLine($"0) {zeroLabel}");
+        }
+        finally
+        {
+            RestoreColor(originalColor);
         }
     }
 
