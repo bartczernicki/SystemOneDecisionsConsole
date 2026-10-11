@@ -1,0 +1,29 @@
+FICTIONAL APPLE WATCH DAILY-STEP FORECAST
+The watch readout and all activity histories below are fictional.
+
+APPLE WATCH - TODAY
+Time:               17:00
+Current steps:      5000
+Daily step goal:    10000
+Steps remaining:    5000
+
+Evaluate three separate alternatives for the same person from this starting state. In each alternative, assume the selected activity is completed today and is the only source of additional steps. Do not include steps from any other activity or combine the alternatives. Completion and selection are assumptions, so the requested probabilities are not chances that the person chooses or completes an activity.
+
+For each alternative, today's final steps equal 5000 plus the additional steps recorded during that activity. Reaching or exceeding 10000 is success. Exactly 5000 additional activity steps is sufficient; fewer than 5000 is failure.
+
+ACTIVITY 1: PARK WITH KIDS
+Plan: 90 minutes at the park, mixing walking and play with the children. The amount of walking and active play varies between sessions.
+Historical additional steps from ten comparable completed sessions:
+[1800, 2200, 2500, 2800, 3100, 3400, 3700, 4100, 4700, 5200]
+
+ACTIVITY 2: TAKE A WALK
+Plan: a 50-minute walk. Pace and route vary between sessions.
+Historical additional steps from ten comparable completed sessions:
+[4400, 4600, 4800, 4900, 5000, 5100, 5200, 5400, 5500, 5700]
+
+ACTIVITY 3: GO FOR A LONG RUN
+Plan: a 60-minute run. Pace and route vary between sessions.
+Historical additional steps from ten comparable completed sessions:
+[7200, 7600, 7900, 8100, 8400, 8700, 9000, 9300, 9600, 9900]
+
+Each history contains additional steps recorded by the same person's watch for that activity, not daily final totals. Use the plans and histories as evidence for each separate goal-reaching forecast. The historical fraction of successful sessions is not a prescribed probability, and the past observations do not guarantee today's outcome. Return three separate conditional forecasts without computing a joint probability. Do not force the three Yes probabilities to sum to one, multiply them, or normalize them together.

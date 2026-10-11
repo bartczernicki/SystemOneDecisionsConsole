@@ -34,6 +34,12 @@ SHIPMENT_FILES = ["ScenarioDescription.txt", "input.txt", "evidence-2.txt", "evi
 SHIPMENT_PROBABILITIES = [(0.22, 0.18, 0.24, 0.16, 0.20),
                          (0.08, 0.06, 0.62, 0.10, 0.14),
                          (0.01, 0.01, 0.94, 0.02, 0.02)]
+APPLE_WATCH_FOLDER = "FoundrySystemOne-AppleWatchStepGoal"
+APPLE_WATCH_QUESTIONS = ["Park with Kids", "Take a Walk", "Go for a Long Run"]
+APPLE_WATCH_PROBABILITIES = (0.15, 0.65, 0.95)
+APPLE_WATCH_HISTORIES = [(1800, 2200, 2500, 2800, 3100, 3400, 3700, 4100, 4700, 5200),
+                         (4400, 4600, 4800, 4900, 5000, 5100, 5200, 5400, 5500, 5700),
+                         (7200, 7600, 7900, 8100, 8400, 8700, 9000, 9300, 9600, 9900)]
 FOOTBALL_QUESTIONS = {
     "Final Game Winner": "choice",
     "Packers Cover -7.5": "noul",
@@ -140,6 +146,35 @@ def shipment_answers(payload, probabilities=None, confidence=None):
     return {"model": payload["model"], "answers": {SHIPMENT_QUESTION: answer}}
 
 
+def apple_watch_answers(payload, probabilities=APPLE_WATCH_PROBABILITIES):
+    """Independent activity probabilities, deliberately reversed on the wire."""
+    answers = {name: {"type": "noul", "noul": probability}
+               for name, probability in zip(APPLE_WATCH_QUESTIONS, probabilities)}
+    return {"model": payload["model"], "answers": dict(reversed(list(answers.items())))}
+
+
+def assert_apple_watch_answers(text, probabilities=APPLE_WATCH_PROBABILITIES):
+    labels = [f"{index}) {name}:" for index, name in enumerate(APPLE_WATCH_QUESTIONS, start=1)]
+    actual_labels = re.findall(r"^\d+\) (?:Park with Kids|Take a Walk|Go for a Long Run):", text, re.MULTILINE)
+    assert actual_labels == labels, text
+    starts = [text.index(label) for label in labels]
+    response_start = text.index("Response JSON:\n", starts[-1])
+    assert starts == sorted(starts), text
+    assert all(text[start - 2:start] == "\n\n" for start in starts[1:]), text
+    assert "Confidence:" not in text[:response_start] and "Probability Distribution:\n" not in text, text
+    for index, (start, probability) in enumerate(zip(starts, probabilities)):
+        end = starts[index + 1] if index < 2 else response_start
+        section = text[start:end]
+        assert f"{labels[index]} Probability of yes: {probability * 100:.2f} %" in section, section
+        rows = assert_distribution(section + "Response JSON:\n",
+                                   [("Yes", f"{probability * 100:.2f}"), ("No", f"{(1 - probability) * 100:.2f}")],
+                                   "Bernoulli Distribution (Yes/No):")
+        if probability in (0, 1):
+            empty_index = 0 if probability == 0 else 1
+            assert rows[empty_index][1] == " " * 40, rows
+    return labels
+
+
 def shipment_sections(text):
     """Split output at stage headings, keeping each stage's JSON and errors together."""
     headings = list(re.finditer(r"^Stage (\d) of 3: ([^\n]+)$", text, re.MULTILINE))
@@ -195,6 +230,8 @@ def answers_for(payload, path):
         return total_points_answers(payload)
     if system_one and list(questions) == [SHIPMENT_QUESTION]:
         return shipment_answers(payload)
+    if system_one and list(questions) == APPLE_WATCH_QUESTIONS:
+        return apple_watch_answers(payload)
     items = questions.items() if system_one else ((q["name"], q) for q in questions)
     answers = {} if system_one else []
     for name, question in items:
@@ -318,6 +355,12 @@ def main():
 
             def shipment_input():
                 return "2\n3\n\n0\n0\n"
+
+            def apple_watch_folder():
+                return output / "Decisions" / ADVANCED_CATEGORY / APPLE_WATCH_FOLDER
+
+            def apple_watch_input():
+                return "2\n4\n\n0\n0\n"
 
             def check_failure(label, input_text=None, overrides=None, timeout=15, timed=True):
                 nonlocal checks
@@ -851,6 +894,143 @@ def main():
             finally:
                 questions_file.write_bytes(original)
 
+            # Foundry evaluates three separate completed-activity hypotheses in one request.
+            watch = apple_watch_folder()
+            watch_source = ROOT / "Decisions" / ADVANCED_CATEGORY / APPLE_WATCH_FOLDER
+            for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
+                assert (watch / filename).is_file(), filename
+                assert (watch / filename).read_bytes() == (watch_source / filename).read_bytes(), filename
+            watch_questions = json.loads((watch / "questions.json").read_text(encoding="utf-8"))
+            assert list(watch_questions) == APPLE_WATCH_QUESTIONS, watch_questions
+            for question in watch_questions.values():
+                assert question["type"] == "noul", question
+                assert set(question["criteria"]) == {"true", "false"}, question
+                assert "at least 10000" in question["criteria"]["true"], question
+                assert "Exactly 5000 additional steps is success" in question["criteria"]["true"], question
+                assert "less than 10000" in question["criteria"]["false"], question
+            watch_state = (watch / "input.txt").read_bytes().decode("utf-8-sig").strip()
+            assert "17:00" in watch_state and "fictional" in watch_state.lower(), watch_state
+            for label, expected in (("Time", "17:00"), ("Current steps", "5000"),
+                                    ("Daily step goal", "10000"), ("Steps remaining", "5000")):
+                assert re.search(rf"(?m)^{label}:\s*{expected}\s*$", watch_state), watch_state
+            assert all(re.search(rf"\b{minutes}(?:[- ]minute|\s+minutes)\b", watch_state)
+                       for minutes in (90, 50, 60)), watch_state
+            histories = re.findall(r"\[[0-9,\s]+\]", watch_state)
+            assert [tuple(json.loads(history)) for history in histories] == APPLE_WATCH_HISTORIES, watch_state
+            text = run(apple_watch_input(), {"LocalSystemOneAPI": "", "LocalDecisionsAPI": "",
+                                             "LocalDecisionModel": "unused-local-model"})
+            assert "Error:" not in text and len(server.requests) == 1, text
+            path, payload = server.requests[0]
+            assert path == FOUNDRY_PATH and set(payload) == {"model", "state", "questions"}, payload
+            assert payload["model"] == FOUNDRY_MODEL and payload["questions"] == watch_questions, payload
+            assert payload["state"] == watch_state, payload
+            headers = server.request_headers[0]
+            assert headers.get("api-key") == FOUNDRY_KEY, headers
+            assert "authorization" not in headers and "ocp-apim-subscription-key" not in headers, headers
+            assert text.count("Calling Foundry API...\n") == 1 and "Calling local API..." not in text, text
+            assert text.count("Scenario Description:\n") == text.count("Input:\n") == 1, text
+            assert text.count("Response JSON:\n") == len(TIMING.findall(text)) == 1, text
+            assert text.count("Press Enter to return to the menu:") == 1, text
+            description = (watch / "ScenarioDescription.txt").read_text(encoding="utf-8").strip()
+            start, displayed_description = displayed_section(text, "Scenario Description:")
+            input_start, displayed_input = displayed_section(text, "Input:", start)
+            assert " ".join(displayed_description.split()) == " ".join(description.split()), text
+            assert " ".join(displayed_input.split()) == " ".join(watch_state.split()), text
+            assert start < input_start < text.index("Calling Foundry API..."), text
+            assert description not in json.dumps(payload), payload
+            watch_labels = assert_apple_watch_answers(text)
+            response_start = text.index("Response JSON:\n")
+            response_json, _ = json.JSONDecoder().raw_decode(text[response_start + len("Response JSON:\n"):].lstrip())
+            assert response_json == apple_watch_answers(payload), response_json
+            assert list(response_json["answers"]) == list(reversed(APPLE_WATCH_QUESTIONS)), response_json
+            assert sum(answer["noul"] for answer in response_json["answers"].values()) == 1.75, response_json
+            assert text.count("Bernoulli Distribution (Yes/No):\n") == 3, text
+            checks += 1
+
+            watch_payload = {"model": FOUNDRY_MODEL, "state": watch_state, "questions": watch_questions}
+            for probabilities in ((0, 0, 0), (1, 1, 1), (0, 0.5, 1)):
+                server.response = apple_watch_answers(watch_payload, probabilities)
+                text = run(apple_watch_input())
+                assert "Error:" not in text and len(server.requests) == 1, text
+                assert_apple_watch_answers(text, probabilities)
+                assert text.count("Response JSON:\n") == len(TIMING.findall(text)) == 1, text
+                assert text.count("Press Enter to return to the menu:") == 1, text
+                checks += 1
+
+            # IDs and types are validated together before rendering any activity chart.
+            for label, modify in (
+                ("missing Apple Watch answer ID", lambda answers: answers.pop(APPLE_WATCH_QUESTIONS[2])),
+                ("extra Apple Watch answer ID", lambda answers: answers.update(Unexpected={"type": "noul", "noul": 0.5})),
+                ("renamed Apple Watch answer ID", lambda answers: answers.update(
+                    **{"Wrong activity": answers.pop(APPLE_WATCH_QUESTIONS[1])})),
+                ("wrong Apple Watch answer type", lambda answers: answers.update(
+                    **{APPLE_WATCH_QUESTIONS[2]: {"type": "choice", "choice": "Yes", "confidence": 0.95,
+                                                 "probabilities": {"Yes": 0.95, "No": 0.05}}})),
+                ("unsupported Apple Watch answer type", lambda answers: answers.update(
+                    **{APPLE_WATCH_QUESTIONS[2]: {"type": "unsupported"}})),
+                ("missing Apple Watch noul", lambda answers: answers[APPLE_WATCH_QUESTIONS[2]].pop("noul")),
+                ("null Apple Watch noul", lambda answers: answers[APPLE_WATCH_QUESTIONS[2]].update(noul=None)),
+                ("NaN Apple Watch noul", lambda answers: answers[APPLE_WATCH_QUESTIONS[2]].update(noul=float("nan"))),
+                ("infinite Apple Watch noul", lambda answers: answers[APPLE_WATCH_QUESTIONS[2]].update(noul=float("inf"))),
+            ):
+                server.response = apple_watch_answers(watch_payload)
+                modify(server.response["answers"])
+                check_failure(label, apple_watch_input())
+                assert len(server.requests) == 1 and "Calling Foundry API..." in raw_text, raw_text
+                assert "Response JSON:" in raw_text, raw_text
+
+            # A numeric failure in the last activity retains earlier charts and never renders a bad chart.
+            for invalid in (-0.01, 1.01):
+                server.response = apple_watch_answers(watch_payload)
+                server.response["answers"][APPLE_WATCH_QUESTIONS[2]]["noul"] = invalid
+                text = run(apple_watch_input())
+                assert "Error:" in text and len(server.requests) == 1, text
+                assert text.count("Bernoulli Distribution (Yes/No):\n") == 2, text
+                assert text.count("Response JSON:\n") == len(TIMING.findall(text)) == 1, text
+                assert "Press Enter to return to the menu:" in text, text
+                assert f"3) {APPLE_WATCH_QUESTIONS[2]}: Probability of yes:" not in text, text
+                first, second = text.index(watch_labels[0]), text.index(watch_labels[1])
+                assert_distribution(text[first:second] + "Response JSON:\n", [("Yes", "15.00"), ("No", "85.00")],
+                                    "Bernoulli Distribution (Yes/No):")
+                assert_distribution(text[second:text.index("Response JSON:\n")] + "Response JSON:\n",
+                                    [("Yes", "65.00"), ("No", "35.00")], "Bernoulli Distribution (Yes/No):")
+                checks += 1
+            server.response = None
+
+            for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
+                file = watch / filename
+                original = file.read_bytes()
+                try:
+                    file.unlink()
+                    check_failure(f"missing Apple Watch {filename}", apple_watch_input(), timed=False)
+                    assert not server.requests, raw_text
+                finally:
+                    file.write_bytes(original)
+            questions_file = watch / "questions.json"
+            original = questions_file.read_bytes()
+            try:
+                for content in ("{", "{}", json.dumps({"Wrong Mode": {"type": "choice", "criteria": {"A": "First", "B": "Second"}}})):
+                    questions_file.write_text(content, encoding="utf-8")
+                    check_failure("invalid Apple Watch questions", apple_watch_input(), timed=False)
+                    assert not server.requests, raw_text
+            finally:
+                questions_file.write_bytes(original)
+            for setting in ("MicrosoftFoundrySystemOneAPI", "MicrosoftFoundryDecisionModelDeploymentName", "MicrosoftFoundryAPIKey"):
+                check_failure(f"missing Apple Watch {setting}", apple_watch_input(), {setting: " "}, timed=False)
+                assert not server.requests and setting in raw_text, raw_text
+                assert "Calling Foundry API..." not in raw_text, raw_text
+            check_failure("invalid Apple Watch Foundry endpoint", apple_watch_input(),
+                          {"MicrosoftFoundrySystemOneAPI": "not-an-endpoint"}, timed=False)
+            assert not server.requests, raw_text
+            check_failure("invalid Apple Watch Foundry key header", apple_watch_input(),
+                          {"MicrosoftFoundryAPIKey": FOUNDRY_KEY + "\ninvalid-header"}, timed=False)
+            assert not server.requests and "MicrosoftFoundryAPIKey" in raw_text, raw_text
+            for status in (401, 403, 500):
+                server.status, server.response = status, {"error": "Apple Watch fixture failure"}
+                check_failure(f"Apple Watch Foundry HTTP {status}", apple_watch_input())
+                assert len(server.requests) == 1 and f"HTTP {status}" in raw_text, raw_text
+            server.status, server.response = 200, None
+
             # Publish must include the same scenario files, using the existing project content glob.
             publish = Path(temporary) / "publish"
             result = subprocess.run(["dotnet", "publish", str(ROOT / "SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj"),
@@ -859,7 +1039,7 @@ def main():
             assert result.returncode == 0, result.stdout + result.stderr
             for category, scenario in [(BASIC_CATEGORY, name) for name in FOLDERS] + \
                                       [(ADVANCED_CATEGORY, FOOTBALL_FOLDER), (ADVANCED_CATEGORY, TOTAL_POINTS_FOLDER),
-                                       (ADVANCED_CATEGORY, SHIPMENT_FOLDER)]:
+                                       (ADVANCED_CATEGORY, SHIPMENT_FOLDER), (ADVANCED_CATEGORY, APPLE_WATCH_FOLDER)]:
                 published_folder = publish / "Decisions" / category / scenario
                 scenario_source = ROOT / "Decisions" / category / scenario
                 filenames = SHIPMENT_FILES if scenario == SHIPMENT_FOLDER else ("ScenarioDescription.txt", "input.txt", "questions.json")
@@ -1009,9 +1189,10 @@ def main():
             assert text.count("1) Local SystemOne - Choice") == 1, text
             assert f"\n{BASIC_CATEGORY}\n" in text, text
             assert f"\n{ADVANCED_CATEGORY}\n" in text, text
-            assert "1) Local SystemOne - Football Game Prediction" in text and "0) Back" in text, text
-            assert "2) Local SystemOne - Football Total Points Probability" in text, text
-            assert "3) Local SystemOne - Shipment Arrival Evidence Updates" in text, text
+            assert "1) Local SystemOne - Football Game Probability Foreacast" in text and "0) Back" in text, text
+            assert "2) Local SystemOne - Football Total Points Cumulative Probability" in text, text
+            assert "3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating" in text, text
+            assert "4) Foundry SystemOne - Apple Watch Step Goal with Decision Rule" in text, text
             assert "Calling local API..." not in text and not TIMING.search(text), text
             if os.name != "nt":
                 colored_menus = "\n".join(re.findall(
@@ -1022,9 +1203,10 @@ def main():
                               "5) Local Decisions - Yes/No (predicate)", "6) Local Decisions - Score",
                               "7) Foundry SystemOne - Choice", "8) Foundry SystemOne - Yes/No (noul)",
                               "9) Foundry SystemOne - Score",
-                              "1) Local SystemOne - Football Game Prediction",
-                              "2) Local SystemOne - Football Total Points Probability",
-                              "3) Local SystemOne - Shipment Arrival Evidence Updates",
+                              "1) Local SystemOne - Football Game Probability Foreacast",
+                              "2) Local SystemOne - Football Total Points Cumulative Probability",
+                              "3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating",
+                              "4) Foundry SystemOne - Apple Watch Step Goal with Decision Rule",
                               "0) Exit", "0) Back"):
                     assert label in colored_menus, (label, raw_text)
             checks += 1
@@ -1039,7 +1221,7 @@ def main():
 
             text = run(football_input())
             pause = text.index("Press Enter to return to the menu:")
-            returned_to_advanced = text.index("1) Local SystemOne - Football Game Prediction", pause)
+            returned_to_advanced = text.index("1) Local SystemOne - Football Game Probability Foreacast", pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 1, text
@@ -1047,7 +1229,7 @@ def main():
 
             text = run(total_points_input())
             pause = text.index("Press Enter to return to the menu:")
-            returned_to_advanced = text.index("2) Local SystemOne - Football Total Points Probability", pause)
+            returned_to_advanced = text.index("2) Local SystemOne - Football Total Points Cumulative Probability", pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 1, text
@@ -1055,10 +1237,18 @@ def main():
 
             text = run(shipment_input())
             pause = text.index("Press Enter to return to the menu:")
-            returned_to_advanced = text.index("3) Local SystemOne - Shipment Arrival Evidence Updates", pause)
+            returned_to_advanced = text.index("3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating", pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 3 and text.count("Press Enter to return to the menu:") == 1, text
+            checks += 1
+
+            text = run(apple_watch_input())
+            pause = text.index("Press Enter to return to the menu:")
+            returned_to_advanced = text.index("4) Foundry SystemOne - Apple Watch Step Goal with Decision Rule", pause)
+            returned_to_startup = text.index("1) Basic Decision Examples", pause)
+            assert returned_to_advanced < returned_to_startup, text
+            assert len(server.requests) == 1 and text.count("Press Enter to return to the menu:") == 1, text
             checks += 1
 
             text = run("2\n 1 \n\n1\n\n0\n1\n2\n\n0\n0\n")
@@ -1090,10 +1280,26 @@ def main():
             assert len(TIMING.findall(text)) == 7 and text.count("Response JSON:\n") == 7, text
             checks += 1
 
+            text = run("2\n 4 \n\n1\n\n4\n\n0\n0\n")
+            assert "Error:" not in text and len(server.requests) == 3, text
+            assert [list(payload["questions"]) for _, payload in server.requests] == \
+                   [APPLE_WATCH_QUESTIONS, list(FOOTBALL_QUESTIONS), APPLE_WATCH_QUESTIONS], server.requests
+            assert [path for path, _ in server.requests] == [FOUNDRY_PATH, "/v1/systemone", FOUNDRY_PATH], server.requests
+            assert server.requests[0][1] == server.requests[2][1] == \
+                   {"model": FOUNDRY_MODEL, "state": watch_state, "questions": watch_questions}, server.requests
+            for index in (0, 2):
+                assert server.request_headers[index].get("api-key") == FOUNDRY_KEY, server.request_headers
+            assert "api-key" not in server.request_headers[1], server.request_headers
+            assert re.findall(r"^\d+\) (?:Park with Kids|Take a Walk|Go for a Long Run):", text, re.MULTILINE) == watch_labels * 2, text
+            assert text.count("Calling Foundry API...\n") == 2 and text.count("Calling local API...\n") == 1, text
+            assert text.count("Press Enter to return to the menu:") == 3, text
+            assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 3, text
+            checks += 1
+
             for input_text, message, count in (
                 ("bad\n\n3\n 0 \n", "Please enter 0, 1, or 2", 3),
                 ("1\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4),
-                ("2\nbad\n\n4\n-1\n 0 \n0\n", "Please enter 0, 1, 2, or 3", 4),
+                ("2\nbad\n\n5\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, or 4", 4),
             ):
                 text = run(input_text)
                 assert text.count(message) == count, text
@@ -1101,11 +1307,11 @@ def main():
                 checks += 1
 
             for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n", "1\n7\n",
-                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n"):
+                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n", "2\n4\n", "2\n4\n\n"):
                 text = run(input_text)
                 assert "Error:" not in text, text
                 expected_requests = 3 if input_text in ("2\n3\n", "2\n3\n\n") else \
-                    1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n") else 0
+                    1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n4\n", "2\n4\n\n") else 0
                 assert len(server.requests) == expected_requests, text
                 checks += 1
             check_failure("missing endpoint", overrides={"LocalSystemOneAPI": ""}, timed=False)
@@ -1208,7 +1414,7 @@ def main():
                 check_failure("60-second timeout", timeout=70)
                 check_failure("Foundry 60-second timeout", basic_input(7), timeout=70)
                 server.delay = 0
-            print(f"PASS: {checks} console integration scenarios (nine Basic examples and three Advanced examples included).")
+            print(f"PASS: {checks} console integration scenarios (nine Basic examples and four Advanced examples included).")
     finally:
         server.shutdown()
         server.server_close()

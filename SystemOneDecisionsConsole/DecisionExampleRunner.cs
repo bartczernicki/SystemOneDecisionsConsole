@@ -39,22 +39,25 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
 
     internal static IReadOnlyList<DecisionExample> AdvancedExamples { get; } =
     [
-        new("Local SystemOne - Football Game Prediction",
+        new("Local SystemOne - Football Game Probability Foreacast",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-FootballGamePrediction"),
             DecisionBackend.LocalSystemOne, "mixed"),
-        new("Local SystemOne - Football Total Points Probability",
+        new("Local SystemOne - Football Total Points Cumulative Probability",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-FootballTotalPointsProbability"),
             DecisionBackend.LocalSystemOne, "score",
             new("Final Total Points Band", ["Under 30", "30-40", "41-49", "50-59", "60 or More"],
                 [2, 3, 4], "Chance of more than 40 total points")),
-        new("Local SystemOne - Shipment Arrival Evidence Updates",
+        new("Local SystemOne - Shipment Arrival Evidence with Bayesian updating",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-ShipmentArrivalEvidenceUpdates"),
             DecisionBackend.LocalSystemOne, "choice", EvidenceStages:
             [
                 new("Initial information", "input.txt"),
                 new("Carrier records", "evidence-2.txt"),
                 new("Verified delivery readiness", "evidence-3.txt")
-            ])
+            ]),
+        new("Foundry SystemOne - Apple Watch Step Goal with Decision Rule",
+            Path.Combine("Advanced Decision Examples", "FoundrySystemOne-AppleWatchStepGoal"),
+            DecisionBackend.FoundrySystemOne, "noul")
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()

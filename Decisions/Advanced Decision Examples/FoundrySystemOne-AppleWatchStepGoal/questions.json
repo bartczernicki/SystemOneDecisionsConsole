@@ -1,0 +1,26 @@
+{
+  "Park with Kids": {
+    "type": "noul",
+    "instructions": "Estimate the probability of reaching today's 10000-step goal conditional on completing the planned 90-minute Park with Kids activity today. Start at 5000 current steps and treat this activity as the only source of additional steps. Use its supplied plan and historical additional-step counts as evidence without prescribing the historical success fraction as the probability. Do not include a chance of selecting or completing the activity. This is a separate Yes/No forecast, not one category in a distribution across activities; do not combine or normalize its probability with the other alternatives.",
+    "criteria": {
+      "true": "5000 current steps plus the additional steps from Park with Kids is at least 10000. Exactly 5000 additional steps is success.",
+      "false": "5000 current steps plus the additional steps from Park with Kids is less than 10000; the activity adds fewer than 5000 steps."
+    }
+  },
+  "Take a Walk": {
+    "type": "noul",
+    "instructions": "Estimate the probability of reaching today's 10000-step goal conditional on completing the planned 50-minute Take a Walk activity today. Start at 5000 current steps and treat this activity as the only source of additional steps. Use its supplied plan and historical additional-step counts as evidence without prescribing the historical success fraction as the probability. Do not include a chance of selecting or completing the activity. This is a separate Yes/No forecast, not one category in a distribution across activities; do not combine or normalize its probability with the other alternatives.",
+    "criteria": {
+      "true": "5000 current steps plus the additional steps from Take a Walk is at least 10000. Exactly 5000 additional steps is success.",
+      "false": "5000 current steps plus the additional steps from Take a Walk is less than 10000; the activity adds fewer than 5000 steps."
+    }
+  },
+  "Go for a Long Run": {
+    "type": "noul",
+    "instructions": "Estimate the probability of reaching today's 10000-step goal conditional on completing the planned 60-minute Go for a Long Run activity today. Start at 5000 current steps and treat this activity as the only source of additional steps. Use its supplied plan and historical additional-step counts as evidence without prescribing the historical success fraction as the probability or treating past results as a guarantee. Do not include a chance of selecting or completing the activity. This is a separate Yes/No forecast, not one category in a distribution across activities; do not combine or normalize its probability with the other alternatives.",
+    "criteria": {
+      "true": "5000 current steps plus the additional steps from Go for a Long Run is at least 10000. Exactly 5000 additional steps is success.",
+      "false": "5000 current steps plus the additional steps from Go for a Long Run is less than 10000; the activity adds fewer than 5000 steps."
+    }
+  }
+}

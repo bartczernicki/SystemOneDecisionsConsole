@@ -30,15 +30,16 @@ Select **Advanced Decision Examples** to open its submenu:
 ```text
 Advanced Decision Examples
 
-1) Local SystemOne - Football Game Prediction
-2) Local SystemOne - Football Total Points Probability
-3) Local SystemOne - Shipment Arrival Evidence Updates
+1) Local SystemOne - Football Game Probability Foreacast
+2) Local SystemOne - Football Total Points Cumulative Probability
+3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating
+4) Foundry SystemOne - Apple Watch Step Goal with Decision Rule
 0) Back
 ```
 
 Select an example to display its scenario description, call its configured API, and show a typed answer summary, available confidence, a horizontal probability chart, response time in milliseconds, and formatted response JSON. Press Enter after an example to return to its submenu. Select `0) Back` in either submenu to return to the startup menu, where `0) Exit` closes the application. Yes/No answers remain probabilities; the application does not impose a boolean threshold. Decisions refusals are shown explicitly. End-of-input at any prompt exits cleanly.
 
-### Football Game Prediction
+### Football Game Probability Foreacast
 
 The first advanced example forecasts an Atlanta Falcons at Green Bay Packers game from a halftime snapshot: Atlanta leads 17–7, Green Bay is the home team, and Green Bay was the pregame favorite at −7.5 points. It preserves the supplied statistics and submits three questions of mixed types in a single local SystemOne request. Answers are displayed in the order of the questions in `questions.json`, with numbered labels and a blank line between each result.
 
@@ -50,7 +51,7 @@ The first advanced example forecasts an Atlanta Falcons at Green Bay Packers gam
 
 The total-points answer is a probability-weighted band index from 0 to 4 and may be fractional; it is not a predicted point total. The scenario does not supply a game date, second-half kickoff possession, injuries, or additional statistics.
 
-### Football Total Points Probability
+### Football Total Points Cumulative Probability
 
 The second advanced example reuses the same halftime snapshot and sends one `score` question, **Final Total Points Band**, in one local SystemOne request. Its bands align with the threshold of strictly more than 40 combined final points, including any overtime:
 
@@ -73,7 +74,7 @@ Chance of more than 40 total points: 65.00 %
 
 This aggregation example requires the configured band order and all five returned indices, with finite probabilities from 0 to 1 whose sum is within `1e-6` of one. Invalid distributions are reported as errors. These additional checks apply to this example.
 
-### Shipment Arrival Evidence Updates
+### Shipment Arrival Evidence with Bayesian updating
 
 The third advanced example forecasts fictional shipment **GFM-427** to Grayford Manufacturing in three automatic local SystemOne requests: **Initial information**, **Carrier records**, and **Verified delivery readiness**. Each request uses the same **Shipment Arrival Window** choice question and a cumulative evidence state. All forecasts use the fixed timestamp **November 17, 2026, 09:00 UTC**; later stages reveal records created before that timestamp. The clock does not advance, and earlier requests do not receive later evidence or earlier model answers.
 
@@ -91,9 +92,23 @@ The example displays each stage's cumulative input, answer, confidence, chart, t
 
 The scenario and evidence files are loaded before the first request. This example requires one shared valid choice question with nonblank criteria, the same question ID and answer type at every stage, an allowed selected choice, finite confidence and probabilities from 0 to 1, probability labels exactly matching the shared question's criteria, and a probability sum within `1e-6` of one. Charts and comparisons retain rubric order even when response keys are shuffled. A failed request or invalid stage response stops the remaining requests, identifies the failed stage, and preserves earlier results without presenting a completed three-stage comparison.
 
+### Apple Watch Step Goal with Decision Rule
+
+The fourth advanced example uses a fictional Apple Watch readout at **17:00 today**: **5000 current steps**, a **10000-step daily goal**, and **5000 steps remaining**. It sends one Microsoft Foundry SystemOne request with three separate `noul` questions, displayed in this order:
+
+| Question | Completed activity plan | Historical additional steps |
+| --- | --- | --- |
+| Park with Kids | 90 minutes of mixed walking and play. | 1800, 2200, 2500, 2800, 3100, 3400, 3700, 4100, 4700, 5200. |
+| Take a Walk | A 50-minute walk. | 4400, 4600, 4800, 4900, 5000, 5100, 5200, 5400, 5500, 5700. |
+| Go for a Long Run | A 60-minute run. | 7200, 7600, 7900, 8100, 8400, 8700, 9000, 9300, 9600, 9900. |
+
+Each answer estimates the probability of reaching the goal assuming that activity is completed today and supplies all new steps. **Yes** means `5000 + activity steps >= 10000`; **No** means a final total below 10000. Exactly 5000 additional steps is enough. Plans and histories inform live model estimates without forcing historical success fractions or guaranteed outcomes.
+
+The results are three separate conditional probabilities, each with its own Yes/No Bernoulli chart. They need not sum to one, and the application does not multiply them or normalize them across activities. They do not represent the probability of choosing an activity or a joint outcome. This example uses the existing `MicrosoftFoundrySystemOneAPI`, `MicrosoftFoundryDecisionModelDeploymentName`, and `MicrosoftFoundryAPIKey` settings.
+
 ## Run
 
-Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–3, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9, configure the Foundry settings below. Run from the repository root:
+Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–3, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9 and Advanced option 4, configure the Foundry settings below. Run from the repository root:
 
 ```sh
 dotnet run --project SystemOneDecisionsConsole
@@ -113,7 +128,7 @@ For local examples (Basic options 1–6 and Advanced options 1–3), install LM 
 
 **Note:** For the multi-question examples, increase LM Studio's **Physical Batch Size** setting from `512` to a larger value such as `3000` so the input and questions can be processed together in one shot.
 
-Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. Foundry examples (Basic options 7–9) use the hosted deployment and do not require a local model.
+Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. Foundry examples (Basic options 7–9 and Advanced option 4) use the hosted deployment and do not require a local model.
 
 ## User Secrets for local APIs and Microsoft Foundry
 
@@ -143,7 +158,7 @@ If the loaded model's identifier differs from `clef-flash`, replace `your-loaded
 dotnet user-secrets set "LocalDecisionModel" "your-loaded-model-id" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 ```
 
-For **Foundry examples (Basic options 7–9)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
+For **Foundry examples (Basic options 7–9 and Advanced option 4)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
 
 ```sh
 dotnet user-secrets set "MicrosoftFoundrySystemOneAPI" "https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
@@ -159,7 +174,7 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder groups twelve examples by category: nine in **Basic Decision Examples** and three in **Advanced Decision Examples**:
+The repository-root `Decisions` folder groups thirteen examples by category: nine in **Basic Decision Examples** and four in **Advanced Decision Examples**:
 
 ```text
 Decisions/
@@ -177,10 +192,11 @@ Decisions/
     LocalSystemOne-FootballGamePrediction/
     LocalSystemOne-FootballTotalPointsProbability/
     LocalSystemOne-ShipmentArrivalEvidenceUpdates/
+    FoundrySystemOne-AppleWatchStepGoal/
     .gitkeep
 ```
 
-The eleven existing examples contain the following three files each. The shipment example adds two evidence files to that common set, giving twelve examples and 38 example files in total. The existing Advanced category `.gitkeep` is retained.
+Each example contains the following three common files. The shipment example adds two evidence files to that common set, giving thirteen examples and 41 example files in total. The existing Advanced category `.gitkeep` is retained.
 
 | File | Purpose |
 | --- | --- |
@@ -190,7 +206,7 @@ The eleven existing examples contain the following three files each. The shipmen
 | `evidence-2.txt` | Shipment example only: carrier records appended to the initial state for stage 2. |
 | `evidence-3.txt` | Shipment example only: delivery-readiness records appended to both earlier evidence sets for stage 3. |
 
-Basic examples each demonstrate one question type. Advanced option 1 combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers. Advanced option 2 demonstrates how to derive a cumulative probability from one score distribution. Advanced option 3 compares three live choice distributions as cumulative evidence is revealed. Aggregation and evidence-stage settings are internal application metadata and do not change the API request or response schemas.
+Basic examples each demonstrate one question type. Advanced option 1 combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers. Advanced option 2 demonstrates how to derive a cumulative probability from one score distribution. Advanced option 3 compares three live choice distributions as cumulative evidence is revealed. Advanced option 4 sends three separate goal-reaching `noul` questions in one Foundry SystemOne request. Aggregation and evidence-stage settings are internal application metadata and do not change the API request or response schemas.
 
 Edit the repository-root files to change the scenarios, then rebuild or run again. 
 
@@ -231,7 +247,7 @@ dotnet build SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Release -o ./publish
 ```
 
-Build and publish copy all 38 example files, including the shipment evidence files, while retaining the nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` paths beside the application. User Secrets remain machine-local and are not copied during publishing. The root `.gitignore` excludes Visual Studio settings and .NET build artifacts.
+Build and publish copy all 41 example files, including the shipment evidence files and Apple Watch scenario, while retaining the nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` paths beside the application. User Secrets remain machine-local and are not copied during publishing. The root `.gitignore` excludes Visual Studio settings and .NET build artifacts.
 
 ## Validation
 
