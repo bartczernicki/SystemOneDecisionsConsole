@@ -1,0 +1,9 @@
+Shipment Arrival Evidence Updates is a fictional logistics forecast for shipment GFM-427, a sealed industrial controller pallet destined for Grayford Manufacturing.
+
+The example runs three local SystemOne choice requests automatically: Initial information, Carrier records, and Verified delivery readiness. Every request forecasts arrival from the same fixed timestamp, Tuesday, November 17, 2026, at 09:00 UTC. Later stages reveal records that already existed before that timestamp; the clock does not advance.
+
+Stage 1 starts with fragmented tracking, a broad supplier estimate, and a broad historical arrival pattern. Stage 2 adds matched customs and terminal records and a tentative carrier delivery booking. Stage 3 adds verified final-depot receipt, pallet identity and condition, confirmed vehicle allocation, and a destination appointment. Evidence is cumulative, and all three requests use the same five arrival-window choices.
+
+Arrival means signed receipt of the correct, undamaged pallet at the destination dock. The dock is staffed continuously, so nighttime receipt is possible. The five windows cover Tuesday daytime, Tuesday night, Wednesday daytime, Wednesday night, and Thursday or later, including no successful receipt.
+
+The model supplies every distribution. The evidence is designed to support a progressively more concentrated forecast, but no probability values or monotonic narrowing are imposed. Completed logistics and confirmed commitments still leave uncertainty about future disruption. The final comparison reports the actual probability distributions and Shannon entropy in bits; lower entropy means a more concentrated distribution.

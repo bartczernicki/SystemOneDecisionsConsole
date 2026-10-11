@@ -17,10 +17,12 @@ internal enum DecisionBackend
 internal sealed record ScoreProbabilityAggregation(
     string QuestionId, IReadOnlyList<string> ExpectedBandTitles, IReadOnlyList<int> IncludedIndices, string Label);
 
-internal sealed record DecisionExample(string Label, string Folder, DecisionBackend Backend, string QuestionType,
-    ScoreProbabilityAggregation? Aggregation = null);
+internal sealed record DecisionEvidenceStage(string Label, string InputFile);
 
-internal sealed class DecisionExampleRunner(HttpClient httpClient)
+internal sealed record DecisionExample(string Label, string Folder, DecisionBackend Backend, string QuestionType,
+    ScoreProbabilityAggregation? Aggregation = null, IReadOnlyList<DecisionEvidenceStage>? EvidenceStages = null);
+
+internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
 {
     internal static IReadOnlyList<DecisionExample> Examples { get; } =
     [
@@ -44,7 +46,15 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-FootballTotalPointsProbability"),
             DecisionBackend.LocalSystemOne, "score",
             new("Final Total Points Band", ["Under 30", "30-40", "41-49", "50-59", "60 or More"],
-                [2, 3, 4], "Chance of more than 40 total points"))
+                [2, 3, 4], "Chance of more than 40 total points")),
+        new("Local SystemOne - Shipment Arrival Evidence Updates",
+            Path.Combine("Advanced Decision Examples", "LocalSystemOne-ShipmentArrivalEvidenceUpdates"),
+            DecisionBackend.LocalSystemOne, "choice", EvidenceStages:
+            [
+                new("Initial information", "input.txt"),
+                new("Carrier records", "evidence-2.txt"),
+                new("Verified delivery readiness", "evidence-3.txt")
+            ])
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -95,6 +105,12 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
                     model = "clef-flash";
                 }
             }
+            if (example.EvidenceStages is not null)
+            {
+                await RunEvidenceStagesAsync(example, folder, uri, model, apiKey);
+                return;
+            }
+
             string input = await ReadTextAsync(folder, "input.txt");
             DisplayTextSection("Input:", input, ConsoleColor.Green, "\u001b[38;2;128;255;160m");
             string questionsJson = await ReadTextAsync(folder, "questions.json");
@@ -184,17 +200,22 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
 
         if (responseBody is not null)
         {
-            Console.WriteLine();
-            DisplayColoredLine("Response JSON:", ConsoleColor.Blue, "\u001b[38;2;128;192;255m");
-            try
-            {
-                using var document = JsonDocument.Parse(responseBody);
-                Console.WriteLine(JsonSerializer.Serialize(document.RootElement, JsonOptions));
-            }
-            catch (JsonException)
-            {
-                Console.WriteLine(responseBody);
-            }
+            DisplayResponseJson(responseBody);
+        }
+    }
+
+    private static void DisplayResponseJson(string responseBody)
+    {
+        Console.WriteLine();
+        DisplayColoredLine("Response JSON:", ConsoleColor.Blue, "\u001b[38;2;128;192;255m");
+        try
+        {
+            using var document = JsonDocument.Parse(responseBody);
+            Console.WriteLine(JsonSerializer.Serialize(document.RootElement, JsonOptions));
+        }
+        catch (JsonException)
+        {
+            Console.WriteLine(responseBody);
         }
     }
 
@@ -413,15 +434,20 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
         }
     }
 
-    private static void DisplaySystemOneAnswer(string name, SystemOneAnswer answer, string expectedType, int questionNumber)
+    private static void DisplaySystemOneAnswer(string name, SystemOneAnswer answer, string expectedType, int questionNumber,
+        IEnumerable<string>? choiceOrder = null, int? totalStages = null)
     {
-        string label = $"{questionNumber}) {name}";
+        string label = totalStages is int count
+            ? $"{questionNumber} of {count}) {name}"
+            : $"{questionNumber}) {name}";
         switch (answer)
         {
             case SystemOneChoiceAnswer choice when expectedType == "choice" && !string.IsNullOrEmpty(choice.Choice) && choice.Probabilities is { Count: > 0 }:
                 Console.WriteLine($"{label}: {choice.Choice}");
                 Console.WriteLine($"Confidence: {Probability(choice.Confidence)}");
-                ProbabilityDistributionRenderer.Display(choice.Probabilities.Select(option => new ProbabilityBar(option.Key, option.Value)));
+                ProbabilityDistributionRenderer.Display(choiceOrder is null
+                    ? choice.Probabilities.Select(option => new ProbabilityBar(option.Key, option.Value))
+                    : choiceOrder.Select(key => new ProbabilityBar(key, choice.Probabilities[key])));
                 break;
             case SystemOneNoulAnswer noul when expectedType == "noul":
                 Console.WriteLine($"{label}: Probability of yes: {Probability(noul.Noul)}");

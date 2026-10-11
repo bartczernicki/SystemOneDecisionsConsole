@@ -32,6 +32,7 @@ Advanced Decision Examples
 
 1) Local SystemOne - Football Game Prediction
 2) Local SystemOne - Football Total Points Probability
+3) Local SystemOne - Shipment Arrival Evidence Updates
 0) Back
 ```
 
@@ -72,9 +73,27 @@ Chance of more than 40 total points: 65.00 %
 
 This aggregation example requires the configured band order and all five returned indices, with finite probabilities from 0 to 1 whose sum is within `1e-6` of one. Invalid distributions are reported as errors. These additional checks apply to this example.
 
+### Shipment Arrival Evidence Updates
+
+The third advanced example forecasts fictional shipment **GFM-427** to Grayford Manufacturing in three automatic local SystemOne requests: **Initial information**, **Carrier records**, and **Verified delivery readiness**. Each request uses the same **Shipment Arrival Window** choice question and a cumulative evidence state. All forecasts use the fixed timestamp **November 17, 2026, 09:00 UTC**; later stages reveal records created before that timestamp. The clock does not advance, and earlier requests do not receive later evidence or earlier model answers.
+
+The initial state supplies fragmented tracking, a broad supplier estimate of Tuesday or Wednesday, and historical counts of 22, 18, 24, 16, and 20 comparable shipments across the five arrival windows. Carrier records verify customs release and terminal availability and introduce a tentative Wednesday delivery booking. Final records verify the correct, undamaged pallet at the last depot, confirm a vehicle and driver allocation, and establish a destination appointment. The receiving dock is staffed continuously. Arrival means signed receipt of the correct, undamaged pallet; an attempted delivery does not qualify.
+
+| Choice | Arrival window, all times UTC |
+| --- | --- |
+| Tuesday daytime | November 17, 09:00 up to but excluding 18:00. |
+| Tuesday night | November 17, 18:00 up to but excluding November 18, 06:00. |
+| Wednesday daytime | November 18, 06:00 up to but excluding 18:00. |
+| Wednesday night | November 18, 18:00 up to but excluding November 19, 06:00. |
+| Thursday or later | November 19, 06:00 onward, or no successful receipt. |
+
+The example displays each stage's cumulative input, answer, confidence, chart, timing, and response JSON. Answers are labeled `1 of 3)`, `2 of 3)`, and `3 of 3)`. Stages 2 and 3 explicitly note that new evidence was added and the forecast time is unchanged. After all three succeed, **Evidence Stage Comparison:** shows the five choice probabilities, **Entropy (bits)** to four decimal places, and a **Confidence Score** row directly below entropy containing each stage's actual API confidence as a percentage. Lower entropy means a more concentrated arrival-window distribution. Each transition reports whether entropy and the separate API confidence increased, decreased, or stayed unchanged on the same line; the two changes are calculated independently. Every distribution comes from the live model; the application does not prescribe probabilities, force narrowing, or equate the separate confidence field with distribution concentration.
+
+The scenario and evidence files are loaded before the first request. This example requires one shared valid choice question with nonblank criteria, the same question ID and answer type at every stage, an allowed selected choice, finite confidence and probabilities from 0 to 1, probability labels exactly matching the shared question's criteria, and a probability sum within `1e-6` of one. Charts and comparisons retain rubric order even when response keys are shuffled. A failed request or invalid stage response stops the remaining requests, identifies the failed stage, and preserves earlier results without presenting a completed three-stage comparison.
+
 ## Run
 
-Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–2, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9, configure the Foundry settings below. Run from the repository root:
+Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–3, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9, configure the Foundry settings below. Run from the repository root:
 
 ```sh
 dotnet run --project SystemOneDecisionsConsole
@@ -84,7 +103,7 @@ Use a terminal that supports ANSI RGB colors to display the cyan banner and gold
 
 ## Download LM Studio and a decision model
 
-For local examples (Basic options 1–6 and Advanced options 1–2), install LM Studio and load a decision model such as Clef or Clef-Flash:
+For local examples (Basic options 1–6 and Advanced options 1–3), install LM Studio and load a decision model such as Clef or Clef-Flash:
 
 1. Download the installer for your operating system from the [LM Studio download page](https://lmstudio.ai/download) and install the application.
 2. Open **Discover** and search for `Clef` or `Clef-Flash`. For a concrete download, paste the [ggml-org/Clef-Flash-GGUF model URL](https://huggingface.co/ggml-org/Clef-Flash-GGUF) into the search bar. LM Studio supports searching by model name or Hugging Face URL; see its [model download guide](https://lmstudio.ai/docs/app/basics/download-model).
@@ -111,7 +130,7 @@ The project has a `UserSecretsId` configured and loads these settings with `Micr
 
 Run the following commands from the repository root for the backend you use.
 
-For **local examples (Basic options 1–6 and Advanced options 1–2)**, these endpoints assume LM Studio runs on the same machine. If it runs on another computer, enable [Serve on Local Network](https://lmstudio.ai/docs/developer/core/server/serve-on-network) and replace `localhost:1234` with the server's address and port, such as `10.0.0.37:1234`:
+For **local examples (Basic options 1–6 and Advanced options 1–3)**, these endpoints assume LM Studio runs on the same machine. If it runs on another computer, enable [Serve on Local Network](https://lmstudio.ai/docs/developer/core/server/serve-on-network) and replace `localhost:1234` with the server's address and port, such as `10.0.0.37:1234`:
 
 ```sh
 dotnet user-secrets set "LocalSystemOneAPI" "http://localhost:1234/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
@@ -140,7 +159,7 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder groups eleven examples by category: nine in **Basic Decision Examples** and two in **Advanced Decision Examples**:
+The repository-root `Decisions` folder groups twelve examples by category: nine in **Basic Decision Examples** and three in **Advanced Decision Examples**:
 
 ```text
 Decisions/
@@ -157,18 +176,21 @@ Decisions/
   Advanced Decision Examples/
     LocalSystemOne-FootballGamePrediction/
     LocalSystemOne-FootballTotalPointsProbability/
+    LocalSystemOne-ShipmentArrivalEvidenceUpdates/
     .gitkeep
 ```
 
-Each example directory contains the following three files, for 33 example files in total. The existing Advanced category `.gitkeep` is retained.
+The eleven existing examples contain the following three files each. The shipment example adds two evidence files to that common set, giving twelve examples and 38 example files in total. The existing Advanced category `.gitkeep` is retained.
 
 | File | Purpose |
 | --- | --- |
 | `ScenarioDescription.txt` | Decision Scenario explanation. Never included in the API request. |
 | `input.txt` | This is the input/state prompt that is passed into the decision model. |
 | `questions.json` | These are the questions (choices, yes/no, score) on howto process the decision input. |
+| `evidence-2.txt` | Shipment example only: carrier records appended to the initial state for stage 2. |
+| `evidence-3.txt` | Shipment example only: delivery-readiness records appended to both earlier evidence sets for stage 3. |
 
-Basic examples each demonstrate one question type. Advanced option 1 combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers. Advanced option 2 demonstrates how to derive a cumulative probability from one score distribution; its aggregation settings are internal application metadata and do not change the API request or response schemas.
+Basic examples each demonstrate one question type. Advanced option 1 combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers. Advanced option 2 demonstrates how to derive a cumulative probability from one score distribution. Advanced option 3 compares three live choice distributions as cumulative evidence is revealed. Aggregation and evidence-stage settings are internal application metadata and do not change the API request or response schemas.
 
 Edit the repository-root files to change the scenarios, then rebuild or run again. 
 
@@ -209,7 +231,7 @@ dotnet build SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Release -o ./publish
 ```
 
-The published application retains the nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` examples beside it. User Secrets remain machine-local and are not copied during publishing. The root `.gitignore` excludes Visual Studio settings and .NET build artifacts.
+Build and publish copy all 38 example files, including the shipment evidence files, while retaining the nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` paths beside the application. User Secrets remain machine-local and are not copied during publishing. The root `.gitignore` excludes Visual Studio settings and .NET build artifacts.
 
 ## Validation
 

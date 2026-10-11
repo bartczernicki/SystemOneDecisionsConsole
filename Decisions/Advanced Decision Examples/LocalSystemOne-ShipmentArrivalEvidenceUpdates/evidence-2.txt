@@ -1,0 +1,10 @@
+ADDITIONAL EVIDENCE: CARRIER RECORDS
+The forecasting timestamp remains Tuesday, November 17, 2026, 09:00 UTC. These are newly verified records that already existed before that timestamp. They resolve earlier unknowns; they do not represent passage of time after the initial forecast.
+
+A customs release certificate recorded on November 17 at 02:10 UTC matches shipment GFM-427 and its declared industrial controller pallet. The customs hold has been cleared.
+
+A cross-border terminal inventory scan recorded on November 17 at 06:10 UTC confirms that GFM-427 is physically present and available for pickup. The terminal is 140 km from the carrier's regional final-delivery depot.
+
+A matched carrier record entered on November 17 at 07:05 UTC introduces a tentative delivery booking for Wednesday, November 18, between 09:00 and 15:00 UTC. This is a provisional route window, subject to final vehicle and driver allocation and a destination receiving appointment. It is not a confirmed delivery commitment or evidence that delivery has already occurred.
+
+The information verified at this stage does not yet establish actual terminal departure, final-depot receipt, final vehicle allocation, pallet condition at the final depot, or a destination receiving appointment. Clearance and the tentative carrier booking reduce uncertainty, but successful completion of the remaining transport and receipt is still uncertain.

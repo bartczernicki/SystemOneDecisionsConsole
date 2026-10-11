@@ -1,0 +1,30 @@
+FICTIONAL SHIPMENT FORECAST: GFM-427 for Grayford Manufacturing.
+Fixed forecasting timestamp: Tuesday, November 17, 2026, 09:00 UTC.
+All dates and times in this scenario use UTC. The destination has not received the shipment as of the forecasting timestamp.
+
+The shipment is a sealed industrial controller pallet. Arrival means signed receipt of the correct, undamaged pallet at Grayford Manufacturing's destination dock. An attempted delivery, receipt of a different pallet, or rejection for damage does not count. The destination dock is staffed continuously, so receipt can occur during daytime or nighttime.
+
+INITIAL INFORMATION
+The supplier confirms handoff to the carrier on Monday, November 16, 2026, at 16:30 UTC. The route requires a cross-border freight-terminal transfer, transport to a regional final-delivery depot, and a final delivery run.
+
+Public tracking says "in transit." This general status does not verify the pallet's current location or which transfer has completed. The supplier's estimate, recorded on November 16 at 16:45 UTC, is Tuesday or Wednesday, subject to transfer and clearance delays. No specific carrier delivery booking or destination receiving appointment is available in the information at this stage.
+
+Customs release, terminal pickup, final-depot arrival, pallet condition, carrier delivery booking, local vehicle allocation, and the receiving appointment are unknown at this stage. Do not treat an unknown as evidence that the event failed to occur. Later records may resolve these unknowns without advancing the forecasting timestamp.
+
+HISTORICAL CONTEXT
+An audit completed before November 17 examined 100 comparable shipments at an equivalent Tuesday 09:00 UTC checkpoint. Each was still awaiting destination receipt and had similarly incomplete tracking information. Relative to each shipment's own checkpoint, the recorded arrival-window counts were:
+- Tuesday daytime: 22 shipments.
+- Tuesday night: 18 shipments.
+- Wednesday daytime: 24 shipments.
+- Wednesday night: 16 shipments.
+- Thursday or later, including no successful receipt: 20 shipments.
+These historical counts provide a broad starting context, not prescribed probabilities for GFM-427. Its actual evidence may justify a different distribution.
+
+FIXED ARRIVAL WINDOWS
+- Tuesday daytime: November 17, 2026, 09:00 UTC up to but excluding 18:00 UTC.
+- Tuesday night: November 17, 2026, 18:00 UTC up to but excluding November 18, 2026, 06:00 UTC.
+- Wednesday daytime: November 18, 2026, 06:00 UTC up to but excluding 18:00 UTC.
+- Wednesday night: November 18, 2026, 18:00 UTC up to but excluding November 19, 2026, 06:00 UTC.
+- Thursday or later: November 19, 2026, 06:00 UTC or later, or no successful receipt.
+
+Forecast from only the supplied information. No future event has been observed. Additional evidence in later stages is appended to this state while preserving the fixed November 17, 09:00 UTC forecasting timestamp.

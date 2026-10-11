@@ -1,0 +1,13 @@
+{
+  "Shipment Arrival Window": {
+    "type": "choice",
+    "instructions": "Forecast the arrival window for fictional shipment GFM-427 from only the supplied cumulative evidence at the fixed timestamp November 17, 2026, 09:00 UTC. Arrival means signed receipt of the correct, undamaged pallet at the destination dock; an attempted delivery or rejected pallet does not count. All timestamps are UTC. The five choices are mutually exclusive and exhaustive, including no successful receipt in the last choice. Historical counts are starting context, not prescribed probabilities. Later verified records resolve earlier unknowns and confirm earlier tentative information without advancing the forecasting clock. Planned future events have not happened. Assess the actual evidence and preserve uncertainty about future disruption; do not assume that later stages must produce a more concentrated distribution.",
+    "criteria": {
+      "Tuesday daytime": "Successful arrival on November 17, 2026, at or after 09:00 UTC and before 18:00 UTC.",
+      "Tuesday night": "Successful arrival at or after November 17, 2026, 18:00 UTC and before November 18, 2026, 06:00 UTC.",
+      "Wednesday daytime": "Successful arrival on November 18, 2026, at or after 06:00 UTC and before 18:00 UTC.",
+      "Wednesday night": "Successful arrival at or after November 18, 2026, 18:00 UTC and before November 19, 2026, 06:00 UTC.",
+      "Thursday or later": "Successful arrival at or after November 19, 2026, 06:00 UTC, or no successful signed receipt of the correct, undamaged pallet."
+    }
+  }
+}

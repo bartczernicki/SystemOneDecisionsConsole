@@ -1,0 +1,12 @@
+ADDITIONAL EVIDENCE: VERIFIED DELIVERY READINESS
+The forecasting timestamp remains Tuesday, November 17, 2026, 09:00 UTC. Every record below was created before that timestamp and has now been reconciled against GFM-427. The records update earlier unknowns and confirm allocation and a destination appointment for the tentative Wednesday booking introduced in the carrier records; no future event is treated as completed.
+
+A signed feeder manifest recorded terminal departure on November 17 at 06:20 UTC. A regional final-depot receiving scan recorded arrival on November 17 at 08:15 UTC, after the 140 km transfer. The pallet barcode, controller serial number, and seal match the supplier manifest.
+
+A receiving inspection completed on November 17 at 08:25 UTC reports intact packaging, an intact seal, and no visible damage. The correct pallet is in the final depot's secured outbound area, 28 km from Grayford Manufacturing.
+
+A dispatch allocation recorded on November 17 at 08:40 UTC assigns an available vehicle and driver to the Wednesday, November 18, delivery route. The planned departure is 08:30 UTC on Wednesday; after an earlier route stop, delivery is scheduled for 10:00 to 11:00 UTC. The dispatch instruction is to hold GFM-427 for that allocated Wednesday run. No earlier delivery is requested or authorized.
+
+Grayford Manufacturing's receiving confirmation, recorded on November 17 at 08:45 UTC, reserves signed receipt of GFM-427 on Wednesday, November 18, between 10:00 and 11:00 UTC. The receiving team and suitable unloading equipment are reserved. This confirmed appointment falls within the earlier tentative carrier window of Wednesday 09:00 to 15:00 UTC.
+
+The pallet has not arrived at the destination. Wednesday vehicle departure, road conditions, successful loading, and signed destination receipt remain future events. A breakdown, road disruption, misloading, newly discovered damage, or receiving failure could still cause delay or prevent successful receipt. Use the verified readiness to update the forecast while retaining that uncertainty.

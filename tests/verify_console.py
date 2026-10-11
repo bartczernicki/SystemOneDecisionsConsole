@@ -2,6 +2,7 @@
 """Integration checks: build first; --include-timeout adds two one-minute timeout checks."""
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -24,6 +25,15 @@ FOOTBALL_FOLDER = "LocalSystemOne-FootballGamePrediction"
 TOTAL_POINTS_FOLDER = "LocalSystemOne-FootballTotalPointsProbability"
 TOTAL_POINTS_QUESTION = "Final Total Points Band"
 TOTAL_POINTS_TITLES = ["Under 30", "30-40", "41-49", "50-59", "60 or More"]
+SHIPMENT_FOLDER = "LocalSystemOne-ShipmentArrivalEvidenceUpdates"
+SHIPMENT_QUESTION = "Shipment Arrival Window"
+SHIPMENT_CHOICES = ["Tuesday daytime", "Tuesday night", "Wednesday daytime",
+                    "Wednesday night", "Thursday or later"]
+SHIPMENT_STAGES = ["Initial information", "Carrier records", "Verified delivery readiness"]
+SHIPMENT_FILES = ["ScenarioDescription.txt", "input.txt", "evidence-2.txt", "evidence-3.txt", "questions.json"]
+SHIPMENT_PROBABILITIES = [(0.22, 0.18, 0.24, 0.16, 0.20),
+                         (0.08, 0.06, 0.62, 0.10, 0.14),
+                         (0.01, 0.01, 0.94, 0.02, 0.02)]
 FOOTBALL_QUESTIONS = {
     "Final Game Winner": "choice",
     "Packers Cover -7.5": "noul",
@@ -59,7 +69,7 @@ TIMING = re.compile(r"Response time: (\d+) ms")
 CHART_ROW = re.compile(r"^  (?P<label>.{0,25}) \|(?P<bar>[ █▏▎▍▌▋▊▉]{40})\| (?P<percent>\d+\.\d{2}) %$",
                        re.MULTILINE)
 CHART_HEADINGS = ("Probability Distribution:", "Bernoulli Distribution (Yes/No):")
-SECTION_END = re.compile(r"^(?:Scenario Description:|Input:|Calling (?:local|Foundry) API\.\.\.).*$",
+SECTION_END = re.compile(r"^(?:Scenario Description:|Input:|Stage \d+ of \d+:|Calling (?:local|Foundry) API\.\.\.).*$",
                          re.MULTILINE)
 
 
@@ -118,6 +128,63 @@ def total_points_answers(payload, probabilities=(0.10, 0.25, 0.30, 0.20, 0.15)):
     return {"model": payload["model"], "answers": {TOTAL_POINTS_QUESTION: answer}}
 
 
+def shipment_answers(payload, probabilities=None, confidence=None):
+    """Distinct staged answers with shuffled keys and an optional zero-probability fixture."""
+    if probabilities is None:
+        stage = 2 if "08:45" in payload["state"] else 1 if "02:10" in payload["state"] else 0
+        probabilities = SHIPMENT_PROBABILITIES[stage]
+    choice_index = max(range(len(probabilities)), key=probabilities.__getitem__)
+    answer = {"type": "choice", "choice": SHIPMENT_CHOICES[choice_index],
+              "confidence": probabilities[choice_index] if confidence is None else confidence,
+              "probabilities": {SHIPMENT_CHOICES[index]: probabilities[index] for index in (4, 2, 0, 3, 1)}}
+    return {"model": payload["model"], "answers": {SHIPMENT_QUESTION: answer}}
+
+
+def shipment_sections(text):
+    """Split output at stage headings, keeping each stage's JSON and errors together."""
+    headings = list(re.finditer(r"^Stage (\d) of 3: ([^\n]+)$", text, re.MULTILINE))
+    sections = []
+    for index, heading in enumerate(headings):
+        end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
+        for marker in ("Evidence Stage Comparison:\n", "Press Enter to return to the menu:"):
+            position = text.find(marker, heading.end(), end)
+            if position >= 0:
+                end = position
+        sections.append(text[heading.start():end])
+    return sections
+
+
+def entropy_bits(probabilities):
+    return sum(probability * -math.log2(probability) for probability in probabilities if probability)
+
+
+def assert_shipment_comparison(text, distributions, confidences=None):
+    """Compare raw fixture values with the table, independent of the C# calculations."""
+    start = text.index("Evidence Stage Comparison:\n")
+    end = text.index("Lower entropy means a more concentrated arrival-window distribution.", start)
+    table = text[start:end]
+    rows = [tuple(cell.strip() for cell in line.strip().strip("|").split("|"))
+            for line in table.splitlines() if "|" in line]
+    assert ("Arrival window", "Stage 1", "Stage 2", "Stage 3") in rows, table
+    actual = [row for row in rows if row[0] in SHIPMENT_CHOICES or row[0] in ("Entropy (bits)", "Confidence Score")]
+    entropies = [entropy_bits(distribution) for distribution in distributions]
+    expected = [(choice, *(f"{distribution[index] * 100:.2f} %" for distribution in distributions))
+                for index, choice in enumerate(SHIPMENT_CHOICES)]
+    expected.append(("Entropy (bits)", *(f"{entropy:.4f}" for entropy in entropies)))
+    if confidences is None:
+        confidences = [max(distribution) for distribution in distributions]
+    expected.append(("Confidence Score", *(f"{confidence * 100:.2f} %" for confidence in confidences)))
+    assert actual == expected, (actual, expected, table)
+    assert all(len(line) <= 80 for line in table.splitlines()), table
+    for index in range(2):
+        delta = entropies[index + 1] - entropies[index]
+        change = "decreased" if delta < -1e-12 else "increased" if delta > 1e-12 else "unchanged"
+        confidence_delta = confidences[index + 1] - confidences[index]
+        confidence_change = "increased" if confidence_delta > 0 else "decreased" if confidence_delta < 0 else "unchanged"
+        transition = f"Stage {index + 1} -> Stage {index + 2}: entropy {change}. Confidence {confidence_change}."
+        assert transition in text.splitlines(), text
+
+
 def answers_for(payload, path):
     """Return representative responses, including deliberately fractional scores."""
     system_one = path in ("/v1/systemone", FOUNDRY_PATH)
@@ -126,6 +193,8 @@ def answers_for(payload, path):
         return football_answers(payload)
     if system_one and list(questions) == [TOTAL_POINTS_QUESTION]:
         return total_points_answers(payload)
+    if system_one and list(questions) == [SHIPMENT_QUESTION]:
+        return shipment_answers(payload)
     items = questions.items() if system_one else ((q["name"], q) for q in questions)
     answers = {} if system_one else []
     for name, question in items:
@@ -175,6 +244,8 @@ class Handler(BaseHTTPRequestHandler):
         self.server.requests.append((self.path, payload))
         self.server.request_headers.append({key.lower(): value for key, value in self.headers.items()})
         response = self.server.response
+        if callable(response):
+            response = response(payload, self.path, len(self.server.requests))
         response = answers_for(payload, self.path) if response is None else response
         body = (response if isinstance(response, str) else json.dumps(response)).encode()
         self.send_response(self.server.status)
@@ -241,6 +312,12 @@ def main():
 
             def total_points_input():
                 return "2\n2\n\n0\n0\n"
+
+            def shipment_folder():
+                return output / "Decisions" / ADVANCED_CATEGORY / SHIPMENT_FOLDER
+
+            def shipment_input():
+                return "2\n3\n\n0\n0\n"
 
             def check_failure(label, input_text=None, overrides=None, timeout=15, timed=True):
                 nonlocal checks
@@ -556,6 +633,224 @@ def main():
             finally:
                 questions_file.write_bytes(original)
 
+            # Three sequential forecasts add evidence at one fixed time, without previous predictions.
+            shipment = shipment_folder()
+            shipment_source = ROOT / "Decisions" / ADVANCED_CATEGORY / SHIPMENT_FOLDER
+            for filename in SHIPMENT_FILES:
+                assert (shipment / filename).is_file(), filename
+                assert (shipment / filename).read_bytes() == (shipment_source / filename).read_bytes(), filename
+            shipment_questions = json.loads((shipment / "questions.json").read_text(encoding="utf-8"))
+            assert list(shipment_questions) == [SHIPMENT_QUESTION], shipment_questions
+            shipment_question = shipment_questions[SHIPMENT_QUESTION]
+            assert shipment_question["type"] == "choice", shipment_question
+            assert list(shipment_question["criteria"]) == SHIPMENT_CHOICES, shipment_question
+            evidence = [(shipment / filename).read_bytes().decode("utf-8-sig").strip()
+                        for filename in ("input.txt", "evidence-2.txt", "evidence-3.txt")]
+            states = ["\n\n".join(evidence[:index + 1]) for index in range(3)]
+            assert "GFM-427" in evidence[0] and "2026" in evidence[0] and "09:00" in evidence[0], evidence[0]
+            assert "02:10" in evidence[1] and "06:10" in evidence[1], evidence[1]
+            assert all(timestamp in evidence[2] for timestamp in ("06:20", "08:15", "08:25", "08:40", "08:45")), evidence[2]
+            assert "02:10" not in evidence[0] and "08:45" not in states[1], states
+            text = run(shipment_input())
+            assert "Error:" not in text and len(server.requests) == 3, text
+            assert text.count("Scenario Description:\n") == 1, text
+            assert text.count("Input:\n") == text.count("Calling local API...\n") == 3, text
+            assert text.count("Response JSON:\n") == len(TIMING.findall(text)) == 3, text
+            assert text.count("Press Enter to return to the menu:") == 1, text
+            sections = shipment_sections(text)
+            assert len(sections) == 3, text
+            description = (shipment / "ScenarioDescription.txt").read_text(encoding="utf-8").strip()
+            _, displayed_description = displayed_section(text, "Scenario Description:")
+            assert " ".join(displayed_description.split()) == " ".join(description.split()), displayed_description
+            for index, ((path, payload), section) in enumerate(zip(server.requests, sections)):
+                assert path == "/v1/systemone" and set(payload) == {"model", "state", "questions"}, payload
+                assert payload["model"] == "console-test-model" and payload["questions"] == shipment_questions, payload
+                assert payload["state"] == states[index], (index, payload["state"], states[index])
+                assert all(key not in payload["state"] for key in ('"answers"', '"probabilities"', '"confidence"')), payload
+                assert description not in json.dumps(payload), payload
+                assert "api-key" not in server.request_headers[index] and "authorization" not in server.request_headers[index]
+                assert section.startswith(f"Stage {index + 1} of 3: {SHIPMENT_STAGES[index]}\n"), section
+                updated_note = "Updated information: new evidence added; forecast time is unchanged."
+                if index:
+                    assert section.splitlines()[1] == updated_note, section
+                    assert section.index(updated_note) < section.index("Input:\n"), section
+                else:
+                    assert updated_note not in section, section
+                input_start, displayed_input = displayed_section(section, "Input:")
+                assert " ".join(displayed_input.split()) == " ".join(states[index].split()), section
+                assert input_start < section.index("Calling local API...") < section.index("Response time:"), section
+                probabilities = SHIPMENT_PROBABILITIES[index]
+                selected = SHIPMENT_CHOICES[max(range(5), key=probabilities.__getitem__)]
+                assert f"{index + 1} of 3) {SHIPMENT_QUESTION}: {selected}" in section, section
+                assert f"Confidence: {max(probabilities) * 100:.2f} %" in section, section
+                assert_distribution(section, [(choice, f"{probability * 100:.2f}")
+                                               for choice, probability in zip(SHIPMENT_CHOICES, probabilities)])
+                response_json, _ = json.JSONDecoder().raw_decode(section.split("Response JSON:\n", 1)[1].lstrip())
+                assert response_json == shipment_answers(payload, probabilities), response_json
+                assert list(response_json["answers"][SHIPMENT_QUESTION]["probabilities"]) == \
+                       [SHIPMENT_CHOICES[index] for index in (4, 2, 0, 3, 1)], response_json
+            assert_shipment_comparison(text, SHIPMENT_PROBABILITIES)
+            assert text.index("Evidence Stage Comparison:") > text.rindex("Response JSON:"), text
+            checks += 1
+
+            # Preserve zeros and rounding, and report entropy and confidence changes independently.
+            for distributions, confidences in (
+                ([SHIPMENT_PROBABILITIES[0], (0, 0.1, 0.7, 0.1, 0.1), (0, 0, 1, 0, 0)],
+                 (0.79, 0.68, 0.57)),
+                ([(0, 0, 1, 0, 0), (0.2, 0.2, 0.2, 0.2, 0.2), (0.2, 0.2, 0.2, 0.2, 0.2)],
+                 (0.57, 0.68, 0.68)),
+                ([(0.33336, 0.33336, 0.11112, 0.11112, 0.11104),
+                  (0.08, 0.06, 0.6200005, 0.10, 0.14), (0.01, 0.01, 0.9399995, 0.02, 0.02)],
+                 (0.79, 0.79, 0.68)),
+            ):
+                assert all(confidence != max(distribution) for confidence, distribution in zip(confidences, distributions))
+                server.response = lambda payload, path, number, distributions=distributions, confidences=confidences: \
+                    shipment_answers(payload, distributions[number - 1], confidences[number - 1])
+                text = run(shipment_input())
+                assert "Error:" not in text and len(server.requests) == 3, text
+                sections = shipment_sections(text)
+                assert len(sections) == 3, text
+                for section, probabilities, confidence in zip(sections, distributions, confidences):
+                    assert f"Confidence: {confidence * 100:.2f} %" in section, section
+                    rows = assert_distribution(section, [(choice, f"{probability * 100:.2f}")
+                                                         for choice, probability in zip(SHIPMENT_CHOICES, probabilities)])
+                    for (_, bar, _), probability in zip(rows, probabilities):
+                        if probability == 0:
+                            assert bar == " " * 40, bar
+                assert_shipment_comparison(text, distributions, confidences)
+                checks += 1
+            server.response = None
+
+            # A second-stage invalid response leaves stage 1 intact, shows current JSON, and stops stage 3.
+            shipment_payload = {"model": "fixture", "state": states[1], "questions": shipment_questions}
+            invalid_answers = [
+                ("missing answer ID", lambda answers: answers.pop(SHIPMENT_QUESTION)),
+                ("extra answer ID", lambda answers: answers.update(Unexpected={"type": "noul", "noul": 0.5})),
+                ("renamed answer ID", lambda answers: answers.update(
+                    **{"Wrong question": answers.pop(SHIPMENT_QUESTION)})),
+                ("mismatched answer type", lambda answers: answers.update(
+                    **{SHIPMENT_QUESTION: {"type": "noul", "noul": 0.6}})),
+            ]
+            invalid_distributions = [
+                ("missing probability key", lambda answer: answer["probabilities"].pop(SHIPMENT_CHOICES[0])),
+                ("extra probability key", lambda answer: answer["probabilities"].update(Unexpected=0)),
+                ("renamed probability key", lambda answer: answer["probabilities"].update(
+                    **{"Tuesday evening": answer["probabilities"].pop(SHIPMENT_CHOICES[1])})),
+                ("negative probability", lambda answer: answer["probabilities"].update({SHIPMENT_CHOICES[0]: -0.01})),
+                ("probability over one", lambda answer: answer["probabilities"].update({SHIPMENT_CHOICES[0]: 1.01})),
+                ("NaN probability", lambda answer: answer["probabilities"].update({SHIPMENT_CHOICES[0]: float("nan")})),
+                ("infinite probability", lambda answer: answer["probabilities"].update({SHIPMENT_CHOICES[0]: float("inf")})),
+                ("null probability", lambda answer: answer["probabilities"].update({SHIPMENT_CHOICES[0]: None})),
+                ("null probabilities", lambda answer: answer.update(probabilities=None)),
+                ("empty probabilities", lambda answer: answer.update(probabilities={})),
+                ("missing probabilities", lambda answer: answer.pop("probabilities")),
+                ("probability sum low", lambda answer: answer["probabilities"].update({SHIPMENT_CHOICES[0]: 0.07})),
+                ("probability sum high", lambda answer: answer["probabilities"].update({SHIPMENT_CHOICES[0]: 0.09})),
+                ("unknown selected choice", lambda answer: answer.update(choice="Friday")),
+                ("blank selected choice", lambda answer: answer.update(choice=" ")),
+                ("null selected choice", lambda answer: answer.update(choice=None)),
+                ("missing selected choice", lambda answer: answer.pop("choice")),
+                ("negative confidence", lambda answer: answer.update(confidence=-0.01)),
+                ("confidence over one", lambda answer: answer.update(confidence=1.01)),
+                ("NaN confidence", lambda answer: answer.update(confidence=float("nan"))),
+                ("infinite confidence", lambda answer: answer.update(confidence=float("inf"))),
+                ("null confidence", lambda answer: answer.update(confidence=None)),
+                ("missing confidence", lambda answer: answer.pop("confidence")),
+            ]
+            failures = []
+            for label, modify in invalid_answers:
+                response = shipment_answers(shipment_payload)
+                modify(response["answers"])
+                failures.append((label, response))
+            for label, modify in invalid_distributions:
+                response = shipment_answers(shipment_payload)
+                modify(response["answers"][SHIPMENT_QUESTION])
+                failures.append((label, response))
+            failures += [("malformed JSON", "{"), ("missing response answers", {"model": "fixture"}),
+                         ("null response answers", {"model": "fixture", "answers": None})]
+            for label, response in failures:
+                server.response = lambda payload, path, number, response=response: \
+                    response if number == 2 else shipment_answers(payload)
+                text = run(shipment_input())
+                assert len(server.requests) == 2, (label, server.requests)
+                assert "Error: Stage 2 of 3 (Carrier records):" in text, (label, text)
+                assert "Evidence sequence incomplete; later stages were not run." in text, (label, text)
+                assert "Evidence Stage Comparison:" not in text, (label, text)
+                assert text.count("Probability Distribution:\n") == 1, (label, text)
+                assert text.count("Response JSON:\n") == len(TIMING.findall(text)) == 2, (label, text)
+                assert text.count("Press Enter to return to the menu:") == 1, (label, text)
+                sections = shipment_sections(text)
+                assert len(sections) == 2, (label, text)
+                assert_distribution(sections[0], [(choice, f"{probability * 100:.2f}")
+                                                  for choice, probability in zip(SHIPMENT_CHOICES, SHIPMENT_PROBABILITIES[0])])
+                assert "Confidence:" not in sections[1] and not re.search(
+                    rf"^\d+ of 3\) {re.escape(SHIPMENT_QUESTION)}:", sections[1], re.MULTILINE), (label, text)
+                current_json = sections[1].split("Response JSON:\n", 1)[1].lstrip()
+                if isinstance(response, str):
+                    assert current_json.startswith(response), (label, current_json)
+                else:
+                    actual_response, _ = json.JSONDecoder().raw_decode(current_json)
+                    # String comparison also handles deliberate NaN/infinity fixture values.
+                    assert json.dumps(actual_response, sort_keys=True) == json.dumps(response, sort_keys=True), (label, current_json)
+                checks += 1
+            server.response = None
+
+            # HTTP errors at any stage stop requests, without reprinting an earlier response's JSON.
+            for failed_stage in (1, 2, 3):
+                def shipment_http_failure(payload, path, number, failed_stage=failed_stage):
+                    server.status = 503 if number == failed_stage else 200
+                    return {"error": f"shipment stage {number} failure"} if number == failed_stage else shipment_answers(payload)
+                server.response = shipment_http_failure
+                text = run(shipment_input())
+                assert len(server.requests) == failed_stage, text
+                assert f"Error: Stage {failed_stage} of 3 ({SHIPMENT_STAGES[failed_stage - 1]}):" in text, text
+                assert "HTTP 503" in text and "Evidence sequence incomplete; later stages were not run." in text, text
+                assert "Evidence Stage Comparison:" not in text, text
+                assert text.count("Probability Distribution:\n") == failed_stage - 1, text
+                assert text.count("Response JSON:\n") == failed_stage - 1, text
+                sections = shipment_sections(text)
+                assert len(sections) == failed_stage and "Response JSON:" not in sections[-1], text
+                for index, section in enumerate(sections[:-1]):
+                    assert_distribution(section, [(choice, f"{probability * 100:.2f}")
+                                                   for choice, probability in zip(SHIPMENT_CHOICES, SHIPMENT_PROBABILITIES[index])])
+                checks += 1
+            server.status, server.response = 200, None
+
+            # Preflight reads every file; even a final evidence-file error causes no live request.
+            for filename in SHIPMENT_FILES:
+                file = shipment / filename
+                original = file.read_bytes()
+                try:
+                    file.unlink()
+                    check_failure(f"missing shipment {filename}", shipment_input(), timed=False)
+                    assert not server.requests and "Evidence Stage Comparison:" not in raw_text, raw_text
+                finally:
+                    file.write_bytes(original)
+            for filename in ("input.txt", "evidence-2.txt", "evidence-3.txt"):
+                file = shipment / filename
+                original = file.read_bytes()
+                try:
+                    for content in ("", " \n\t\n "):
+                        file.write_text(content, encoding="utf-8")
+                        check_failure(f"empty shipment {filename}", shipment_input(), timed=False)
+                        assert not server.requests and "Evidence Stage Comparison:" not in raw_text, raw_text
+                finally:
+                    file.write_bytes(original)
+            questions_file = shipment / "questions.json"
+            original = questions_file.read_bytes()
+            try:
+                invalid_questions = ["{", "{}", json.dumps({SHIPMENT_QUESTION: {"type": "noul"}}),
+                                     json.dumps({SHIPMENT_QUESTION: {"type": "choice", "criteria": {"Only": "One choice"}}}),
+                                     json.dumps({SHIPMENT_QUESTION: {"type": "choice", "criteria": None}}),
+                                     json.dumps({SHIPMENT_QUESTION: {"type": "choice", "criteria": {" ": "Blank", "Valid": "Valid"}}}),
+                                     json.dumps({**shipment_questions, "Second choice question": shipment_question})]
+                for content in invalid_questions:
+                    questions_file.write_text(content, encoding="utf-8")
+                    check_failure("invalid shipment questions", shipment_input(), timed=False)
+                    assert not server.requests and "Evidence Stage Comparison:" not in raw_text, raw_text
+            finally:
+                questions_file.write_bytes(original)
+
             # Publish must include the same scenario files, using the existing project content glob.
             publish = Path(temporary) / "publish"
             result = subprocess.run(["dotnet", "publish", str(ROOT / "SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj"),
@@ -563,10 +858,12 @@ def main():
                                     capture_output=True, text=True, encoding="utf-8", cwd=ROOT, timeout=60)
             assert result.returncode == 0, result.stdout + result.stderr
             for category, scenario in [(BASIC_CATEGORY, name) for name in FOLDERS] + \
-                                      [(ADVANCED_CATEGORY, FOOTBALL_FOLDER), (ADVANCED_CATEGORY, TOTAL_POINTS_FOLDER)]:
+                                      [(ADVANCED_CATEGORY, FOOTBALL_FOLDER), (ADVANCED_CATEGORY, TOTAL_POINTS_FOLDER),
+                                       (ADVANCED_CATEGORY, SHIPMENT_FOLDER)]:
                 published_folder = publish / "Decisions" / category / scenario
                 scenario_source = ROOT / "Decisions" / category / scenario
-                for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
+                filenames = SHIPMENT_FILES if scenario == SHIPMENT_FOLDER else ("ScenarioDescription.txt", "input.txt", "questions.json")
+                for filename in filenames:
                     assert (published_folder / filename).read_bytes() == (scenario_source / filename).read_bytes(), (scenario, filename)
             checks += 1
 
@@ -714,6 +1011,7 @@ def main():
             assert f"\n{ADVANCED_CATEGORY}\n" in text, text
             assert "1) Local SystemOne - Football Game Prediction" in text and "0) Back" in text, text
             assert "2) Local SystemOne - Football Total Points Probability" in text, text
+            assert "3) Local SystemOne - Shipment Arrival Evidence Updates" in text, text
             assert "Calling local API..." not in text and not TIMING.search(text), text
             if os.name != "nt":
                 colored_menus = "\n".join(re.findall(
@@ -726,6 +1024,7 @@ def main():
                               "9) Foundry SystemOne - Score",
                               "1) Local SystemOne - Football Game Prediction",
                               "2) Local SystemOne - Football Total Points Probability",
+                              "3) Local SystemOne - Shipment Arrival Evidence Updates",
                               "0) Exit", "0) Back"):
                     assert label in colored_menus, (label, raw_text)
             checks += 1
@@ -754,6 +1053,14 @@ def main():
             assert len(server.requests) == 1, text
             checks += 1
 
+            text = run(shipment_input())
+            pause = text.index("Press Enter to return to the menu:")
+            returned_to_advanced = text.index("3) Local SystemOne - Shipment Arrival Evidence Updates", pause)
+            returned_to_startup = text.index("1) Basic Decision Examples", pause)
+            assert returned_to_advanced < returned_to_startup, text
+            assert len(server.requests) == 3 and text.count("Press Enter to return to the menu:") == 1, text
+            checks += 1
+
             text = run("2\n 1 \n\n1\n\n0\n1\n2\n\n0\n0\n")
             assert "Error:" not in text and len(server.requests) == 3, text
             assert [list(payload["questions"]) for _, payload in server.requests[:2]] == [list(FOOTBALL_QUESTIONS)] * 2
@@ -772,10 +1079,21 @@ def main():
             assert text.count("Press Enter to return to the menu:") == 3, text
             checks += 1
 
+            text = run("2\n 3 \n\n1\n\n3\n\n0\n0\n")
+            assert "Error:" not in text and len(server.requests) == 7, text
+            assert [list(payload["questions"]) for _, payload in server.requests] == \
+                   [[SHIPMENT_QUESTION]] * 3 + [list(FOOTBALL_QUESTIONS)] + [[SHIPMENT_QUESTION]] * 3, server.requests
+            assert [payload["state"] for _, payload in server.requests[:3]] == states, server.requests
+            assert [payload["state"] for _, payload in server.requests[4:]] == states, server.requests
+            assert text.count("Evidence Stage Comparison:\n") == 2, text
+            assert text.count("Press Enter to return to the menu:") == 3, text
+            assert len(TIMING.findall(text)) == 7 and text.count("Response JSON:\n") == 7, text
+            checks += 1
+
             for input_text, message, count in (
                 ("bad\n\n3\n 0 \n", "Please enter 0, 1, or 2", 3),
                 ("1\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4),
-                ("2\nbad\n\n3\n-1\n 0 \n0\n", "Please enter 0, 1, or 2", 4),
+                ("2\nbad\n\n4\n-1\n 0 \n0\n", "Please enter 0, 1, 2, or 3", 4),
             ):
                 text = run(input_text)
                 assert text.count(message) == count, text
@@ -783,11 +1101,12 @@ def main():
                 checks += 1
 
             for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n", "1\n7\n",
-                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n"):
+                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n"):
                 text = run(input_text)
                 assert "Error:" not in text, text
-                assert len(server.requests) == (1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n",
-                                                                   "2\n2\n", "2\n2\n\n") else 0), text
+                expected_requests = 3 if input_text in ("2\n3\n", "2\n3\n\n") else \
+                    1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n") else 0
+                assert len(server.requests) == expected_requests, text
                 checks += 1
             check_failure("missing endpoint", overrides={"LocalSystemOneAPI": ""}, timed=False)
             assert not server.requests
@@ -889,7 +1208,7 @@ def main():
                 check_failure("60-second timeout", timeout=70)
                 check_failure("Foundry 60-second timeout", basic_input(7), timeout=70)
                 server.delay = 0
-            print(f"PASS: {checks} console integration scenarios (nine Basic examples and both advanced football examples included).")
+            print(f"PASS: {checks} console integration scenarios (nine Basic examples and three Advanced examples included).")
     finally:
         server.shutdown()
         server.server_close()
