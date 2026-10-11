@@ -1,0 +1,1 @@
+Rate the severity of an export failure. Exporting a report fails in Safari, but succeeds in Chrome. The ordered rubric runs from Cosmetic (0), through Workaround available (1), to Fully blocked (2). SystemOne returns a probability-weighted score, which can fall between levels.

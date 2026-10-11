@@ -1,0 +1,7 @@
+[
+  {
+    "name": "Duplicate Charge",
+    "type": "predicate",
+    "instructions": "Does the customer report being charged more than once for the same purchase? A yes means the customer explicitly describes multiple charges for one purchase."
+  }
+]

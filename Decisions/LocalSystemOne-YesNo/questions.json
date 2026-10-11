@@ -1,0 +1,10 @@
+{
+  "Duplicate Charge": {
+    "type": "noul",
+    "instructions": "Does the customer report being charged more than once for the same purchase?",
+    "criteria": {
+      "true": "The customer explicitly describes multiple charges for one purchase.",
+      "false": "The customer does not report multiple charges for one purchase."
+    }
+  }
+}

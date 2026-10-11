@@ -2,7 +2,7 @@
 
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         ConsoleColor originalColor = Console.ForegroundColor;
         SetColor(ConsoleColor.Cyan, "\u001b[38;2;0;229;255m");
@@ -21,17 +21,21 @@ class Program
             """);
         RestoreColor(originalColor);
 
+        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+        var runner = new DecisionExampleRunner(httpClient);
+
         while (true)
         {
             Console.WriteLine();
             SetColor(ConsoleColor.Yellow, "\u001b[38;2;255;215;0m");
-            Console.WriteLine("1) Local System One - Choice");
-            Console.WriteLine("2) Local System One - Yes/No (noul)");
-            Console.WriteLine("3) Local System One -Score");
+            for (int index = 0; index < DecisionExampleRunner.Examples.Count; index++)
+            {
+                Console.WriteLine($"{index + 1}) {DecisionExampleRunner.Examples[index].Label}");
+            }
             Console.WriteLine("0) Exit");
             RestoreColor(originalColor);
 
-            string? selectedMode;
+            DecisionExample selectedExample;
             while (true)
             {
                 Console.Write("Select an option: ");
@@ -42,25 +46,17 @@ class Program
                     return;
                 }
 
-                selectedMode = selection switch
+                if (int.TryParse(selection, out int option) && option >= 1 && option <= DecisionExampleRunner.Examples.Count)
                 {
-                    "1" => "Local System One - Choice",
-                    "2" => "Local System One - Yes/No (noul)",
-                    "3" => "Local System One -Score",
-                    _ => null
-                };
-
-                if (selectedMode is not null)
-                {
+                    selectedExample = DecisionExampleRunner.Examples[option - 1];
                     break;
                 }
 
-                Console.WriteLine("Please enter 0, 1, 2, or 3");
+                Console.WriteLine("Please enter 0, 1, 2, 3, 4, 5, or 6");
             }
 
             Console.WriteLine();
-            Console.WriteLine($"Selected mode: {selectedMode}");
-            Console.WriteLine("Workflow coming soon");
+            await runner.RunAsync(selectedExample);
             Console.Write("Press Enter to return to the menu: ");
             if (Console.ReadLine() is null)
             {
@@ -69,7 +65,7 @@ class Program
         }
     }
 
-    private static void SetColor(ConsoleColor color, string ansiCode)
+    internal static void SetColor(ConsoleColor color, string ansiCode)
     {
         if (OperatingSystem.IsWindows())
         {
@@ -81,7 +77,7 @@ class Program
         }
     }
 
-    private static void RestoreColor(ConsoleColor originalColor)
+    internal static void RestoreColor(ConsoleColor originalColor)
     {
         if (OperatingSystem.IsWindows())
         {

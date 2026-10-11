@@ -1,0 +1,1 @@
+Route a customer support complaint to the correct team. The customer reports two charges for one order, so the example compares billing, technical support, and shipping. The Decisions API returns the selected department and the probability of each choice.

@@ -1,0 +1,21 @@
+[
+  {
+    "name": "Severity",
+    "type": "score",
+    "instructions": "Rate the severity of the reported export problem using the ordered levels. Consider whether the task can still be completed with a practical workaround.",
+    "levels": [
+      {
+        "label": "Cosmetic",
+        "description": "A visual issue that does not prevent the task from being completed normally."
+      },
+      {
+        "label": "Workaround Available",
+        "description": "The normal path fails, but a practical workaround allows the task to be completed."
+      },
+      {
+        "label": "Fully Blocked",
+        "description": "The task cannot be completed and no practical workaround is available."
+      }
+    ]
+  }
+]

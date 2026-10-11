@@ -1,0 +1,11 @@
+{
+  "Department": {
+    "type": "choice",
+    "instructions": "Which support team should handle this customer complaint? Select the team responsible for the main issue.",
+    "criteria": {
+      "Billing": "Payment problems, duplicate charges, invoices, or refunds.",
+      "Technical": "Problems using the website, application, or product functionality.",
+      "Shipping": "Delivery delays, missing packages, or shipping address problems."
+    }
+  }
+}
