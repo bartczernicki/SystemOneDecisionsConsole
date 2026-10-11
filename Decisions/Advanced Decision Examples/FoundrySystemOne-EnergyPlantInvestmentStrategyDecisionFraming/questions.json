@@ -1,0 +1,32 @@
+{
+  "Creativity Hat (Green)": {
+    "type": "choice",
+    "instructions": "Recommend among the four supplied strategies using the fictional Meridian Energy facts and the active thinking frame provided in the state. Respect the available capital, approval requirements, and stated uncertainties; do not invent financing, signed contracts, partner commitments, market data, or another strategy. Return a choice recommendation distribution across these four strategies, summing to one. The probabilities express uncertainty about the recommendation under the active frame, not probabilities of financial success, project profitability, or any cash-flow case. Do not prescribe probability values or force a particular winning strategy.",
+    "criteria": {
+      "Full Build Now": "Authorize the estimated $150 million full project, with construction contingent on approvals; retain full ownership and capital/risk exposure.",
+      "Phased Investment": "Authorize a $38 million first phase of 20 MW solar plus 10 MW / 40 MWh battery, commissioning at month 18. Review expansion after 12 operating months, with separate approval; estimated combined cost is $155 million and full commissioning is around month 48 if expanded.",
+      "Joint Venture": "Pursue a 50/50 full-project joint venture with Meridian contributing an estimated $75 million and sharing returns and risks equally. Allow six additional negotiation months; partner commitment and governance remain unresolved.",
+      "Defer Investment": "Authorize up to $2 million for engineering, permits, grid studies, and customer negotiations over six months, then reconsider construction. Preserve capital while accepting quotation changes and delay."
+    }
+  },
+  "Caution Hat (Black)": {
+    "type": "choice",
+    "instructions": "Recommend among the four supplied strategies using the fictional Meridian Energy facts and the active thinking frame provided in the state. Respect the available capital, approval requirements, and stated uncertainties; do not invent financing, signed contracts, partner commitments, market data, or another strategy. Return a choice recommendation distribution across these four strategies, summing to one. The probabilities express uncertainty about the recommendation under the active frame, not probabilities of financial success, project profitability, or any cash-flow case. Do not prescribe probability values or force a particular winning strategy.",
+    "criteria": {
+      "Full Build Now": "Authorize the estimated $150 million full project, with construction contingent on approvals; retain full ownership and capital/risk exposure.",
+      "Phased Investment": "Authorize a $38 million first phase of 20 MW solar plus 10 MW / 40 MWh battery, commissioning at month 18. Review expansion after 12 operating months, with separate approval; estimated combined cost is $155 million and full commissioning is around month 48 if expanded.",
+      "Joint Venture": "Pursue a 50/50 full-project joint venture with Meridian contributing an estimated $75 million and sharing returns and risks equally. Allow six additional negotiation months; partner commitment and governance remain unresolved.",
+      "Defer Investment": "Authorize up to $2 million for engineering, permits, grid studies, and customer negotiations over six months, then reconsider construction. Preserve capital while accepting quotation changes and delay."
+    }
+  },
+  "Benefits Hat (Yellow)": {
+    "type": "choice",
+    "instructions": "Recommend among the four supplied strategies using the fictional Meridian Energy facts and the active thinking frame provided in the state. Respect the available capital, approval requirements, and stated uncertainties; do not invent financing, signed contracts, partner commitments, market data, or another strategy. Return a choice recommendation distribution across these four strategies, summing to one. The probabilities express uncertainty about the recommendation under the active frame, not probabilities of financial success, project profitability, or any cash-flow case. Do not prescribe probability values or force a particular winning strategy.",
+    "criteria": {
+      "Full Build Now": "Authorize the estimated $150 million full project, with construction contingent on approvals; retain full ownership and capital/risk exposure.",
+      "Phased Investment": "Authorize a $38 million first phase of 20 MW solar plus 10 MW / 40 MWh battery, commissioning at month 18. Review expansion after 12 operating months, with separate approval; estimated combined cost is $155 million and full commissioning is around month 48 if expanded.",
+      "Joint Venture": "Pursue a 50/50 full-project joint venture with Meridian contributing an estimated $75 million and sharing returns and risks equally. Allow six additional negotiation months; partner commitment and governance remain unresolved.",
+      "Defer Investment": "Authorize up to $2 million for engineering, permits, grid studies, and customer negotiations over six months, then reconsider construction. Preserve capital while accepting quotation changes and delay."
+    }
+  }
+}

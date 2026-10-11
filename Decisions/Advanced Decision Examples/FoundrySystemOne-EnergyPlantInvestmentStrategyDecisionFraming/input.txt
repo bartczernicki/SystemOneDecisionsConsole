@@ -1,0 +1,38 @@
+FICTIONAL MERIDIAN ENERGY INVESTMENT-COMMITTEE DECISION
+All project facts and financial figures below are fictional planning inputs. All monetary values are USD. Proposed spending is not a binding commitment, and estimates and planned schedules are not guaranteed outcomes.
+
+OBJECTIVE
+Choose an investment strategy for a 100 MW solar plant plus a 50 MW / 200 MWh battery. Meridian Energy seeks attractive long-term value, reliable electricity supply, and manageable capital exposure.
+
+SHARED PROJECT FACTS
+- Available capital: $160 million.
+- Estimated full-project construction cost: $150 million, with possible cost increases of 20%.
+- Planned full-project commissioning: 24 months after authorization.
+- Operating horizon: 20 years.
+- Illustrative full-project annual operating cash flow before financing and tax: $18 million in the base case, $11 million in the adverse case, and $25 million in the favorable case.
+- No probabilities are assigned to those cash-flow cases. They are planning assumptions, not assured returns.
+- An industrial customer is interested in 60% of output under a 12-year agreement, but the agreement is unsigned.
+- The remaining electricity output and battery services are exposed to market prices.
+- The land option expires in 12 months.
+- Final permits and grid approval are outstanding.
+- Equipment quotations remain valid for six months.
+- Battery degradation, construction delays, and customer negotiations are uncertain.
+- A possible joint-venture partner has expressed nonbinding interest. Partner commitment and governance terms are unresolved.
+
+FIXED STRATEGY ALTERNATIVES
+1. Full Build Now
+Authorize the estimated $150 million full project, with construction contingent on approvals. Meridian retains full ownership and full capital/risk exposure. Planned full commissioning is at month 24.
+
+2. Phased Investment
+Authorize a $38 million first phase: 20 MW solar plus a 10 MW / 40 MWh battery, commissioning at month 18. After 12 operating months, review whether to expand; expansion requires separate approval. The estimated combined cost is $155 million, with full commissioning around month 48 if expansion is approved and completed.
+
+3. Joint Venture
+Pursue a 50/50 joint venture for the full project. Meridian's estimated contribution is $75 million, with returns and risks split equally. Negotiation adds six months to the full-project schedule. Partner commitment and governance remain unresolved.
+
+4. Defer Investment
+Authorize up to $2 million for engineering, permits, grid studies, and customer negotiations over six months, then reconsider construction. Preserve the remaining capital while accepting potential equipment quotation changes and project delay.
+
+ASSESSMENT RULES
+Apply the active thinking frame supplied below to this fact sheet and the four fixed strategies. Select only among the defined strategies and respect the supplied capital and approval constraints. Do not invent new financing, binding commitments, case probabilities, market observations, or project facts.
+
+Provide a recommendation distribution over the four strategies, summing to one. The probabilities describe uncertainty about the recommendation under the active frame, not probabilities of investment success or probabilities of the cash-flow cases. No probability values or winning strategy are prescribed.

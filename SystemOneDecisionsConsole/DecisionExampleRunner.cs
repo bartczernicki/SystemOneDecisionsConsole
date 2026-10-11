@@ -19,8 +19,11 @@ internal sealed record ScoreProbabilityAggregation(
 
 internal sealed record DecisionEvidenceStage(string Label, string InputFile);
 
+internal sealed record DecisionFrame(string QuestionId, string Label, string InputFile);
+
 internal sealed record DecisionExample(string Label, string Folder, DecisionBackend Backend, string QuestionType,
-    ScoreProbabilityAggregation? Aggregation = null, IReadOnlyList<DecisionEvidenceStage>? EvidenceStages = null);
+    ScoreProbabilityAggregation? Aggregation = null, IReadOnlyList<DecisionEvidenceStage>? EvidenceStages = null,
+    IReadOnlyList<DecisionFrame>? Frames = null);
 
 internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
 {
@@ -57,7 +60,15 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
             ]),
         new("Foundry SystemOne - Apple Watch Step Goal with Decision Rule",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-AppleWatchStepGoal"),
-            DecisionBackend.FoundrySystemOne, "noul")
+            DecisionBackend.FoundrySystemOne, "noul"),
+        new("Foundry SystemOne - Energy Plant Investment Strategy with Decision Framing",
+            Path.Combine("Advanced Decision Examples", "FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming"),
+            DecisionBackend.FoundrySystemOne, "choice", Frames:
+            [
+                new("Creativity Hat (Green)", "Creativity", "frame-creativity.txt"),
+                new("Caution Hat (Black)", "Caution", "frame-caution.txt"),
+                new("Benefits Hat (Yellow)", "Benefits", "frame-benefits.txt")
+            ])
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -74,6 +85,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
         string? responseBody = null;
         try
         {
+            if (example.Frames is not null)
+            {
+                ValidateFrameMetadata(example);
+            }
             string folder = Path.Combine(AppContext.BaseDirectory, "Decisions", example.Folder);
             DisplayTextSection("Scenario Description:", await ReadTextAsync(folder, "ScenarioDescription.txt"),
                 ConsoleColor.Magenta, "\u001b[38;2;255;128;224m");
@@ -111,6 +126,11 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
             if (example.EvidenceStages is not null)
             {
                 await RunEvidenceStagesAsync(example, folder, uri, model, apiKey);
+                return;
+            }
+            if (example.Frames is not null)
+            {
+                await RunFramesAsync(example, folder, uri, model, apiKey);
                 return;
             }
 

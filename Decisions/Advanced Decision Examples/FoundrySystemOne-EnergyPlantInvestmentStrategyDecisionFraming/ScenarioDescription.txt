@@ -1,0 +1,13 @@
+Energy Plant Investment Strategy with Decision Framing is a fictional investment-committee decision for Meridian Energy: how to pursue a 100 MW solar plant with a 50 MW / 200 MWh battery while seeking attractive long-term value, reliable electricity, and manageable capital exposure.
+
+Same facts; different thinking frames.
+
+Three sequential Microsoft Foundry SystemOne requests evaluate the project separately through Creativity Hat (Green), Caution Hat (Black), and Benefits Hat (Yellow). Each request contains the same shared facts plus only its current frame's instructions and one choice question. Earlier frames and answers are not included in later inputs. Creativity considers possibilities and inventive approaches; Caution examines risks and difficulties; Benefits examines supported value and advantages.
+
+All three choice questions use identical strategy definitions in the same order: Full Build Now, Phased Investment, Joint Venture, and Defer Investment. Each answer gives a selected strategy, the model's confidence, and a recommendation distribution under that frame. The distributions represent recommendations under different perspectives, not financial-success probabilities. No winners or probabilities are prescribed, and the hats may recommend the same strategy.
+
+Each completed frame displays its input, selected strategy, confidence, probability chart, request timing, and response JSON, under a Frame 1 of 3, Frame 2 of 3, or Frame 3 of 3 heading. Each request has a 60-second timeout. After all three succeed, a Decision Framing Comparison table shows each strategy's probability, Selected Strategy, and Confidence Score under Creativity, Caution, and Benefits.
+
+If a frame fails, the sequence stops and completed results remain visible. The comparison is shown only when all three frames succeed.
+
+All project facts, costs, cash-flow assumptions, and commercial interest are fictional planning inputs. Proposed spending and schedules are not binding commitments or guaranteed outcomes. The example uses the existing Microsoft Foundry endpoint, deployment name, and API key settings.

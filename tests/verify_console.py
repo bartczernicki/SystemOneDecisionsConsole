@@ -40,6 +40,15 @@ APPLE_WATCH_PROBABILITIES = (0.15, 0.65, 0.95)
 APPLE_WATCH_HISTORIES = [(1800, 2200, 2500, 2800, 3100, 3400, 3700, 4100, 4700, 5200),
                          (4400, 4600, 4800, 4900, 5000, 5100, 5200, 5400, 5500, 5700),
                          (7200, 7600, 7900, 8100, 8400, 8700, 9000, 9300, 9600, 9900)]
+ENERGY_FOLDER = "FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming"
+ENERGY_MENU = "5) Foundry SystemOne - Energy Plant Investment Strategy with Decision Framing"
+ENERGY_QUESTIONS = ["Creativity Hat (Green)", "Caution Hat (Black)", "Benefits Hat (Yellow)"]
+ENERGY_FRAME_LABELS = ["Creativity", "Caution", "Benefits"]
+ENERGY_FRAME_FILES = ["frame-creativity.txt", "frame-caution.txt", "frame-benefits.txt"]
+ENERGY_FILES = ["ScenarioDescription.txt", "input.txt", "questions.json", *ENERGY_FRAME_FILES]
+ENERGY_CHOICES = ["Full Build Now", "Phased Investment", "Joint Venture", "Defer Investment"]
+ENERGY_PROBABILITIES = [(0.15, 0.50, 0.30, 0.05), (0.10, 0.25, 0.15, 0.50), (0.55, 0.20, 0.20, 0.05)]
+ENERGY_CONFIDENCES = (0.72, 0.78, 0.75)
 FOOTBALL_QUESTIONS = {
     "Final Game Winner": "choice",
     "Packers Cover -7.5": "noul",
@@ -75,7 +84,7 @@ TIMING = re.compile(r"Response time: (\d+) ms")
 CHART_ROW = re.compile(r"^  (?P<label>.{0,25}) \|(?P<bar>[ █▏▎▍▌▋▊▉]{40})\| (?P<percent>\d+\.\d{2}) %$",
                        re.MULTILINE)
 CHART_HEADINGS = ("Probability Distribution:", "Bernoulli Distribution (Yes/No):")
-SECTION_END = re.compile(r"^(?:Scenario Description:|Input:|Stage \d+ of \d+:|Calling (?:local|Foundry) API\.\.\.).*$",
+SECTION_END = re.compile(r"^(?:Scenario Description:|Input:|Stage \d+ of \d+:|Frame \d+ of \d+:|Calling (?:local|Foundry) API\.\.\.).*$",
                          re.MULTILINE)
 
 
@@ -175,6 +184,147 @@ def assert_apple_watch_answers(text, probabilities=APPLE_WATCH_PROBABILITIES):
     return labels
 
 
+def energy_answers(payload, distributions=ENERGY_PROBABILITIES, confidences=ENERGY_CONFIDENCES, selected_choices=None):
+    """Answer only the requested frame, with reversed criterion keys."""
+    answers = {}
+    if selected_choices is None:
+        selected_choices = [ENERGY_CHOICES[max(range(4), key=distribution.__getitem__)] for distribution in distributions]
+    for name, distribution, confidence, choice in zip(ENERGY_QUESTIONS, distributions, confidences, selected_choices):
+        if name not in payload["questions"]:
+            continue
+        answers[name] = {"type": "choice", "choice": choice, "confidence": confidence,
+                         "probabilities": dict(reversed(list(zip(ENERGY_CHOICES, distribution))))}
+    return {"model": payload["model"], "answers": dict(reversed(list(answers.items())))}
+
+
+def framing_sections(text):
+    headings = list(re.finditer(r"^Frame (\d) of 3: ([^\n]+)$", text, re.MULTILINE))
+    sections = []
+    for index, heading in enumerate(headings):
+        end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
+        for marker in ("Decision Framing Comparison:\n", "Press Enter to return to the menu:"):
+            position = text.find(marker, heading.end(), end)
+            if position >= 0:
+                end = position
+        sections.append(text[heading.start():end])
+    return sections
+
+
+def assert_energy_frame(section, index, distribution, confidence, selected):
+    label = f"{index + 1} of 3) {ENERGY_QUESTIONS[index]}:"
+    assert section.startswith(f"Frame {index + 1} of 3: {ENERGY_QUESTIONS[index]}\n"), section
+    assert f"{label} {selected}" in section, section
+    assert f"Confidence: {confidence * 100:.2f} %" in section, section
+    assert section.index(label) < section.index("Probability Distribution:\n") < section.index("Response JSON:\n"), section
+    rows = assert_distribution(section, [(choice, f"{probability * 100:.2f}")
+                                         for choice, probability in zip(ENERGY_CHOICES, distribution)])
+    for (_, bar, _), probability in zip(rows, distribution):
+        if probability == 0:
+            assert bar == " " * 40, rows
+
+
+def assert_energy_answers(text, distributions=ENERGY_PROBABILITIES, confidences=ENERGY_CONFIDENCES, selected_choices=None):
+    labels = [f"{index} of 3) {name}:" for index, name in enumerate(ENERGY_QUESTIONS, start=1)]
+    actual = re.findall(r"^\d+ of 3\) (?:Creativity Hat \(Green\)|Caution Hat \(Black\)|Benefits Hat \(Yellow\)):",
+                        text, re.MULTILINE)
+    assert actual == labels, text
+    starts = [text.index(label) for label in labels]
+    comparison_start = text.index("Decision Framing Comparison:\n")
+    assert starts == sorted(starts) and comparison_start > text.rindex("Response JSON:\n"), text
+    if selected_choices is None:
+        selected_choices = [ENERGY_CHOICES[max(range(4), key=distribution.__getitem__)] for distribution in distributions]
+    sections = framing_sections(text)
+    assert len(sections) == 3, text
+    for index, (section, distribution, confidence, selected) in enumerate(zip(sections, distributions, confidences, selected_choices)):
+        assert_energy_frame(section, index, distribution, confidence, selected)
+    assert "Bernoulli Distribution (Yes/No):" not in text and "Evidence Stage Comparison:" not in text, text
+    assert "Same facts; different thinking frames." in text, text
+    table = text[comparison_start:text.index("Press Enter to return to the menu:", comparison_start)]
+    table_rows = [tuple(cell.strip() for cell in line.strip().strip("|").split("|"))
+                  for line in table.splitlines() if "|" in line]
+    assert table_rows[0] == ("Strategy", *ENERGY_FRAME_LABELS), table
+    expected = [(choice, *(f"{distribution[index] * 100:.2f} %" for distribution in distributions))
+                for index, choice in enumerate(ENERGY_CHOICES)]
+    expected += [("Selected Strategy", *selected_choices),
+                 ("Confidence Score", *(f"{confidence * 100:.2f} %" for confidence in confidences))]
+    assert table_rows[1:] == expected and len(table_rows) == 7, table
+    lines = table.splitlines()
+    selected_line = next(index for index, line in enumerate(lines) if "Selected Strategy" in line)
+    assert selected_line > 0 and lines[selected_line - 1].strip() and set(lines[selected_line - 1].strip()) == {"-"}, table
+    assert all(len(line) <= 80 for line in table.splitlines()), table
+    return labels
+
+
+def assert_frame_metadata_combinations(temporary, assembly):
+    """Exercise internal production metadata validation without adding application test hooks."""
+    harness = Path(temporary) / "frame-metadata-checks"
+    harness.mkdir()
+    (harness / "FrameMetadataChecks.csproj").write_text(
+        '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType>'
+        '<TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings>'
+        '<Nullable>enable</Nullable></PropertyGroup></Project>', encoding="utf-8")
+    (harness / "Program.cs").write_text(r'''
+using System.Collections;
+using System.Reflection;
+
+Assembly app = Assembly.LoadFrom(args[0]);
+Type runner = app.GetType("SystemOneDecisionsConsole.DecisionExampleRunner", throwOnError: true)!;
+Type exampleType = app.GetType("SystemOneDecisionsConsole.DecisionExample", throwOnError: true)!;
+MethodInfo validator = runner.GetMethod("ValidateFrameMetadata", BindingFlags.Static | BindingFlags.NonPublic)!;
+IEnumerable examples = (IEnumerable)runner.GetProperty("AdvancedExamples", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+object valid = examples.Cast<object>().Single(example =>
+    ((string)exampleType.GetProperty("Folder")!.GetValue(example)!).EndsWith(args[1], StringComparison.Ordinal));
+ConstructorInfo constructor = exampleType.GetConstructors().OrderByDescending(ctor => ctor.GetParameters().Length).First();
+
+object With(string property, object value) => constructor.Invoke(constructor.GetParameters()
+    .Select(parameter => parameter.Name == property ? value : exampleType.GetProperty(parameter.Name!)!.GetValue(valid)).ToArray());
+
+void Verify(object example, bool mustReject)
+{
+    try
+    {
+        validator.Invoke(null, [example]);
+        if (mustReject) throw new Exception("Incompatible frame metadata was accepted.");
+    }
+    catch (TargetInvocationException error) when (mustReject && error.InnerException is InvalidDataException)
+    {
+        return;
+    }
+}
+
+Verify(valid, false);
+Type stageType = app.GetType("SystemOneDecisionsConsole.DecisionEvidenceStage", throwOnError: true)!;
+Array stages = Array.CreateInstance(stageType, 1);
+stages.SetValue(Activator.CreateInstance(stageType, "Fixture stage", "input.txt"), 0);
+Verify(With("EvidenceStages", stages), true);
+Type aggregationType = app.GetType("SystemOneDecisionsConsole.ScoreProbabilityAggregation", throwOnError: true)!;
+object aggregation = Activator.CreateInstance(aggregationType, "Fixture", new[] { "A", "B" }, new[] { 0 }, "Fixture")!;
+Verify(With("Aggregation", aggregation), true);
+Type frameType = app.GetType("SystemOneDecisionsConsole.DecisionFrame", throwOnError: true)!;
+object[] validFrames = ((IEnumerable)exampleType.GetProperty("Frames")!.GetValue(valid)!).Cast<object>().ToArray();
+object FramesWithLastFile(string inputFile)
+{
+    Array frames = Array.CreateInstance(frameType, validFrames.Length);
+    for (int index = 0; index < validFrames.Length; index++)
+    {
+        object frame = validFrames[index];
+        string questionId = (string)frameType.GetProperty("QuestionId")!.GetValue(frame)!;
+        string label = (string)frameType.GetProperty("Label")!.GetValue(frame)!;
+        string file = index == validFrames.Length - 1 ? inputFile : (string)frameType.GetProperty("InputFile")!.GetValue(frame)!;
+        frames.SetValue(Activator.CreateInstance(frameType, questionId, label, file), index);
+    }
+    return frames;
+}
+Verify(With("Frames", FramesWithLastFile(" ")), true);
+Verify(With("Frames", FramesWithLastFile((string)frameType.GetProperty("InputFile")!.GetValue(validFrames[0])!)), true);
+Console.WriteLine("PASS: framing metadata combinations rejected");
+''', encoding="utf-8")
+    result = subprocess.run(["dotnet", "run", "--project", str(harness / "FrameMetadataChecks.csproj"),
+                             "--", str(assembly), ENERGY_FOLDER], capture_output=True, text=True,
+                            encoding="utf-8", cwd=temporary, timeout=60)
+    assert result.returncode == 0 and "PASS: framing metadata combinations rejected" in result.stdout, result.stdout + result.stderr
+
+
 def shipment_sections(text):
     """Split output at stage headings, keeping each stage's JSON and errors together."""
     headings = list(re.finditer(r"^Stage (\d) of 3: ([^\n]+)$", text, re.MULTILINE))
@@ -232,6 +382,8 @@ def answers_for(payload, path):
         return shipment_answers(payload)
     if system_one and list(questions) == APPLE_WATCH_QUESTIONS:
         return apple_watch_answers(payload)
+    if system_one and questions and all(name in ENERGY_QUESTIONS for name in questions):
+        return energy_answers(payload)
     items = questions.items() if system_one else ((q["name"], q) for q in questions)
     answers = {} if system_one else []
     for name, question in items:
@@ -361,6 +513,12 @@ def main():
 
             def apple_watch_input():
                 return "2\n4\n\n0\n0\n"
+
+            def energy_folder():
+                return output / "Decisions" / ADVANCED_CATEGORY / ENERGY_FOLDER
+
+            def energy_input():
+                return "2\n5\n\n0\n0\n"
 
             def check_failure(label, input_text=None, overrides=None, timeout=15, timed=True):
                 nonlocal checks
@@ -1031,20 +1189,219 @@ def main():
                 assert len(server.requests) == 1 and f"HTTP {status}" in raw_text, raw_text
             server.status, server.response = 200, None
 
+            # Three Foundry requests isolate each thinking frame over identical shared facts and strategies.
+            energy = energy_folder()
+            energy_source = ROOT / "Decisions" / ADVANCED_CATEGORY / ENERGY_FOLDER
+            for filename in ENERGY_FILES:
+                assert (energy / filename).is_file(), filename
+                assert (energy / filename).read_bytes() == (energy_source / filename).read_bytes(), filename
+            energy_questions = json.loads((energy / "questions.json").read_text(encoding="utf-8"))
+            assert list(energy_questions) == ENERGY_QUESTIONS, energy_questions
+            first_criteria = energy_questions[ENERGY_QUESTIONS[0]]["criteria"]
+            assert list(first_criteria) == ENERGY_CHOICES, first_criteria
+            assert all(isinstance(description, str) and description.strip() for description in first_criteria.values())
+            instructions = []
+            for question in energy_questions.values():
+                assert question["type"] == "choice" and list(question["criteria"].items()) == list(first_criteria.items()), question
+                assert question["instructions"].strip(), question
+                instructions.append(question["instructions"])
+            assert len(set(instructions)) == 1, instructions
+            assert all(name not in instructions[0] for name in ENERGY_QUESTIONS), instructions
+            energy_state = (energy / "input.txt").read_bytes().decode("utf-8-sig").strip()
+            frame_inputs = [(energy / filename).read_bytes().decode("utf-8-sig").strip() for filename in ENERGY_FRAME_FILES]
+            frame_states = [energy_state + "\n\n" + frame_input for frame_input in frame_inputs]
+            energy_payloads = [{"model": FOUNDRY_MODEL, "state": frame_states[index], "questions": {name: energy_questions[name]}}
+                               for index, name in enumerate(ENERGY_QUESTIONS)]
+            assert all(name not in energy_state for name in ENERGY_QUESTIONS), energy_state
+            for index, frame_input in enumerate(frame_inputs):
+                assert ENERGY_QUESTIONS[index] in frame_input, frame_input
+                assert all(name not in frame_input for position, name in enumerate(ENERGY_QUESTIONS) if position != index), frame_input
+            text = run(energy_input(), {"LocalSystemOneAPI": "", "LocalDecisionsAPI": "",
+                                       "LocalDecisionModel": "unused-local-model"})
+            assert "Error:" not in text and len(server.requests) == 3, text
+            assert text.count("Calling Foundry API...\n") == 3 and "Calling local API..." not in text, text
+            assert text.count("Scenario Description:\n") == 1 and text.count("Input:\n") == 3, text
+            assert text.count("Response JSON:\n") == len(TIMING.findall(text)) == 3, text
+            assert text.count("Press Enter to return to the menu:") == 1, text
+            description = (energy / "ScenarioDescription.txt").read_text(encoding="utf-8").strip()
+            start, displayed_description = displayed_section(text, "Scenario Description:")
+            assert " ".join(displayed_description.split()) == " ".join(description.split()), text
+            energy_labels = assert_energy_answers(text)
+            for index, ((path, payload), section) in enumerate(zip(server.requests, framing_sections(text))):
+                assert path == FOUNDRY_PATH and set(payload) == {"model", "state", "questions"}, payload
+                assert payload == energy_payloads[index], payload
+                assert list(payload["questions"]) == [ENERGY_QUESTIONS[index]], payload
+                headers = server.request_headers[index]
+                assert headers.get("api-key") == FOUNDRY_KEY, headers
+                assert "authorization" not in headers and "ocp-apim-subscription-key" not in headers, headers
+                serialized_payload = json.dumps(payload)
+                assert description not in serialized_payload, payload
+                assert all(name not in serialized_payload for position, name in enumerate(ENERGY_QUESTIONS) if position != index), payload
+                assert all(frame_input not in payload["state"] for position, frame_input in enumerate(frame_inputs) if position != index), payload
+                assert all(key not in payload["state"] for key in ('"answers"', '"probabilities"', '"confidence"')), payload
+                input_start, displayed_input = displayed_section(section, "Input:")
+                assert " ".join(displayed_input.split()) == " ".join(frame_states[index].split()), section
+                assert input_start < section.index("Calling Foundry API...") < section.index("Response time:"), section
+                response_json, _ = json.JSONDecoder().raw_decode(section.split("Response JSON:\n", 1)[1].lstrip())
+                assert response_json == energy_answers(payload), response_json
+                assert list(response_json["answers"]) == [ENERGY_QUESTIONS[index]], response_json
+                assert list(response_json["answers"][ENERGY_QUESTIONS[index]]["probabilities"]) == list(reversed(ENERGY_CHOICES)), response_json
+            assert all(confidence != max(distribution) for confidence, distribution in zip(ENERGY_CONFIDENCES, ENERGY_PROBABILITIES))
+            assert text.count("Probability Distribution:\n") == 3 and text.count("Decision Framing Comparison:\n") == 1, text
+            checks += 1
+
+            # Identical winners, 0/1 distributions, and a selected field differing from the largest probability are valid.
+            for distributions, confidences, selected_choices in (
+                ([(1, 0, 0, 0)] * 3, ENERGY_CONFIDENCES, ["Full Build Now"] * 3),
+                ([(1, 0, 0, 0)] * 3, (0, 1, 0.5), ["Full Build Now"] * 3),
+                (ENERGY_PROBABILITIES, ENERGY_CONFIDENCES, ["Joint Venture", "Phased Investment", "Defer Investment"]),
+            ):
+                server.response = lambda payload, path, number, distributions=distributions, confidences=confidences, selected_choices=selected_choices: \
+                    energy_answers(payload, distributions, confidences, selected_choices)
+                text = run(energy_input())
+                assert "Error:" not in text and len(server.requests) == 3, text
+                assert_energy_answers(text, distributions, confidences, selected_choices)
+                for section, (_, payload) in zip(framing_sections(text), server.requests):
+                    response_json, _ = json.JSONDecoder().raw_decode(section.split("Response JSON:\n", 1)[1].lstrip())
+                    assert response_json == energy_answers(payload, distributions, confidences, selected_choices), response_json
+                checks += 1
+
+            # Even an invalid final frame must be detected before any answer or chart is printed.
+            invalid_energy_responses = []
+            for label, modify in (
+                ("missing frame answer", lambda answers: answers.pop(ENERGY_QUESTIONS[2])),
+                ("extra frame answer", lambda answers: answers.update(Unexpected={"type": "noul", "noul": 0.5})),
+                ("renamed frame answer", lambda answers: answers.update(**{"Wrong frame": answers.pop(ENERGY_QUESTIONS[2])})),
+                ("wrong frame answer type", lambda answers: answers.update(**{ENERGY_QUESTIONS[2]: {"type": "noul", "noul": 0.5}})),
+            ):
+                response = energy_answers(energy_payload)
+                modify(response["answers"])
+                invalid_energy_responses.append((label, response))
+            for label, modify in (
+                ("missing frame probability", lambda answer: answer["probabilities"].pop(ENERGY_CHOICES[3])),
+                ("extra frame probability", lambda answer: answer["probabilities"].update(Unexpected=0)),
+                ("renamed frame probability", lambda answer: answer["probabilities"].update(
+                    **{"Unknown strategy": answer["probabilities"].pop(ENERGY_CHOICES[3])})),
+                ("negative frame probability", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: -0.01})),
+                ("frame probability over one", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: 1.01})),
+                ("NaN frame probability", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: float("nan")})),
+                ("infinite frame probability", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: float("inf")})),
+                ("null frame probability", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: None})),
+                ("frame probability sum low", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: 0.04})),
+                ("frame probability sum high", lambda answer: answer["probabilities"].update({ENERGY_CHOICES[3]: 0.06})),
+                ("empty frame probabilities", lambda answer: answer.update(probabilities={})),
+                ("null frame probabilities", lambda answer: answer.update(probabilities=None)),
+                ("missing frame probabilities", lambda answer: answer.pop("probabilities")),
+                ("unknown frame choice", lambda answer: answer.update(choice="Cancel plant")),
+                ("blank frame choice", lambda answer: answer.update(choice=" ")),
+                ("null frame choice", lambda answer: answer.update(choice=None)),
+                ("missing frame choice", lambda answer: answer.pop("choice")),
+                ("negative frame confidence", lambda answer: answer.update(confidence=-0.01)),
+                ("frame confidence over one", lambda answer: answer.update(confidence=1.01)),
+                ("NaN frame confidence", lambda answer: answer.update(confidence=float("nan"))),
+                ("infinite frame confidence", lambda answer: answer.update(confidence=float("inf"))),
+                ("null frame confidence", lambda answer: answer.update(confidence=None)),
+                ("missing frame confidence", lambda answer: answer.pop("confidence")),
+            ):
+                response = energy_answers(energy_payload)
+                modify(response["answers"][ENERGY_QUESTIONS[2]])
+                invalid_energy_responses.append((label, response))
+            invalid_energy_responses += [("malformed framing JSON", "{"), ("missing framing answers", {"model": FOUNDRY_MODEL}),
+                                         ("null framing answers", {"model": FOUNDRY_MODEL, "answers": None})]
+            for label, response in invalid_energy_responses:
+                server.response = response
+                check_failure(label, energy_input())
+                assert len(server.requests) == 1 and "Decision Framing Comparison:" not in raw_text, (label, raw_text)
+                clean_text = ANSI.sub("", raw_text)
+                assert not re.search(r"^\d+\) (?:Creativity Hat|Caution Hat|Benefits Hat)", clean_text, re.MULTILINE), (label, clean_text)
+                assert "Response JSON:" in clean_text and clean_text.count("Confidence:") == 0, (label, clean_text)
+                current_json = clean_text.split("Response JSON:\n", 1)[1].lstrip()
+                if isinstance(response, str):
+                    assert current_json.startswith(response), (label, current_json)
+                else:
+                    actual_response, _ = json.JSONDecoder().raw_decode(current_json)
+                    assert json.dumps(actual_response, sort_keys=True) == json.dumps(response, sort_keys=True), (label, current_json)
+            server.response = None
+
+            # Question metadata must retain frame IDs/order and identical ordered strategy descriptions.
+            questions_file = energy / "questions.json"
+            original = questions_file.read_bytes()
+            try:
+                for label, modify in (
+                    ("missing frame question", lambda questions: questions.pop(ENERGY_QUESTIONS[2])),
+                    ("extra frame question", lambda questions: questions.update(Unexpected=questions[ENERGY_QUESTIONS[0]])),
+                    ("renamed frame question", lambda questions: questions.update(**{"Wrong frame": questions.pop(ENERGY_QUESTIONS[2])})),
+                    ("reordered frame questions", lambda questions: questions.update(
+                        **{ENERGY_QUESTIONS[0]: questions.pop(ENERGY_QUESTIONS[0])})),
+                    ("wrong frame question type", lambda questions: questions.update(**{ENERGY_QUESTIONS[2]: {"type": "noul"}})),
+                    ("blank frame instructions", lambda questions: questions[ENERGY_QUESTIONS[2]].update(instructions=" ")),
+                    ("missing frame instructions", lambda questions: questions[ENERGY_QUESTIONS[2]].pop("instructions")),
+                    ("reordered frame criteria", lambda questions: questions[ENERGY_QUESTIONS[2]].update(
+                        criteria=dict(reversed(list(questions[ENERGY_QUESTIONS[2]]["criteria"].items()))))),
+                    ("changed frame criterion description", lambda questions: questions[ENERGY_QUESTIONS[2]]["criteria"].update(
+                        {ENERGY_CHOICES[0]: "A different strategy definition."})),
+                    ("changed frame criterion name", lambda questions: questions[ENERGY_QUESTIONS[2]]["criteria"].update(
+                        **{"Unknown strategy": questions[ENERGY_QUESTIONS[2]]["criteria"].pop(ENERGY_CHOICES[0])})),
+                    ("missing frame criterion", lambda questions: questions[ENERGY_QUESTIONS[2]]["criteria"].pop(ENERGY_CHOICES[0])),
+                    ("extra frame criterion", lambda questions: questions[ENERGY_QUESTIONS[2]]["criteria"].update(Unexpected="An extra strategy.")),
+                    ("blank shared criterion description", lambda questions: [question["criteria"].update({ENERGY_CHOICES[0]: " "})
+                                                                              for question in questions.values()]),
+                    ("blank shared criterion name", lambda questions: [question["criteria"].update(**{" ": question["criteria"].pop(ENERGY_CHOICES[0])})
+                                                                       for question in questions.values()]),
+                ):
+                    invalid_questions = json.loads(original.decode("utf-8"))
+                    modify(invalid_questions)
+                    questions_file.write_text(json.dumps(invalid_questions), encoding="utf-8")
+                    check_failure(label, energy_input(), timed=False)
+                    assert not server.requests and "Decision Framing Comparison:" not in raw_text, raw_text
+                questions_file.write_text("{", encoding="utf-8")
+                check_failure("malformed framing questions JSON", energy_input(), timed=False)
+                assert not server.requests, raw_text
+            finally:
+                questions_file.write_bytes(original)
+            for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
+                file = energy / filename
+                original = file.read_bytes()
+                try:
+                    file.unlink()
+                    check_failure(f"missing framing {filename}", energy_input(), timed=False)
+                    assert not server.requests, raw_text
+                finally:
+                    file.write_bytes(original)
+            for setting in ("MicrosoftFoundrySystemOneAPI", "MicrosoftFoundryDecisionModelDeploymentName", "MicrosoftFoundryAPIKey"):
+                check_failure(f"missing framing {setting}", energy_input(), {setting: " "}, timed=False)
+                assert not server.requests and setting in raw_text, raw_text
+            for status in (401, 403, 500):
+                server.status, server.response = status, {"error": "framing fixture failure"}
+                check_failure(f"framing Foundry HTTP {status}", energy_input())
+                assert len(server.requests) == 1 and f"HTTP {status}" in raw_text, raw_text
+                assert "Decision Framing Comparison:" not in raw_text, raw_text
+            server.status, server.response = 200, None
+            assert_frame_metadata_combinations(temporary, output / "SystemOneDecisionsConsole.dll")
+            checks += 1
+
             # Publish must include the same scenario files, using the existing project content glob.
             publish = Path(temporary) / "publish"
             result = subprocess.run(["dotnet", "publish", str(ROOT / "SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj"),
                                      "--no-restore", "-c", "Debug", "-o", str(publish)],
                                     capture_output=True, text=True, encoding="utf-8", cwd=ROOT, timeout=60)
             assert result.returncode == 0, result.stdout + result.stderr
-            for category, scenario in [(BASIC_CATEGORY, name) for name in FOLDERS] + \
-                                      [(ADVANCED_CATEGORY, FOOTBALL_FOLDER), (ADVANCED_CATEGORY, TOTAL_POINTS_FOLDER),
-                                       (ADVANCED_CATEGORY, SHIPMENT_FOLDER), (ADVANCED_CATEGORY, APPLE_WATCH_FOLDER)]:
+            scenarios = [(BASIC_CATEGORY, name) for name in FOLDERS] + \
+                        [(ADVANCED_CATEGORY, FOOTBALL_FOLDER), (ADVANCED_CATEGORY, TOTAL_POINTS_FOLDER),
+                         (ADVANCED_CATEGORY, SHIPMENT_FOLDER), (ADVANCED_CATEGORY, APPLE_WATCH_FOLDER),
+                         (ADVANCED_CATEGORY, ENERGY_FOLDER)]
+            assert len(scenarios) == 14, scenarios
+            expected_file_count = 0
+            for category, scenario in scenarios:
                 published_folder = publish / "Decisions" / category / scenario
                 scenario_source = ROOT / "Decisions" / category / scenario
                 filenames = SHIPMENT_FILES if scenario == SHIPMENT_FOLDER else ("ScenarioDescription.txt", "input.txt", "questions.json")
+                expected_file_count += len(filenames)
                 for filename in filenames:
                     assert (published_folder / filename).read_bytes() == (scenario_source / filename).read_bytes(), (scenario, filename)
+            assert expected_file_count == 44, expected_file_count
+            published_assets = [file for file in (publish / "Decisions").rglob("*") if file.suffix in (".txt", ".json")]
+            assert len(published_assets) == 44, published_assets
             checks += 1
 
             text = run("1\n7\n\n1\n\n4\n\n0\n0\n")
@@ -1193,6 +1550,7 @@ def main():
             assert "2) Local SystemOne - Football Total Points Cumulative Probability" in text, text
             assert "3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating" in text, text
             assert "4) Foundry SystemOne - Apple Watch Step Goal with Decision Rule" in text, text
+            assert ENERGY_MENU in text, text
             assert "Calling local API..." not in text and not TIMING.search(text), text
             if os.name != "nt":
                 colored_menus = "\n".join(re.findall(
@@ -1207,6 +1565,7 @@ def main():
                               "2) Local SystemOne - Football Total Points Cumulative Probability",
                               "3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating",
                               "4) Foundry SystemOne - Apple Watch Step Goal with Decision Rule",
+                              ENERGY_MENU,
                               "0) Exit", "0) Back"):
                     assert label in colored_menus, (label, raw_text)
             checks += 1
@@ -1246,6 +1605,14 @@ def main():
             text = run(apple_watch_input())
             pause = text.index("Press Enter to return to the menu:")
             returned_to_advanced = text.index("4) Foundry SystemOne - Apple Watch Step Goal with Decision Rule", pause)
+            returned_to_startup = text.index("1) Basic Decision Examples", pause)
+            assert returned_to_advanced < returned_to_startup, text
+            assert len(server.requests) == 1 and text.count("Press Enter to return to the menu:") == 1, text
+            checks += 1
+
+            text = run(energy_input())
+            pause = text.index("Press Enter to return to the menu:")
+            returned_to_advanced = text.index(ENERGY_MENU, pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 1 and text.count("Press Enter to return to the menu:") == 1, text
@@ -1296,10 +1663,25 @@ def main():
             assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 3, text
             checks += 1
 
+            text = run("2\n 5 \n\n1\n\n5\n\n0\n0\n")
+            assert "Error:" not in text and len(server.requests) == 3, text
+            assert [list(payload["questions"]) for _, payload in server.requests] == \
+                   [ENERGY_QUESTIONS, list(FOOTBALL_QUESTIONS), ENERGY_QUESTIONS], server.requests
+            assert [path for path, _ in server.requests] == [FOUNDRY_PATH, "/v1/systemone", FOUNDRY_PATH], server.requests
+            assert server.requests[0][1] == server.requests[2][1] == energy_payload, server.requests
+            for index in (0, 2):
+                assert server.request_headers[index].get("api-key") == FOUNDRY_KEY, server.request_headers
+            assert "api-key" not in server.request_headers[1], server.request_headers
+            assert re.findall(r"^\d+\) (?:Creativity Hat \(Green\)|Caution Hat \(Black\)|Benefits Hat \(Yellow\)):",
+                              text, re.MULTILINE) == energy_labels * 2, text
+            assert text.count("Decision Framing Comparison:\n") == 2 and text.count("Press Enter to return to the menu:") == 3, text
+            assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 3, text
+            checks += 1
+
             for input_text, message, count in (
                 ("bad\n\n3\n 0 \n", "Please enter 0, 1, or 2", 3),
                 ("1\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4),
-                ("2\nbad\n\n5\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, or 4", 4),
+                ("2\nbad\n\n6\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, or 5", 4),
             ):
                 text = run(input_text)
                 assert text.count(message) == count, text
@@ -1307,11 +1689,11 @@ def main():
                 checks += 1
 
             for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n", "1\n7\n",
-                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n", "2\n4\n", "2\n4\n\n"):
+                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n", "2\n4\n", "2\n4\n\n", "2\n5\n", "2\n5\n\n"):
                 text = run(input_text)
                 assert "Error:" not in text, text
                 expected_requests = 3 if input_text in ("2\n3\n", "2\n3\n\n") else \
-                    1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n4\n", "2\n4\n\n") else 0
+                    1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n4\n", "2\n4\n\n", "2\n5\n", "2\n5\n\n") else 0
                 assert len(server.requests) == expected_requests, text
                 checks += 1
             check_failure("missing endpoint", overrides={"LocalSystemOneAPI": ""}, timed=False)
@@ -1414,7 +1796,7 @@ def main():
                 check_failure("60-second timeout", timeout=70)
                 check_failure("Foundry 60-second timeout", basic_input(7), timeout=70)
                 server.delay = 0
-            print(f"PASS: {checks} console integration scenarios (nine Basic examples and four Advanced examples included).")
+            print(f"PASS: {checks} console integration scenarios (nine Basic examples and five Advanced examples included).")
     finally:
         server.shutdown()
         server.server_close()

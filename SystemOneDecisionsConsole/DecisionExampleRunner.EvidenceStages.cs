@@ -55,7 +55,7 @@ internal sealed partial class DecisionExampleRunner
                 var request = new SystemOneRequest { Model = model, State = states[index], Questions = questions };
                 responseBody = await SendAsync(endpoint, request, example.Backend, apiKey);
                 var response = Deserialize<SystemOneResponse>(responseBody);
-                SystemOneChoiceAnswer answer = ValidateEvidenceAnswer(response, questionId, question);
+                SystemOneChoiceAnswer answer = ValidateSingleChoiceAnswer(response, questionId, question);
                 DisplaySystemOneAnswer(questionId, answer, "choice", index + 1, question.Criteria.Keys, stages.Count);
                 answers.Add(answer);
                 completed = true;
@@ -85,7 +85,7 @@ internal sealed partial class DecisionExampleRunner
         DisplayEvidenceComparison(question.Criteria.Keys, answers);
     }
 
-    private static SystemOneChoiceAnswer ValidateEvidenceAnswer(SystemOneResponse response, string questionId,
+    private static SystemOneChoiceAnswer ValidateSingleChoiceAnswer(SystemOneResponse response, string questionId,
         SystemOneChoiceQuestion question)
     {
         if (response.Answers is null || response.Answers.Count != 1 || !response.Answers.ContainsKey(questionId))
@@ -96,25 +96,7 @@ internal sealed partial class DecisionExampleRunner
         {
             throw new InvalidDataException($"Malformed response: expected a choice answer for {questionId}.");
         }
-        if (answer.Probabilities is null || answer.Probabilities.Count != question.Criteria.Count ||
-            question.Criteria.Keys.Any(key => !answer.Probabilities.ContainsKey(key)))
-        {
-            throw new InvalidDataException("Malformed response: the choice distribution must contain exactly the requested criteria.");
-        }
-        if (answer.Probabilities.Values.Any(value => !double.IsFinite(value) || value < 0 || value > 1))
-        {
-            throw new InvalidDataException("Malformed response: choice probabilities must be finite and between 0 and 1.");
-        }
-        if (Math.Abs(answer.Probabilities.Values.Sum() - 1) > 1e-6)
-        {
-            throw new InvalidDataException("Malformed response: choice probabilities must sum to 1 within 1e-6.");
-        }
-        if (string.IsNullOrEmpty(answer.Choice) || !question.Criteria.ContainsKey(answer.Choice))
-        {
-            throw new InvalidDataException("Malformed response: the selected choice must match a requested criterion.");
-        }
-        // Validate confidence before displaying any part of this stage's answer.
-        _ = Probability(answer.Confidence);
+        ValidateChoiceAnswer(answer, question);
         return answer;
     }
 

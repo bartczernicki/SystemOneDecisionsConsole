@@ -34,6 +34,7 @@ Advanced Decision Examples
 2) Local SystemOne - Football Total Points Cumulative Probability
 3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating
 4) Foundry SystemOne - Apple Watch Step Goal with Decision Rule
+5) Foundry SystemOne - Energy Plant Investment Strategy with Decision Framing
 0) Back
 ```
 
@@ -106,9 +107,30 @@ Each answer estimates the probability of reaching the goal assuming that activit
 
 The results are three separate conditional probabilities, each with its own Yes/No Bernoulli chart. They need not sum to one, and the application does not multiply them or normalize them across activities. They do not represent the probability of choosing an activity or a joint outcome. This example uses the existing `MicrosoftFoundrySystemOneAPI`, `MicrosoftFoundryDecisionModelDeploymentName`, and `MicrosoftFoundryAPIKey` settings.
 
+### Energy Plant Investment Strategy with Decision Framing
+
+The fifth advanced example asks fictional **Meridian Energy** how to pursue a **100 MW solar plant plus a 50 MW / 200 MWh battery** while seeking attractive long-term value, reliable electricity, and manageable capital exposure. The shared fact sheet includes $160 million of available capital, a $150 million full-project construction estimate with possible 20% cost increases, outstanding permits and grid approval, an unsigned customer agreement, and uncertain market revenue. Illustrative full-project annual operating cash flows before financing and tax are $18 million base, $11 million adverse, and $25 million favorable, with no probabilities assigned to these cases.
+
+**Same facts; different thinking frames.** Three sequential isolated Foundry SystemOne POSTs evaluate **Creativity Hat (Green)**, **Caution Hat (Black)**, and **Benefits Hat (Yellow)** in that order. Each request sends exactly one `choice` question and a state composed from the neutral shared `input.txt` plus only its current frame file. Other frame instructions and prior model answers are not carried into a request. Green considers possibilities and inventive approaches, Black examines risks and difficulties, and Yellow examines supported value and advantages, following the [De Bono Group's Six Thinking Hats descriptions](https://www.debonogroup.com/services/core-programs/six-thinking-hats/).
+
+All three frames use identical strategy definitions and the same choice order:
+
+| Strategy | Proposed investment and timing |
+| --- | --- |
+| Full Build Now | Authorize the estimated $150 million full project, contingent on approvals; retain full ownership and exposure, with planned commissioning at month 24. |
+| Phased Investment | Authorize a $38 million first phase of 20 MW solar plus 10 MW / 40 MWh battery, targeting commissioning at month 18; review expansion after 12 operating months with separate approval. Estimated combined cost is $155 million and full commissioning around month 48 if expanded. |
+| Joint Venture | Pursue a 50/50 full project with an estimated $75 million Meridian contribution and equally shared returns and risks; allow six additional negotiation months, with commitment and governance unresolved. |
+| Defer Investment | Spend up to $2 million over six months on engineering, permits, grid studies, and customer negotiations, then reconsider construction; preserve capital while facing quotation changes and delay. |
+
+Each result is a recommendation distribution under its own frame, accompanied by the selected strategy, actual API confidence, and a probability chart. It does not represent probabilities of profitability, financial success, or the cash-flow cases. Probabilities sum to one within each frame, and are not multiplied or normalized across frames. No probabilities or different winners are forced; all three frames may select the same strategy. All project facts and financial inputs are fictional, and planned spending is not binding or guaranteed.
+
+A **Frame 1 of 3**, **Frame 2 of 3**, or **Frame 3 of 3** heading identifies each evaluation. Its composed input, validated answer, probability chart, request timing, and response JSON are displayed separately. After all three succeed, the **Decision Framing Comparison:** table uses columns **Creativity**, **Caution**, and **Benefits**, with four strategy-probability rows followed by a dashed separator, **Selected Strategy**, and **Confidence Score**. It displays no entropy or final combined winner. The existing API contract supplies choice, confidence, and probabilities without generated rationale; the public request and response schemas are unchanged.
+
+This example opts into an internal frame-comparison configuration. Before the first API call, the application loads every shared and frame input and checks the configured frame IDs and three choice definitions with identical ordered strategy criteria. It sends only the active definition from `questions.json` on each call; all three definitions use neutral instructions referring to the active frame in the request state. Each returned distribution must pass strict validation before its answer summary or chart is displayed: exactly the requested question ID and type, exactly the requested probability labels, a selected strategy from the criteria, finite confidence and probabilities from 0 to 1, and a probability sum within `1e-6` of one. Charts and table rows retain criterion order even if response keys arrive shuffled. A failed request or invalid response identifies the failed frame, stops subsequent calls, preserves completed results and available response JSON, and omits the comparison. The example uses the existing Foundry endpoint, deployment name, and API key, with a 60-second timeout per request, so the three calls can take up to three minutes.
+
 ## Run
 
-Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–3, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9 and Advanced option 4, configure the Foundry settings below. Run from the repository root:
+Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–3, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9 and Advanced options 4–5, configure the Foundry settings below. Run from the repository root:
 
 ```sh
 dotnet run --project SystemOneDecisionsConsole
@@ -128,7 +150,7 @@ For local examples (Basic options 1–6 and Advanced options 1–3), install LM 
 
 **Note:** For the multi-question examples, increase LM Studio's **Physical Batch Size** setting from `512` to a larger value such as `3000` so the input and questions can be processed together in one shot.
 
-Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. Foundry examples (Basic options 7–9 and Advanced option 4) use the hosted deployment and do not require a local model.
+Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. Foundry examples (Basic options 7–9 and Advanced options 4–5) use the hosted deployment and do not require a local model.
 
 ## User Secrets for local APIs and Microsoft Foundry
 
@@ -158,7 +180,7 @@ If the loaded model's identifier differs from `clef-flash`, replace `your-loaded
 dotnet user-secrets set "LocalDecisionModel" "your-loaded-model-id" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 ```
 
-For **Foundry examples (Basic options 7–9 and Advanced option 4)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
+For **Foundry examples (Basic options 7–9 and Advanced options 4–5)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
 
 ```sh
 dotnet user-secrets set "MicrosoftFoundrySystemOneAPI" "https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
@@ -174,7 +196,7 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder groups thirteen examples by category: nine in **Basic Decision Examples** and four in **Advanced Decision Examples**:
+The repository-root `Decisions` folder groups fourteen examples by category: nine in **Basic Decision Examples** and five in **Advanced Decision Examples**:
 
 ```text
 Decisions/
@@ -193,20 +215,24 @@ Decisions/
     LocalSystemOne-FootballTotalPointsProbability/
     LocalSystemOne-ShipmentArrivalEvidenceUpdates/
     FoundrySystemOne-AppleWatchStepGoal/
+    FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming/
     .gitkeep
 ```
 
-Each example contains the following three common files. The shipment example adds two evidence files to that common set, giving thirteen examples and 41 example files in total. The existing Advanced category `.gitkeep` is retained.
+Each example contains the following three common files. The shipment example adds two evidence files and the energy example adds three isolated frame files, giving fourteen examples and 47 example files in total. The existing Advanced category `.gitkeep` is retained.
 
 | File | Purpose |
 | --- | --- |
 | `ScenarioDescription.txt` | Decision Scenario explanation. Never included in the API request. |
-| `input.txt` | This is the input/state prompt that is passed into the decision model. |
-| `questions.json` | These are the questions (choices, yes/no, score) on howto process the decision input. |
+| `input.txt` | Input/state supplied to the model; for the energy example, shared facts and neutral rules combined with only the current frame file. |
+| `questions.json` | Question definitions (choices, yes/no, score); the energy example sends only its active question definition on each call. |
 | `evidence-2.txt` | Shipment example only: carrier records appended to the initial state for stage 2. |
 | `evidence-3.txt` | Shipment example only: delivery-readiness records appended to both earlier evidence sets for stage 3. |
+| `frame-creativity.txt` | Energy example only: Creativity Hat (Green) instructions appended to the shared state for the first request. |
+| `frame-caution.txt` | Energy example only: Caution Hat (Black) instructions appended to the shared state for the second request. |
+| `frame-benefits.txt` | Energy example only: Benefits Hat (Yellow) instructions appended to the shared state for the third request. |
 
-Basic examples each demonstrate one question type. Advanced option 1 combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers. Advanced option 2 demonstrates how to derive a cumulative probability from one score distribution. Advanced option 3 compares three live choice distributions as cumulative evidence is revealed. Advanced option 4 sends three separate goal-reaching `noul` questions in one Foundry SystemOne request. Aggregation and evidence-stage settings are internal application metadata and do not change the API request or response schemas.
+Basic examples each demonstrate one question type. Advanced option 1 combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers. Advanced option 2 demonstrates how to derive a cumulative probability from one score distribution. Advanced option 3 compares three live choice distributions as cumulative evidence is revealed. Advanced option 4 sends three separate goal-reaching `noul` questions in one Foundry SystemOne request. Advanced option 5 compares recommendation distributions over the same investment strategies using three isolated single-question Foundry requests, each with its own thinking frame. Aggregation, evidence-stage, and frame-comparison settings are internal application metadata and do not change the API request or response schemas.
 
 Edit the repository-root files to change the scenarios, then rebuild or run again. 
 
@@ -247,7 +273,7 @@ dotnet build SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Release -o ./publish
 ```
 
-Build and publish copy all 41 example files, including the shipment evidence files and Apple Watch scenario, while retaining the nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` paths beside the application. User Secrets remain machine-local and are not copied during publishing. The root `.gitignore` excludes Visual Studio settings and .NET build artifacts.
+Build and publish copy all 47 example files, including the shipment evidence files, Apple Watch scenario, and all six energy investment files, while retaining the nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` paths beside the application. User Secrets remain machine-local and are not copied during publishing. The root `.gitignore` excludes Visual Studio settings and .NET build artifacts.
 
 ## Validation
 
