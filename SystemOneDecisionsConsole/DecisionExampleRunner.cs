@@ -316,20 +316,18 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
             case SystemOneChoiceAnswer choice when expectedType == "choice" && !string.IsNullOrEmpty(choice.Choice) && choice.Probabilities is { Count: > 0 }:
                 Console.WriteLine($"{name}: {choice.Choice}");
                 Console.WriteLine($"Confidence: {Probability(choice.Confidence)}");
-                foreach (var (value, probability) in choice.Probabilities)
-                    Console.WriteLine($"  {value}: {Probability(probability)}");
+                ProbabilityDistributionRenderer.Display(choice.Probabilities.Select(option => new ProbabilityBar(option.Key, option.Value)));
                 break;
             case SystemOneNoulAnswer noul when expectedType == "noul":
                 Console.WriteLine($"{name}: Probability of yes: {Probability(noul.Noul)}");
+                ProbabilityDistributionRenderer.DisplayBernoulli(noul.Noul);
                 break;
             case SystemOneScoreAnswer score when expectedType == "score" && double.IsFinite(score.Score) && score.Probabilities is { Count: > 0 }:
                 Console.WriteLine($"{name}: Score: {Number(score.Score)}");
                 Console.WriteLine($"Confidence: {Probability(score.Confidence)}");
-                foreach (var (value, probability) in score.Probabilities)
-                {
-                    string label = score.Legend?.GetValueOrDefault(value) ?? value;
-                    Console.WriteLine($"  {value} ({label}): {Probability(probability)}");
-                }
+                ProbabilityDistributionRenderer.Display(score.Probabilities
+                    .OrderBy(option => ScoreLevelOrder(option.Key))
+                    .Select(option => new ProbabilityBar(ScoreLabel(option.Key, score.Legend?.GetValueOrDefault(option.Key)), option.Value)));
                 break;
             default:
                 throw new InvalidDataException($"Malformed response: expected a {expectedType} answer for {name}.");
@@ -346,38 +344,44 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
             case DecisionChoiceAnswer choice when expectedType == "choice" && choice.Choice.ValueKind is JsonValueKind.String or JsonValueKind.True or JsonValueKind.False && choice.Probabilities is { Count: > 0 }:
                 Console.WriteLine($"{answer.Name ?? "Choice"}: {choice.Choice}");
                 Console.WriteLine($"Confidence: {Probability(choice.Confidence)}");
-                foreach (var option in choice.Probabilities)
-                {
-                    if (option is null || option.Value.ValueKind is not (JsonValueKind.String or JsonValueKind.True or JsonValueKind.False))
-                        throw new InvalidDataException("Malformed choice probabilities.");
-                    Console.WriteLine($"  {option.Value}: {Probability(option.Probability)}");
-                }
+                ProbabilityDistributionRenderer.Display(choice.Probabilities.Select(option =>
+                    option is not null && option.Value.ValueKind is JsonValueKind.String or JsonValueKind.True or JsonValueKind.False
+                        ? new ProbabilityBar(option.Value.ToString(), option.Probability)
+                        : throw new InvalidDataException("Malformed choice probabilities.")));
                 break;
             case DecisionPredicateAnswer predicate when expectedType == "predicate":
                 Console.WriteLine($"{answer.Name}: Probability of yes: {Probability(predicate.Probability)}");
+                ProbabilityDistributionRenderer.DisplayBernoulli(predicate.Probability);
                 break;
             case DecisionScoreAnswer score when expectedType == "score" && double.IsFinite(score.Score) && score.Probabilities is { Count: > 0 }:
                 Console.WriteLine($"{answer.Name}: Score: {Number(score.Score)}");
                 Console.WriteLine($"Confidence: {Probability(score.Confidence)}");
-                foreach (var level in score.Probabilities)
-                {
-                    if (level is null) throw new InvalidDataException("Malformed score probabilities.");
-                    Console.WriteLine($"  {level.Value} ({level.Label}): {Probability(level.Probability)}");
-                }
+                ProbabilityDistributionRenderer.Display(score.Probabilities
+                    .Select(level => level ?? throw new InvalidDataException("Malformed score probabilities."))
+                    .OrderBy(level => level.Value)
+                    .Select(level => new ProbabilityBar(ScoreLabel(level.Value.ToString(CultureInfo.InvariantCulture), level.Label), level.Probability)));
                 break;
             default:
                 throw new InvalidDataException($"Malformed response: expected a {expectedType} answer for {answer.Name}.");
         }
     }
 
-    private static string Probability(double value)
+    private static double ScoreLevelOrder(string value) =>
+        double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double number) && double.IsFinite(number)
+            ? number : double.PositiveInfinity;
+
+    private static string ScoreLabel(string value, string? label)
     {
-        if (!double.IsFinite(value) || value < 0 || value > 1)
+        if (string.IsNullOrWhiteSpace(label))
         {
-            throw new InvalidDataException("Malformed response: probabilities and confidence must be between 0 and 1.");
+            return value;
         }
-        return value.ToString("P2", CultureInfo.InvariantCulture);
+        int separator = label.IndexOf(": ", StringComparison.Ordinal);
+        string title = (separator >= 0 ? label[..separator] : label).Trim();
+        return string.IsNullOrEmpty(title) ? value : $"{value} ({title})";
     }
+
+    private static string Probability(double value) => ProbabilityDistributionRenderer.FormatProbability(value);
 
     private static string Number(double value) => value.ToString("0.########", CultureInfo.InvariantCulture);
 }

@@ -25,7 +25,7 @@ Basic Decision Examples
 0) Back
 ```
 
-Select an example to display its scenario description, call its configured API, and show a typed answer summary, available confidence/probabilities, response time in milliseconds, and formatted response JSON. Press Enter after an example to return to the Basic submenu. Select `0) Back` in either submenu to return to the startup menu, where `0) Exit` closes the application. Yes/No answers remain probabilities; the application does not impose a boolean threshold. Decisions refusals are shown explicitly.
+Select an example to display its scenario description, call its configured API, and show a typed answer summary, available confidence, a horizontal probability chart, response time in milliseconds, and formatted response JSON. Press Enter after an example to return to the Basic submenu. Select `0) Back` in either submenu to return to the startup menu, where `0) Exit` closes the application. Yes/No answers remain probabilities; the application does not impose a boolean threshold. Decisions refusals are shown explicitly.
 
 The **Advanced Decision Examples** submenu currently displays “No advanced examples yet” and offers `0) Back` without calling an API. End-of-input at any prompt exits cleanly.
 
@@ -148,13 +148,6 @@ Decisions follows the [OpenAI Decisions API reference](https://developers.openai
 ]
 ```
 
-## Response timing and errors
-
-While sending a request, the application displays orange `Calling local API...` or `Calling Foundry API...` text. The `Response JSON:` label is blue. These colors are independent of the scenario and input labels.
-
-`Response time: 123 ms` measures the client-observed HTTP round trip. A `Stopwatch` starts immediately before sending the prepared request and stops after the entire response body is received. File loading, request preparation, response deserialization, and console rendering are excluded. Failed requests also display elapsed milliseconds.
-
-Requests have a 60-second timeout and no automatic retries. Missing settings or files, invalid JSON, HTTP failures, timeouts, and malformed responses display an error and allow returning to the menu.
 
 ## Build and publish
 
@@ -173,5 +166,3 @@ Build first, then run the standard-library Python integration checks:
 python3 tests/verify_console.py
 python3 tests/verify_console.py --include-timeout
 ```
-
-The checks use a temporary localhost HTTP server and a copy of the built application, so they do not change saved User Secrets or call your local decision model or Foundry gateway. They cover all nine request formats, the Foundry deployment and per-request authentication header, credential isolation from local calls, menu navigation, configuration and response errors, wrapping, and response timing. The optional timeout checks take about two minutes.

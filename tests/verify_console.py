@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Integration checks: build first, then run this file; --include-timeout adds 60 seconds."""
+"""Integration checks: build first; --include-timeout adds two one-minute timeout checks."""
 import argparse
 import json
 import os
@@ -25,6 +25,9 @@ FOUNDRY_MODEL = "console-test-foundry-deployment"
 FOUNDRY_KEY = "console-test-foundry-key-do-not-print"
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 TIMING = re.compile(r"Response time: (\d+) ms")
+CHART_ROW = re.compile(r"^  (?P<label>.{0,25}) \|(?P<bar>[ █▏▎▍▌▋▊▉]{40})\| (?P<percent>\d+\.\d{2}) %$",
+                       re.MULTILINE)
+CHART_HEADINGS = ("Probability Distribution:", "Bernoulli Distribution (Yes/No):")
 SECTION_END = re.compile(r"^(?:Scenario Description:|Input:|Calling (?:local|Foundry) API\.\.\.).*$",
                          re.MULTILINE)
 
@@ -37,6 +40,25 @@ def displayed_section(text, label, cursor=0):
     content = text[content_start:end.start()].strip("\n")
     assert all(len(line) <= 80 for line in content.splitlines()), (label, content)
     return start, content
+
+
+def chart_rows(text):
+    """Read chart output independently of the rendering implementation."""
+    rows = list(CHART_ROW.finditer(text))
+    assert rows, text
+    assert all(len(row[0]) <= 80 for row in rows), text
+    assert len({len(row["label"]) for row in rows}) == 1, text
+    return [(row["label"].strip(), row["bar"], row["percent"]) for row in rows]
+
+
+def assert_distribution(text, expected, heading="Probability Distribution:"):
+    start = text.index(f"{heading}\n")
+    end = text.index("Response JSON:\n", start)
+    section = text[start:end].rstrip("\n")
+    assert all(len(line) <= 80 for line in section.splitlines()), section
+    rows = chart_rows(section)
+    assert [(label, percent) for label, _, percent in rows] == expected, section
+    return rows
 
 
 def answers_for(payload, path):
@@ -150,10 +172,17 @@ def main():
                 nonlocal checks
                 text = run(basic_input(1) if input_text is None else input_text, overrides, timeout)
                 assert "Error:" in text, (label, text)
+                assert all(heading not in text for heading in CHART_HEADINGS), (label, text)
                 assert "Press Enter to return to the menu:" in text, (label, text)
                 if timed:
                     assert TIMING.search(text), (label, text)
                 checks += 1
+
+            def response_for(option, answer):
+                questions = json.loads((basic_folder(option - 1) / "questions.json").read_text())
+                system_one = option <= 3 or option >= 7
+                name = next(iter(questions)) if system_one else questions[0]["name"]
+                return {"model": "fixture", "answers": {name: answer} if system_one else [{"name": name, **answer}]}
 
             for index in range(9):
                 for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
@@ -167,6 +196,8 @@ def main():
             assert text.count("Please enter") == 2, text
             assert text.count("Press Enter to return to the menu:") == 9, text
             assert len(TIMING.findall(text)) == 9, text
+            assert text.count("Probability Distribution:\n") == 6, text
+            assert text.count("Bernoulli Distribution (Yes/No):\n") == 3, text
             assert text.count("Scenario Description:\n") == text.count("Input:\n") == 9, text
             assert "Selected mode:" not in text and "Model:" not in text, text
             if os.name != "nt":
@@ -175,6 +206,8 @@ def main():
                 assert raw_text.count("\x1b[38;2;255;180;84mCalling local API...\n") == 6, raw_text
                 assert raw_text.count("\x1b[38;2;255;180;84mCalling Foundry API...\n") == 3, raw_text
                 assert raw_text.count("\x1b[38;2;128;192;255mResponse JSON:\n") == 9, raw_text
+                assert raw_text.count("\x1b[38;2;0;229;255mProbability Distribution:\x1b[39m\n") == 6, raw_text
+                assert raw_text.count("\x1b[38;2;0;229;255mBernoulli Distribution (Yes/No):\x1b[39m\n") == 3, raw_text
             cursor = 0
             for index, (path, payload) in enumerate(server.requests):
                 folder = basic_folder(index)
@@ -200,6 +233,27 @@ def main():
                 status = "Calling Foundry API..." if foundry else "Calling local API..."
                 assert start < input_start < text.index(status, start)
                 cursor = text.index("Press Enter to return to the menu:", start)
+                example_text = text[start:cursor]
+                if index % 3 == 0:
+                    expected_rows = [("Billing", "91.00"), ("Technical", "6.00"), ("Shipping", "3.00")]
+                    heading, outcome = "Probability Distribution:", "Department: Billing"
+                elif index % 3 == 1:
+                    expected_rows = [("Yes", "87.50"), ("No", "12.50")]
+                    heading, outcome = "Bernoulli Distribution (Yes/No):", "Probability of yes: 87.50"
+                else:
+                    expected_rows = [("0 (Cosmetic)", "10.00"), ("1 (Workaround Available)", "42.50"),
+                                     ("2 (Fully Blocked)", "47.50")]
+                    heading, outcome = "Probability Distribution:", "Score: 1.375"
+                rows = assert_distribution(example_text, expected_rows, heading)
+                assert example_text.index(outcome) < example_text.index(heading) < example_text.index("Response JSON:"), example_text
+                assert not re.search(r"^  (?:Billing|Technical|Shipping):", example_text, re.MULTILINE), example_text
+                if index % 3 != 1:
+                    assert example_text.index("Confidence: ") < example_text.index(heading), example_text
+                if os.name != "nt":
+                    colors = (["128;255;160", "255;128;128"] if index % 3 == 1 else
+                              ["0;229;255"] * len(rows))
+                    for (_, bar, _), color in zip(rows, colors):
+                        assert f"\x1b[38;2;{color}m{bar}\x1b[39m|" in raw_text, (bar, color, raw_text)
             assert text.count("Department: Billing") == 3 and text.count("Score: 1.375") == 3, text
             assert text.count("Probability of yes: 87.50") == 3, text
             checks += 1
@@ -210,6 +264,113 @@ def main():
             for headers in server.request_headers[1:]:
                 assert "api-key" not in headers and "authorization" not in headers, headers
             checks += 1
+
+            # Bernoulli charts retain probabilities rather than selecting a boolean outcome.
+            for option in (2, 5, 8):
+                for probability in (0, 1):
+                    answer = ({"type": "noul", "noul": probability} if option != 5 else
+                              {"type": "predicate", "probability": probability})
+                    server.response = response_for(option, answer)
+                    text = run(basic_input(option))
+                    assert "Error:" not in text, text
+                    rows = assert_distribution(text, [("Yes", f"{probability * 100:.2f}"),
+                                                      ("No", f"{(1 - probability) * 100:.2f}")],
+                                               "Bernoulli Distribution (Yes/No):")
+                    assert rows[0][1] == ("█" * 40 if probability else " " * 40), rows
+                    assert rows[1][1] == (" " * 40 if probability else "█" * 40), rows
+                    assert f"Probability of yes: {probability * 100:.2f} %" in text, text
+                    checks += 1
+
+            # Each bar uses the supplied probability, even when the values do not sum to one.
+            probabilities = {"Full": 1, "Zero": 0, "Fraction": 0.3375, "Tiny": 0.0001,
+                             "Half Eighth": 0.0015625, "One And Half Eighths": 0.0046875}
+            expected_bars = ["█" * 40, " " * 40, "█" * 13 + "▌" + " " * 26, " " * 40,
+                             "▏" + " " * 39, "▎" + " " * 39]
+            for option in (1, 4, 7):
+                answer = {"type": "choice", "choice": "Full", "confidence": 1,
+                          "probabilities": probabilities if option != 4 else
+                          [{"value": value, "probability": probability} for value, probability in probabilities.items()]}
+                server.response = response_for(option, answer)
+                text = run(basic_input(option))
+                assert "Error:" not in text, text
+                rows = assert_distribution(text, [(name, f"{probability * 100:.2f}")
+                                                  for name, probability in probabilities.items()])
+                assert [bar for _, bar, _ in rows] == expected_bars, rows
+                checks += 1
+
+            # Score rows sort numerically, while unknown numeric labels keep their wire order at the end.
+            answer = {"type": "score", "score": 1.375, "confidence": 0.8,
+                      "probabilities": {"2": 0.475, "10": 0, "0": 0.1, "1": 0.425,
+                                        "Later": 0, "-2": 0, "Alpha": 0},
+                      "legend": {"2": "Fully Blocked: Verbose explanation stays in JSON.",
+                                 "1": "Workaround Available: A practical workaround exists."}}
+            for option in (3, 9):
+                server.response = response_for(option, answer)
+                text = run(basic_input(option))
+                assert "Error:" not in text and "Score: 1.375" in text, text
+                rows = assert_distribution(text, [("-2", "0.00"), ("0", "10.00"),
+                                                  ("1 (Workaround Available)", "42.50"),
+                                                  ("2 (Fully Blocked)", "47.50"), ("10", "0.00"),
+                                                  ("Later", "0.00"), ("Alpha", "0.00")])
+                chart = text[text.index("Probability Distribution:"):text.index("Response JSON:")]
+                assert "Verbose explanation" not in chart and "practical workaround" not in chart, chart
+                assert "Verbose explanation stays in JSON." in text[text.index("Response JSON:"):], text
+                checks += 1
+            server.response = response_for(3, {"type": "score", "score": 0.75, "confidence": 0.8,
+                                               "probabilities": {"1": 0.75, "0": 0.25}})
+            text = run(basic_input(3))
+            assert_distribution(text, [("0", "25.00"), ("1", "75.00")])
+            assert "Score: 0.75" in text, text
+            checks += 1
+            server.response = response_for(6, {"type": "score", "score": 1.375, "confidence": 0.8,
+                                               "probabilities": [{"value": 2, "label": "Fully Blocked: Extra detail", "probability": 0.475},
+                                                                 {"value": 0, "label": "Cosmetic", "probability": 0.1},
+                                                                 {"value": 1, "label": "Workaround Available", "probability": 0.425}]})
+            text = run(basic_input(6))
+            assert_distribution(text, [("0 (Cosmetic)", "10.00"), ("1 (Workaround Available)", "42.50"),
+                                       ("2 (Fully Blocked)", "47.50")])
+            checks += 1
+
+            # Labels that cannot fit alongside a bar wrap above it, including unbroken words.
+            long_label = "This option has a very long label that must wrap above its bar " * 3
+            long_word = "L" * 165
+            for option in (1, 4):
+                probabilities = {long_label.strip(): 0.75, long_word: 0.25}
+                answer = {"type": "choice", "choice": long_label.strip(), "confidence": 0.75,
+                          "probabilities": probabilities if option == 1 else
+                          [{"value": value, "probability": probability} for value, probability in probabilities.items()]}
+                server.response = response_for(option, answer)
+                text = run(basic_input(option))
+                assert "Error:" not in text, text
+                rows = assert_distribution(text, [("", "75.00"), ("", "25.00")])
+                section = text[text.index("Probability Distribution:\n"):text.index("Response JSON:\n")]
+                labels = [line.strip() for line in section.splitlines()[1:]
+                          if line.strip() and CHART_ROW.fullmatch(line) is None]
+                assert re.sub(r"\s", "", "".join(labels)) == re.sub(r"\s", "", long_label + long_word), section
+                assert labels[-3:] == ["L" * 78, "L" * 78, "L" * 9], section
+                checks += 1
+
+            # A later malformed probability must not leave a partially rendered distribution.
+            for option in (1, 4, 7):
+                for invalid in (-0.01, 1.01):
+                    answer = {"type": "choice", "choice": "Billing", "confidence": 0.91,
+                              "probabilities": {"Billing": 0.91, "Shipping": invalid} if option != 4 else
+                              [{"value": "Billing", "probability": 0.91}, {"value": "Shipping", "probability": invalid}]}
+                    server.response = response_for(option, answer)
+                    check_failure("invalid choice probability", basic_input(option))
+            for option in (2, 5, 8):
+                answer = ({"type": "noul", "noul": 1.01} if option != 5 else
+                          {"type": "predicate", "probability": 1.01})
+                server.response = response_for(option, answer)
+                check_failure("invalid Bernoulli probability", basic_input(option))
+            for option in (3, 6, 9):
+                answer = {"type": "score", "score": 1.375, "confidence": 0.8,
+                          "probabilities": {"0": 0.1, "1": -0.01} if option != 6 else
+                          [{"value": 0, "label": "Cosmetic", "probability": 0.1},
+                           {"value": 1, "label": "Workaround Available", "probability": -0.01}]}
+                server.response = response_for(option, answer)
+                check_failure("invalid score probability", basic_input(option))
+            server.response = None
 
             folder = basic_folder(0)
             description_file, input_file = folder / "ScenarioDescription.txt", folder / "input.txt"
@@ -342,7 +503,14 @@ def main():
             server.response = {"model": "console-test-model", "answers": [{"name": name, "type": "refusal"}]}
             text = run(basic_input(4))
             assert "Refused:" in text and "Error:" not in text and TIMING.search(text), text
+            assert all(heading not in text for heading in CHART_HEADINGS), text
             checks += 1
+            for option in (5, 6):
+                server.response = response_for(option, {"type": "refusal"})
+                text = run(basic_input(option))
+                assert "Refused:" in text and "Error:" not in text and TIMING.search(text), text
+                assert all(heading not in text for heading in CHART_HEADINGS), text
+                checks += 1
             server.response = None
             server.delay = 0.18
             text = run(basic_input(1))
