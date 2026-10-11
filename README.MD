@@ -13,15 +13,15 @@ Select **Basic Decision Examples** to open its submenu:
 ```text
 Basic Decision Examples
 
-1) Local SystemOne - Choice
-2) Local SystemOne - Yes/No (noul)
-3) Local SystemOne - Score
-4) Local Decisions - Choice
-5) Local Decisions - Yes/No (predicate)
-6) Local Decisions - Score
-7) Foundry SystemOne - Choice
-8) Foundry SystemOne - Yes/No (noul)
-9) Foundry SystemOne - Score
+1) Local (SystemOne API) - Choice
+2) Local (SystemOne API) - Yes/No (noul)
+3) Local (SystemOne API) - Score
+4) Local (Decisions API) - Choice
+5) Local (Decisions API) - Yes/No (predicate)
+6) Local (Decisions API) - Score
+7) Foundry (SystemOne API) - Choice
+8) Foundry (SystemOne API) - Yes/No (noul)
+9) Foundry (SystemOne API) - Score
 0) Back
 ```
 
@@ -30,13 +30,14 @@ Select **Advanced Decision Examples** to open its submenu:
 ```text
 Advanced Decision Examples
 
-1) Local SystemOne - Football Game Probability Foreacast
-2) Local SystemOne - Football Total Points Cumulative Probability
-3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating
-4) Local SystemOne - Customer Subscription Brier Score and Calibration
-5) Foundry SystemOne - Apple Watch Step Goal with 10,000 Step Decision Rule
-6) Foundry SystemOne - Energy Plant Investment Strategy with Decision Framing
-7) Foundry SystemOne - Work Queue Prioritization with the Eisenhower Matrix
+1) Local (SystemOne API) - Football Game Probability Foreacast
+2) Local (SystemOne API) - Football Total Points Cumulative Probability
+3) Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating
+4) Local (SystemOne API) - Customer Subscription Brier Score and Calibration
+5) Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule
+6) Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing
+7) Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix
+8) Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation?
 0) Back
 ```
 
@@ -190,9 +191,38 @@ After all eight requests succeed, a task summary and a **two-by-two Eisenhower M
 
 Before the first request, the application loads and validates all four assets, including eight unique ordered task IDs, nonblank titles and details, and the shared four-choice question. Responses must contain exactly the requested question and choice keys, an allowed selected action, finite confidence and probabilities in `[0,1]`, and probabilities summing to one within `1e-6`. Charts retain rubric order when response keys are shuffled. A failed request or invalid response identifies the task, preserves completed output and available current response JSON, stops subsequent calls, and omits the final summary and matrix. It uses the existing Foundry endpoint, deployment name, and API key, with a separate 60-second timeout per request. There are no pauses between tasks; the normal end-of-example Enter prompt remains.
 
+### Restaurant Choice: Decision Exploration or Exploitation?
+
+The eighth advanced example asks fictional **Alex** to choose an entree at **Harbor Table**, balancing a satisfying dinner, good value, and discovering a possible future favorite. It adapts exploration and exploitation from Bart Czernicki's [Decision Intelligence with AI, Chapter 1F](https://www.decisionintelligencebook.ai/chapters/1f-decision-execution-with-decision-rules.html). Alex, the restaurant, menu, prices, preferences, and rating histories are created for this example.
+
+Alex has an entree budget of **$25 USD before tax and tip**, likes savory flavors, mushrooms, and herbs, prefers mild to medium heat, and has no dietary restrictions. Hunger is 7 out of 10 and willingness to try something novel is 6 out of 10. Novelty willingness is a preference, not a probability or a required exploration rate. Alex returns about monthly, making information about an unfamiliar dish useful for future visits. All six entrees are available and within budget.
+
+| Dish | Price, USD | Portion | Heat | Alex's personal satisfaction history here, out of 10 |
+| --- | --- | --- | --- | --- |
+| Lemon Herb Chicken | $20 | Generous | Mild | 8, 9, 8; three visits. |
+| Mushroom Risotto | $19 | Medium | Mild | 9, 8, 9, 9; four visits. |
+| Roasted Vegetable Pasta | $18 | Generous | Mild | 7, 8; two visits. |
+| Ginger Soy Salmon | $24 | Generous | Medium | Never tried; rating unknown. |
+| Smoky Chickpea Bowl | $17 | Generous | Medium | Never tried; rating unknown. |
+| Spinach and Ricotta Ravioli | $21 | Medium | Mild | Never tried; rating unknown. |
+
+Familiar means Alex has previously eaten that exact dish at Harbor Table. Familiar ingredients or experience elsewhere do not make it familiar here. The familiar-dish comparison considers the supplied histories and sample counts alongside appetite, preferences, and value. Untried-dish ratings remain unknown; the questions do not invent ratings, force a winner, or impose an exploration frequency.
+
+One Foundry SystemOne POST sends these three `choice` questions together, in this order:
+
+| Question | Choices, in criterion order | Meaning |
+| --- | --- | --- |
+| Dining Strategy | Explore; Exploit. | Recommend trying an unfamiliar dish or choosing a familiar dish using the full context. |
+| Dish if Exploring | Ginger Soy Salmon; Smoky Chickpea Bowl; Spinach and Ricotta Ravioli. | Recommend a dish assuming Explore, independently of the other generated answers. |
+| Dish if Exploiting | Lemon Herb Chicken; Mushroom Risotto; Roasted Vegetable Pasta. | Recommend a dish assuming Exploit, independently of the other generated answers. |
+
+Each question has its own recommendation distribution, rather than meal-satisfaction or success probabilities. The application does not multiply or normalize probabilities across questions. The selected strategy determines which conditional dish answer is displayed. Two numbered answers show the strategy and active dish, each with its own API confidence and probability chart, followed by a final recommendation identifying **Explore with an unfamiliar dish** or **Exploit with a familiar dish**. The inactive branch remains in the full three-answer response JSON. One response time covers the single request.
+
+Before the call, the application loads and validates all three assets and the ordered question definitions. All three answers, including the inactive branch, must pass strict validation before any answer or chart is displayed: exactly the requested question IDs and types, exact probability labels, an allowed selected choice, finite confidence and probabilities in `[0,1]`, and probabilities summing to one within `1e-6` for each question. Charts preserve criterion order when keys arrive shuffled. A failed request or invalid response reports the error and retains available response JSON without a final recommendation. The example uses the existing Foundry endpoint, deployment name, and API key, with the standard 60-second timeout and end-of-example Enter prompt. Recommendations do not place an order.
+
 ## Run
 
-Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–4, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9 and Advanced options 5–7, configure the Foundry settings below. Run from the repository root:
+Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–4, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9 and Advanced options 5–8, configure the Foundry settings below. Run from the repository root:
 
 ```sh
 dotnet run --project SystemOneDecisionsConsole
@@ -212,7 +242,7 @@ For local examples (Basic options 1–6 and Advanced options 1–4), install LM 
 
 **Note:** For the multi-question examples, increase LM Studio's **Physical Batch Size** setting from `512` to a larger value such as `3000` so the input and questions can be processed together in one shot.
 
-Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. Foundry examples (Basic options 7–9 and Advanced options 5–7) use the hosted deployment and do not require a local model.
+Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. Foundry examples (Basic options 7–9 and Advanced options 5–8) use the hosted deployment and do not require a local model.
 
 ## User Secrets for local APIs and Microsoft Foundry
 
@@ -242,7 +272,7 @@ If the loaded model's identifier differs from `clef-flash`, replace `your-loaded
 dotnet user-secrets set "LocalDecisionModel" "your-loaded-model-id" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 ```
 
-For **Foundry examples (Basic options 7–9 and Advanced options 5–7)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
+For **Foundry examples (Basic options 7–9 and Advanced options 5–8)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
 
 ```sh
 dotnet user-secrets set "MicrosoftFoundrySystemOneAPI" "https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
@@ -258,7 +288,7 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder groups sixteen examples by category: nine in **Basic Decision Examples** and seven in **Advanced Decision Examples**:
+The repository-root `Decisions` folder groups seventeen examples by category: nine in **Basic Decision Examples** and eight in **Advanced Decision Examples**:
 
 ```text
 Decisions/
@@ -280,16 +310,17 @@ Decisions/
     FoundrySystemOne-AppleWatchStepGoal/
     FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming/
     FoundrySystemOne-WorkQueueEisenhowerMatrix/
+    FoundrySystemOne-RestaurantExploreExploit/
     .gitkeep
 ```
 
-Each example contains the following three common files. The shipment example adds two evidence files, the customer subscription example adds three evaluation-data files, the energy example adds three isolated frame files, and the work-queue example adds one task file, giving sixteen examples and 57 example files in total. The existing Advanced category `.gitkeep` is retained.
+Each example contains the following three common files. The shipment example adds two evidence files, the customer subscription example adds three evaluation-data files, the energy example adds three isolated frame files, and the work-queue example adds one task file, giving seventeen examples and 60 example files in total. The existing Advanced category `.gitkeep` is retained.
 
 | File | Purpose |
 | --- | --- |
 | `ScenarioDescription.txt` | Decision Scenario explanation. Never included in the API request. |
 | `input.txt` | Input/state supplied to the model; for the customer subscription example, common context combined with one case's features; for the energy example, shared facts and neutral rules combined with only the current frame file; for the work-queue example, shared role and rubric combined with only the current task's title and details. |
-| `questions.json` | Question definitions (choices, yes/no, score); the energy example sends only its active question definition on each call. |
+| `questions.json` | Question definitions (choices, yes/no, score); the energy example sends only its active question definition on each call; the restaurant example sends its strategy and both conditional dish questions together. |
 | `evidence-2.txt` | Shipment example only: carrier records appended to the initial state for stage 2. |
 | `evidence-3.txt` | Shipment example only: delivery-readiness records appended to both earlier evidence sets for stage 3. |
 | `cases.json` | Customer subscription example only: 200 selected customers' allowlisted features, local case IDs, and cohort IDs. |
@@ -300,7 +331,7 @@ Each example contains the following three common files. The shipment example add
 | `frame-benefits.txt` | Energy example only: Benefits Hat (Yellow) instructions appended to the shared state for the third request. |
 | `tasks.json` | Work-queue example only: eight ordered local IDs, titles, and task details for isolated classifications. |
 
-Basic examples each demonstrate one question type. Advanced option 1 combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers. Advanced option 2 demonstrates how to derive a cumulative probability from one score distribution. Advanced option 3 compares three live choice distributions as cumulative evidence is revealed. Advanced option 4 scores 200 local single-customer `noul` forecasts and inspects raw calibration separately for representative and previous-campaign-success diagnostic cohorts. Advanced option 5 sends three separate goal-reaching `noul` questions in one Foundry SystemOne request. Advanced option 6 compares recommendation distributions over the same investment strategies using three isolated single-question Foundry requests, each with its own thinking frame. Advanced option 7 independently classifies eight work items into an Eisenhower Matrix using eight isolated single-question Foundry requests. Aggregation, evidence-stage, evaluation, frame-comparison, and work-queue settings are internal application metadata and do not change the API request or response schemas.
+Basic examples each demonstrate one question type. Advanced option 1 combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers. Advanced option 2 demonstrates how to derive a cumulative probability from one score distribution. Advanced option 3 compares three live choice distributions as cumulative evidence is revealed. Advanced option 4 scores 200 local single-customer `noul` forecasts and inspects raw calibration separately for representative and previous-campaign-success diagnostic cohorts. Advanced option 5 sends three separate goal-reaching `noul` questions in one Foundry SystemOne request. Advanced option 6 compares recommendation distributions over the same investment strategies using three isolated single-question Foundry requests, each with its own thinking frame. Advanced option 7 independently classifies eight work items into an Eisenhower Matrix using eight isolated single-question Foundry requests. Advanced option 8 sends a dining strategy and two conditional dish questions in one Foundry request, then displays the strategy and its active dish branch. Aggregation, evidence-stage, evaluation, frame-comparison, work-queue, and restaurant display settings are internal application metadata and do not change the API request or response schemas.
 
 Edit the repository-root files to change the scenarios, then rebuild or run again. 
 
@@ -341,7 +372,7 @@ dotnet build SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Release -o ./publish
 ```
 
-Build and publish copy all 57 example files, including the shipment evidence files, all six customer subscription files, Apple Watch scenario, all six energy investment files, and all four work-queue files, while retaining the nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` paths beside the application. User Secrets remain machine-local and are not copied during publishing. Generated `Results` reports are separate from scenario assets and are not copied during publishing. The root `.gitignore` excludes generated reports, Visual Studio settings, and .NET build artifacts.
+Build and publish copy all 60 example files, including the shipment evidence files, all six customer subscription files, Apple Watch scenario, all six energy investment files, all four work-queue files, and all three restaurant files, while retaining the nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` paths beside the application. User Secrets remain machine-local and are not copied during publishing. Generated `Results` reports are separate from scenario assets and are not copied during publishing. The root `.gitignore` excludes generated reports, Visual Studio settings, and .NET build artifacts.
 
 ## Validation
 

@@ -29,7 +29,8 @@ internal sealed partial class DecisionExampleRunner
         DecisionTaskClassification metadata = example.Tasks!;
         if (example.Backend != DecisionBackend.FoundrySystemOne || example.QuestionType != "choice" ||
             example.Aggregation is not null || example.EvidenceStages is not null || example.Frames is not null ||
-            example.Evaluation is not null || metadata.QuestionId != "Work Queue Action" || metadata.TaskCount != 8 ||
+            example.Evaluation is not null || example.ExplorationExploitation is not null ||
+            metadata.QuestionId != "Work Queue Action" || metadata.TaskCount != 8 ||
             string.IsNullOrWhiteSpace(metadata.TasksFile) || Path.GetFileName(metadata.TasksFile) != metadata.TasksFile)
         {
             throw new InvalidDataException("Task classification requires eight Foundry SystemOne choice tasks without evidence stages, decision frames, evaluation, or score aggregation.");

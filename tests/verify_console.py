@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Integration checks: build first; --include-timeout adds four one-minute timeout checks."""
+"""Integration checks: build first; --include-timeout adds five one-minute timeout checks."""
 import argparse
 import copy
 import csv
@@ -40,7 +40,7 @@ SHIPMENT_PROBABILITIES = [(0.22, 0.18, 0.24, 0.16, 0.20),
                          (0.01, 0.01, 0.94, 0.02, 0.02)]
 APPLE_WATCH_FOLDER = "FoundrySystemOne-AppleWatchStepGoal"
 CUSTOMER_FOLDER = "LocalSystemOne-CustomerSubscriptionCalibration"
-CUSTOMER_MENU = "4) Local SystemOne - Customer Subscription Brier Score and Calibration"
+CUSTOMER_MENU = "4) Local (SystemOne API) - Customer Subscription Brier Score and Calibration"
 CUSTOMER_QUESTION = "Customer Subscription"
 CUSTOMER_FILES = ["ScenarioDescription.txt", "input.txt", "questions.json", "cases.json", "outcomes.json", "provenance.json"]
 CALIBRATION_LABELS = [f"[{index / 10:.1f}, {(index + 1) / 10:.1f}{']' if index == 9 else ')'}" for index in range(10)]
@@ -55,7 +55,7 @@ APPLE_WATCH_HISTORIES = [(1800, 2200, 2500, 2800, 3100, 3400, 3700, 4100, 4700, 
                          (4400, 4600, 4800, 4900, 5000, 5100, 5200, 5400, 5500, 5700),
                          (7200, 7600, 7900, 8100, 8400, 8700, 9000, 9300, 9600, 9900)]
 ENERGY_FOLDER = "FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming"
-ENERGY_MENU = "6) Foundry SystemOne - Energy Plant Investment Strategy with Decision Framing"
+ENERGY_MENU = "6) Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing"
 ENERGY_QUESTIONS = ["Creativity Hat (Green)", "Caution Hat (Black)", "Benefits Hat (Yellow)"]
 ENERGY_FRAME_LABELS = ["Creativity", "Caution", "Benefits"]
 ENERGY_FRAME_FILES = ["frame-creativity.txt", "frame-caution.txt", "frame-benefits.txt"]
@@ -64,7 +64,7 @@ ENERGY_CHOICES = ["Full Build Now", "Phased Investment", "Joint Venture", "Defer
 ENERGY_PROBABILITIES = [(0.15, 0.50, 0.30, 0.05), (0.10, 0.25, 0.15, 0.50), (0.55, 0.20, 0.20, 0.05)]
 ENERGY_CONFIDENCES = (0.72, 0.78, 0.75)
 WORK_QUEUE_FOLDER = "FoundrySystemOne-WorkQueueEisenhowerMatrix"
-WORK_QUEUE_MENU = "7) Foundry SystemOne - Work Queue Prioritization with the Eisenhower Matrix"
+WORK_QUEUE_MENU = "7) Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix"
 WORK_QUEUE_QUESTION = "Work Queue Action"
 WORK_QUEUE_FILES = ["ScenarioDescription.txt", "input.txt", "questions.json", "tasks.json"]
 WORK_QUEUE_CHOICES = ["Do Now", "Schedule", "Delegate", "Eliminate"]
@@ -73,6 +73,14 @@ WORK_QUEUE_PROBABILITIES = [(0.61, 0.19, 0.12, 0.08), (0.10, 0.62, 0.18, 0.10),
                             (0.65, 0.15, 0.11, 0.09), (0.08, 0.66, 0.14, 0.12),
                             (0.07, 0.13, 0.67, 0.13), (0.09, 0.10, 0.13, 0.68)]
 WORK_QUEUE_CONFIDENCES = (0.72, 0.73, 0.74, 0.75, 0.76, 0.77, 0.78, 0.79)
+RESTAURANT_FOLDER = "FoundrySystemOne-RestaurantExploreExploit"
+RESTAURANT_MENU = "8) Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation?"
+RESTAURANT_QUESTIONS = ["Dining Strategy", "Dish if Exploring", "Dish if Exploiting"]
+RESTAURANT_CHOICES = [["Explore", "Exploit"],
+                      ["Ginger Soy Salmon", "Smoky Chickpea Bowl", "Spinach and Ricotta Ravioli"],
+                      ["Lemon Herb Chicken", "Mushroom Risotto", "Roasted Vegetable Pasta"]]
+RESTAURANT_PROBABILITIES = [(0.68, 0.32), (0.47, 0.31, 0.22), (0.56, 0.28, 0.16)]
+RESTAURANT_CONFIDENCES = (0.73, 0.81, 0.79)
 FOOTBALL_QUESTIONS = {
     "Final Game Winner": "choice",
     "Packers Cover -7.5": "noul",
@@ -433,6 +441,69 @@ def work_queue_answers(payload, index=None, probabilities=None, confidence=None,
     return {"model": payload["model"], "answers": {WORK_QUEUE_QUESTION: answer}}
 
 
+def restaurant_answers(payload, strategy="Explore", distributions=RESTAURANT_PROBABILITIES,
+                       confidences=RESTAURANT_CONFIDENCES, selected_dishes=None):
+    if selected_dishes is None:
+        selected_dishes = [choices[max(range(len(choices)), key=distribution.__getitem__)]
+                           for choices, distribution in zip(RESTAURANT_CHOICES[1:], distributions[1:])]
+    answers = {}
+    for name, choices, distribution, confidence, selected in zip(
+            RESTAURANT_QUESTIONS, RESTAURANT_CHOICES, distributions, confidences, [strategy, *selected_dishes]):
+        answers[name] = {"type": "choice", "choice": selected, "confidence": confidence,
+                         "probabilities": dict(reversed(list(zip(choices, distribution))))}
+    return {"model": payload["model"], "answers": dict(reversed(list(answers.items())))}
+
+
+def assert_restaurant_output(text, response, choices_by_question=RESTAURANT_CHOICES):
+    answers = response["answers"]
+    strategy = answers[RESTAURANT_QUESTIONS[0]]["choice"]
+    branch = 1 if strategy == "Explore" else 2
+    dish = answers[RESTAURANT_QUESTIONS[branch]]["choice"]
+    names = [RESTAURANT_QUESTIONS[0], RESTAURANT_QUESTIONS[branch]]
+    labels = [f"{index}) {name}: {answers[name]['choice']}" for index, name in enumerate(names, 1)]
+    actual_labels = re.findall(r"^\d+\) (?:Dining Strategy|Dish if Exploring|Dish if Exploiting): [^\n]+$", text, re.MULTILINE)
+    assert actual_labels == labels, text
+    assert text.count("Probability Distribution:\n") == text.count("Confidence:") == 2, text
+    assert text.count("Response JSON:\n") == len(TIMING.findall(text)) == 1, text
+    for index, name in enumerate(names):
+        start = text.index(labels[index])
+        end = text.index(labels[index + 1]) if index + 1 < len(labels) else text.index("Response JSON:\n", start)
+        section = text[start:end]
+        if "Response JSON:\n" not in section:
+            section += "Response JSON:\n"
+        answer = answers[name]
+        assert f"Confidence: {100 * answer['confidence']:.2f} %" in section, section
+        choices = choices_by_question[RESTAURANT_QUESTIONS.index(name)]
+        expected = [(choice if len(choice) <= 25 else "", f"{100 * answer['probabilities'][choice]:.2f}") for choice in choices]
+        assert_distribution(section, expected)
+        for choice in choices:
+            if len(choice) > 25:
+                assert f"  {choice}\n" in section, section
+    conditional = f"Conditional recommendation given {strategy}."
+    final = f"Final recommendation: {strategy} → {dish} ({'unfamiliar' if branch == 1 else 'familiar'})."
+    assert conditional in text and final in text, text
+    assert text.index(labels[0]) < text.index(conditional) < text.index(labels[1]) < text.index(final) < text.index("Response JSON:\n"), text
+    assert text.count("Final recommendation:") == text.count("Conditional recommendation given") == 1, text
+    inactive = RESTAURANT_QUESTIONS[2 if branch == 1 else 1]
+    visible = text[:text.index("Response JSON:\n")]
+    assert not re.search(rf"^\d+\) {re.escape(inactive)}:", visible, re.MULTILINE), visible
+    actual_response, _ = json.JSONDecoder().raw_decode(text.split("Response JSON:\n", 1)[1].lstrip())
+    assert actual_response == response and set(actual_response["answers"]) == set(RESTAURANT_QUESTIONS), actual_response
+
+
+def assert_restaurant_harness(temporary, assembly):
+    harness = Path(temporary) / "restaurant-checks"
+    harness.mkdir()
+    (harness / "RestaurantChecks.csproj").write_text(
+        '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType>'
+        '<TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings>'
+        '<Nullable>enable</Nullable></PropertyGroup></Project>', encoding="utf-8")
+    shutil.copyfile(ROOT / "tests/RestaurantHarness.cs", harness / "Program.cs")
+    result = subprocess.run(["dotnet", "run", "--project", str(harness / "RestaurantChecks.csproj"), "--", str(assembly)],
+                            capture_output=True, text=True, encoding="utf-8", cwd=temporary, timeout=60)
+    assert result.returncode == 0 and "PASS: invalid exploration/exploitation metadata rejected" in result.stdout, result.stdout + result.stderr
+
+
 def work_queue_sections(text):
     headings = list(re.finditer(r"^Task (\d+) of 8: ([^\n]+)$", text, re.MULTILINE))
     sections = []
@@ -725,6 +796,8 @@ def answers_for(payload, path):
         return energy_answers(payload)
     if system_one and list(questions) == [WORK_QUEUE_QUESTION]:
         return work_queue_answers(payload)
+    if system_one and list(questions) == RESTAURANT_QUESTIONS:
+        return restaurant_answers(payload)
     items = questions.items() if system_one else ((q["name"], q) for q in questions)
     answers = {} if system_one else []
     for name, question in items:
@@ -872,6 +945,12 @@ def main():
 
             def work_queue_input():
                 return "2\n7\n\n0\n0\n"
+
+            def restaurant_folder():
+                return output / "Decisions" / ADVANCED_CATEGORY / RESTAURANT_FOLDER
+
+            def restaurant_input():
+                return "2\n8\n\n0\n0\n"
 
             def check_failure(label, input_text=None, overrides=None, timeout=15, timed=True):
                 nonlocal checks
@@ -2317,6 +2396,227 @@ def main():
             assert "MicrosoftFoundryAPIKey" in raw_text and "Work queue incomplete; later tasks were not run." in raw_text, raw_text
             assert "Response JSON:" not in raw_text and "Work Queue Summary:" not in raw_text, raw_text
 
+            # Restaurant strategy and both conditional dishes arrive in one authenticated request.
+            restaurant = restaurant_folder()
+            for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
+                assert (restaurant / filename).read_bytes() == \
+                       (ROOT / "Decisions" / ADVANCED_CATEGORY / RESTAURANT_FOLDER / filename).read_bytes(), filename
+            restaurant_questions = json.loads((restaurant / "questions.json").read_text(encoding="utf-8"))
+            assert list(restaurant_questions) == RESTAURANT_QUESTIONS, restaurant_questions
+            assert all(question["type"] == "choice" for question in restaurant_questions.values()), restaurant_questions
+            assert [list(question["criteria"]) for question in restaurant_questions.values()] == RESTAURANT_CHOICES, restaurant_questions
+            restaurant_state = (restaurant / "input.txt").read_text(encoding="utf-8").strip()
+            restaurant_description = (restaurant / "ScenarioDescription.txt").read_text(encoding="utf-8").strip()
+            restaurant_payload = {"model": FOUNDRY_MODEL, "state": restaurant_state, "questions": restaurant_questions}
+            server.status, server.response = 200, None
+            text = run(restaurant_input(), {"LocalSystemOneAPI": "", "LocalDecisionsAPI": "", "LocalDecisionModel": "unused-local"})
+            assert "Error:" not in text and server.requests == [(FOUNDRY_PATH, restaurant_payload)], text
+            assert text.count("Calling Foundry API...\n") == 1 and "Calling local API..." not in text, text
+            assert text.count("Scenario Description:\n") == text.count("Input:\n") == text.count("Press Enter to return to the menu:") == 1, text
+            headers = server.request_headers[0]
+            assert headers.get("api-key") == FOUNDRY_KEY and "authorization" not in headers and "ocp-apim-subscription-key" not in headers, headers
+            _, displayed = displayed_section(text, "Scenario Description:")
+            assert re.sub(r"\s", "", displayed) == re.sub(r"\s", "", restaurant_description), displayed
+            input_start, displayed = displayed_section(text, "Input:")
+            assert re.sub(r"\s", "", displayed) == re.sub(r"\s", "", restaurant_state), displayed
+            assert input_start < text.index("Calling Foundry API...") < text.index("Response time:"), text
+            assert restaurant_description not in restaurant_state, restaurant_payload
+            assert_restaurant_output(text, restaurant_answers(restaurant_payload))
+            response, _ = json.JSONDecoder().raw_decode(text.split("Response JSON:\n", 1)[1].lstrip())
+            assert list(response["answers"]) == list(reversed(RESTAURANT_QUESTIONS)), response
+            for index, name in enumerate(RESTAURANT_QUESTIONS):
+                assert list(response["answers"][name]["probabilities"]) == list(reversed(RESTAURANT_CHOICES[index])), response
+                assert response["answers"][name]["confidence"] != max(response["answers"][name]["probabilities"].values()), response
+            checks += 1
+
+            # Display the returned selection, retaining the branch's conditional probabilities.
+            for strategy, distributions, confidences, dishes in (
+                ("Exploit", RESTAURANT_PROBABILITIES, RESTAURANT_CONFIDENCES, None),
+                ("Explore", RESTAURANT_PROBABILITIES, RESTAURANT_CONFIDENCES, ["Spinach and Ricotta Ravioli", "Mushroom Risotto"]),
+                ("Exploit", RESTAURANT_PROBABILITIES, RESTAURANT_CONFIDENCES, ["Smoky Chickpea Bowl", "Roasted Vegetable Pasta"]),
+                ("Explore", [(1, 0), (0, 1, 0), (0, 0, 1)], (0, 1, .5), None),
+                ("Exploit", [(0, 1), (1, 0, 0), (0, 1, 0)], (1, 0, 1), None),
+                ("Explore", [(.68, .3200005), (.47, .31, .22), (.56, .28, .16)], RESTAURANT_CONFIDENCES, None),
+            ):
+                expected_response = restaurant_answers(restaurant_payload, strategy, distributions, confidences, dishes)
+                server.response = expected_response
+                text = run(restaurant_input())
+                assert "Error:" not in text and server.requests == [(FOUNDRY_PATH, restaurant_payload)], text
+                assert_restaurant_output(text, expected_response)
+                checks += 1
+            assert_restaurant_harness(temporary, output / "SystemOneDecisionsConsole.dll")
+            checks += 1
+
+            # Every answer is checked before any chart, including the unused branch.
+            def check_restaurant_failure(label, response, http_status=None, question_name=None):
+                nonlocal checks
+                server.status, server.response = 200 if http_status is None else http_status, response
+                text = run(restaurant_input())
+                assert server.requests == [(FOUNDRY_PATH, restaurant_payload)], (label, text)
+                assert "Error: Restaurant choice:" in text, (label, text)
+                assert all(heading not in text for heading in CHART_HEADINGS), (label, text)
+                assert not re.search(r"^\d+\) (?:Dining Strategy|Dish if Exploring|Dish if Exploiting):", text, re.MULTILINE), (label, text)
+                assert not re.search(r"^(?:Conditional recommendation given|Final recommendation:)", text, re.MULTILINE), (label, text)
+                assert text.count("Response JSON:\n") == len(TIMING.findall(text)) == text.count("Press Enter to return to the menu:") == 1, (label, text)
+                if question_name is not None:
+                    error_line = next(line for line in text.splitlines() if line.startswith("Error: Restaurant choice:"))
+                    assert question_name in error_line, (label, error_line)
+                current = text.split("Response JSON:\n", 1)[1].split("Press Enter to return to the menu:", 1)[0].strip()
+                if isinstance(response, str):
+                    try:
+                        expected = json.loads(response)
+                    except json.JSONDecodeError:
+                        assert current == response, (label, current)
+                    else:
+                        actual, _ = json.JSONDecoder().raw_decode(current)
+                        assert actual == expected and "duplicate" in text.lower(), (label, current)
+                else:
+                    actual, _ = json.JSONDecoder().raw_decode(current)
+                    assert json.dumps(actual, sort_keys=True) == json.dumps(response, sort_keys=True), (label, actual)
+                if http_status is not None:
+                    assert f"HTTP {http_status}" in text and response["error"] in text, (label, text)
+                checks += 1
+
+            for strategy in ("Explore", "Exploit"):
+                for name in RESTAURANT_QUESTIONS:
+                    for label, modify in (
+                        ("missing restaurant answer", lambda value, name=name: value["answers"].pop(name)),
+                        ("wrong restaurant answer ID", lambda value, name=name: value["answers"].update(Other=value["answers"].pop(name))),
+                        ("wrong restaurant answer type", lambda value, name=name: value["answers"].update({name: {"type": "noul", "noul": .5}})),
+                    ):
+                        response = restaurant_answers(restaurant_payload, strategy)
+                        modify(response)
+                        check_restaurant_failure(label, response)
+                inactive = RESTAURANT_QUESTIONS[2 if strategy == "Explore" else 1]
+                inactive_choices = RESTAURANT_CHOICES[RESTAURANT_QUESTIONS.index(inactive)]
+                for label, modify in (
+                    ("missing inactive probability", lambda value: value["probabilities"].pop(inactive_choices[-1])),
+                    ("extra inactive probability", lambda value: value["probabilities"].update(Other=0)),
+                    ("negative inactive probability", lambda value: value.update(probabilities=dict(zip(inactive_choices, (-.01, .35, .66))))),
+                    ("inactive probability above one", lambda value: value["probabilities"].update({inactive_choices[0]: 1.01})),
+                    ("NaN inactive probability", lambda value: value["probabilities"].update({inactive_choices[0]: float("nan")})),
+                    ("infinite inactive probability", lambda value: value["probabilities"].update({inactive_choices[0]: float("inf")})),
+                    ("null inactive probability", lambda value: value["probabilities"].update({inactive_choices[0]: None})),
+                    ("low inactive sum", lambda value: value["probabilities"].update({inactive_choices[0]: .1})),
+                    ("high inactive sum", lambda value: value["probabilities"].update({inactive_choices[0]: .9})),
+                    ("missing inactive probabilities", lambda value: value.pop("probabilities")),
+                    ("null inactive probabilities", lambda value: value.update(probabilities=None)),
+                    ("empty inactive probabilities", lambda value: value.update(probabilities={})),
+                    ("unknown inactive dish", lambda value: value.update(choice="Unknown dish")),
+                    ("blank inactive dish", lambda value: value.update(choice=" ")),
+                    ("null inactive dish", lambda value: value.update(choice=None)),
+                    ("missing inactive dish", lambda value: value.pop("choice")),
+                    ("negative inactive confidence", lambda value: value.update(confidence=-.01)),
+                    ("inactive confidence above one", lambda value: value.update(confidence=1.01)),
+                    ("NaN inactive confidence", lambda value: value.update(confidence=float("nan"))),
+                    ("infinite inactive confidence", lambda value: value.update(confidence=float("inf"))),
+                    ("null inactive confidence", lambda value: value.update(confidence=None)),
+                    ("missing inactive confidence", lambda value: value.pop("confidence")),
+                ):
+                    response = restaurant_answers(restaurant_payload, strategy)
+                    modify(response["answers"][inactive])
+                    # Deserialization failures may precede field-level question attribution.
+                    attributed = inactive if not any(word in label for word in ("NaN", "infinite", "null", "missing inactive probabilities", "missing inactive dish", "missing inactive confidence")) else None
+                    check_restaurant_failure(label, response, question_name=attributed)
+            for name in RESTAURANT_QUESTIONS:
+                choices = RESTAURANT_CHOICES[RESTAURANT_QUESTIONS.index(name)]
+                for label, modify in (
+                    ("invalid restaurant selected choice", lambda answer: answer.update(choice="Unknown choice")),
+                    ("missing restaurant criterion", lambda answer: answer["probabilities"].pop(choices[-1])),
+                    ("restaurant probability sum below one", lambda answer: answer["probabilities"].update({choices[0]: .1})),
+                    ("restaurant confidence above one", lambda answer: answer.update(confidence=1.01)),
+                ):
+                    response = restaurant_answers(restaurant_payload)
+                    modify(response["answers"][name])
+                    check_restaurant_failure(label, response, question_name=name)
+            for label, response in (
+                ("malformed restaurant JSON", "{"),
+                ("missing restaurant model", {"answers": restaurant_answers(restaurant_payload)["answers"]}),
+                ("null restaurant model", {"model": None, "answers": restaurant_answers(restaurant_payload)["answers"]}),
+                ("missing restaurant answers", {"model": FOUNDRY_MODEL}),
+                ("null restaurant answers", {"model": FOUNDRY_MODEL, "answers": None}),
+                ("extra restaurant answer", {"model": FOUNDRY_MODEL, "answers": {**restaurant_answers(restaurant_payload)["answers"], "Other": {"type": "noul", "noul": .5}}}),
+            ):
+                check_restaurant_failure(label, response)
+            raw_response = json.dumps(restaurant_answers(restaurant_payload))
+            for needle, duplicate in (('"confidence":', '"confidence": 0.1, "confidence":'),
+                                      ('"Ginger Soy Salmon":', '"Ginger Soy Salmon": 0, "Ginger Soy Salmon":'),
+                                      ('"Dish if Exploiting":', '"Dish if Exploiting": {}, "Dish if Exploiting":')):
+                check_restaurant_failure("duplicate restaurant response property", raw_response.replace(needle, duplicate, 1))
+            for status in (401, 403, 500, 503):
+                check_restaurant_failure(f"restaurant HTTP {status}", {"error": f"restaurant HTTP {status} current failure"}, status)
+            server.status, server.response = 200, None
+
+            def check_restaurant_preflight(label, overrides=None):
+                check_failure(label, restaurant_input(), overrides, timed=False)
+                assert not server.requests and not TIMING.search(raw_text), (label, raw_text)
+                assert "Response JSON:" not in raw_text and "Calling Foundry API..." not in raw_text, (label, raw_text)
+                assert not re.search(r"^Final recommendation:", ANSI.sub("", raw_text), re.MULTILINE), (label, raw_text)
+            for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
+                file = restaurant / filename
+                original = file.read_bytes()
+                try:
+                    file.unlink()
+                    check_restaurant_preflight(f"missing restaurant {filename}")
+                    file.write_text(" \n", encoding="utf-8")
+                    check_restaurant_preflight(f"empty restaurant {filename}")
+                finally:
+                    file.write_bytes(original)
+            questions_file = restaurant / "questions.json"
+            original = questions_file.read_bytes()
+            try:
+                for label, modify in (
+                    ("missing restaurant question", lambda value: value.pop(RESTAURANT_QUESTIONS[2])),
+                    ("extra restaurant question", lambda value: value.update(Other=value[RESTAURANT_QUESTIONS[2]])),
+                    ("wrong restaurant question ID", lambda value: value.update(Other=value.pop(RESTAURANT_QUESTIONS[2]))),
+                    ("reordered restaurant questions", lambda value: value.update({RESTAURANT_QUESTIONS[0]: value.pop(RESTAURANT_QUESTIONS[0])})),
+                    ("wrong restaurant question type", lambda value: value[RESTAURANT_QUESTIONS[2]].update(type="noul")),
+                    ("blank restaurant instructions", lambda value: value[RESTAURANT_QUESTIONS[2]].update(instructions=" ")),
+                    ("missing restaurant instructions", lambda value: value[RESTAURANT_QUESTIONS[2]].pop("instructions")),
+                    ("reordered strategy choices", lambda value: value[RESTAURANT_QUESTIONS[0]].update(criteria=dict(reversed(list(value[RESTAURANT_QUESTIONS[0]]["criteria"].items()))))),
+                    ("wrong strategy choice", lambda value: value[RESTAURANT_QUESTIONS[0]]["criteria"].update(Other=value[RESTAURANT_QUESTIONS[0]]["criteria"].pop("Explore"))),
+                    ("overlapping dish choices", lambda value: value[RESTAURANT_QUESTIONS[2]]["criteria"].update({RESTAURANT_CHOICES[1][0]: "Overlapping dish"})),
+                    ("blank dish criterion", lambda value: value[RESTAURANT_QUESTIONS[2]]["criteria"].update({RESTAURANT_CHOICES[2][0]: " "})),
+                    ("blank dish criterion name", lambda value: value[RESTAURANT_QUESTIONS[2]]["criteria"].update({" ": "Invalid name"})),
+                    ("one dish criterion", lambda value: value[RESTAURANT_QUESTIONS[2]].update(criteria={RESTAURANT_CHOICES[2][0]: "Only one"})),
+                ):
+                    value = copy.deepcopy(restaurant_questions)
+                    modify(value)
+                    questions_file.write_text(json.dumps(value), encoding="utf-8")
+                    check_restaurant_preflight(label)
+                for content in ("{", "null", original.decode("utf-8").replace('"type":', '"type": "choice", "type":', 1)):
+                    questions_file.write_text(content, encoding="utf-8")
+                    check_restaurant_preflight("malformed/duplicate restaurant questions")
+                # Conditional dish names/order come from assets rather than a hardcoded menu.
+                for choices in ([RESTAURANT_CHOICES[0], list(reversed(RESTAURANT_CHOICES[1])), list(reversed(RESTAURANT_CHOICES[2]))],
+                                [RESTAURANT_CHOICES[0], ["New unfamiliar entree", "Alternative unfamiliar entree"], ["Known favorite", "Another known favorite"]]):
+                    value = copy.deepcopy(restaurant_questions)
+                    for index, name in enumerate(RESTAURANT_QUESTIONS):
+                        value[name]["criteria"] = {choice: f"Description of {choice}" for choice in choices[index]}
+                    questions_file.write_text(json.dumps(value), encoding="utf-8")
+                    for strategy in ("Explore", "Exploit"):
+                        response = {"model": FOUNDRY_MODEL, "answers": {name: {"type": "choice", "choice": strategy if index == 0 else choices[index][-1],
+                                     "confidence": .8, "probabilities": dict(reversed([(choice, 1 if position == 0 else 0) for position, choice in enumerate(choices[index])]))}
+                                     for index, name in enumerate(RESTAURANT_QUESTIONS)}}
+                        server.response = response
+                        text = run(restaurant_input())
+                        assert "Error:" not in text and len(server.requests) == 1, text
+                        assert server.requests[0][1]["questions"] == value, server.requests
+                        assert_restaurant_output(text, response, choices)
+                        checks += 1
+            finally:
+                questions_file.write_bytes(original)
+                server.status, server.response = 200, None
+            for setting in ("MicrosoftFoundrySystemOneAPI", "MicrosoftFoundryDecisionModelDeploymentName", "MicrosoftFoundryAPIKey"):
+                for value in ("", " "):
+                    check_restaurant_preflight(f"restaurant missing {setting}", {setting: value})
+                    assert setting in raw_text, raw_text
+            check_restaurant_preflight("invalid restaurant Foundry endpoint", {"MicrosoftFoundrySystemOneAPI": "not-an-endpoint"})
+            check_failure("invalid restaurant key header", restaurant_input(),
+                          {"MicrosoftFoundryAPIKey": FOUNDRY_KEY + "\ninvalid-header"}, timed=False)
+            assert not server.requests and not TIMING.search(raw_text) and "Error: Restaurant choice:" in raw_text, raw_text
+            assert "Response JSON:" not in raw_text, raw_text
+
             # Publish must include the same scenario files, using the existing project content glob.
             publish = Path(temporary) / "publish"
             result = subprocess.run(["dotnet", "publish", str(ROOT / "SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj"),
@@ -2326,8 +2626,9 @@ def main():
             scenarios = [(BASIC_CATEGORY, name) for name in FOLDERS] + \
                         [(ADVANCED_CATEGORY, FOOTBALL_FOLDER), (ADVANCED_CATEGORY, TOTAL_POINTS_FOLDER),
                          (ADVANCED_CATEGORY, SHIPMENT_FOLDER), (ADVANCED_CATEGORY, CUSTOMER_FOLDER), (ADVANCED_CATEGORY, APPLE_WATCH_FOLDER),
-                         (ADVANCED_CATEGORY, ENERGY_FOLDER), (ADVANCED_CATEGORY, WORK_QUEUE_FOLDER)]
-            assert len(scenarios) == 16, scenarios
+                         (ADVANCED_CATEGORY, ENERGY_FOLDER), (ADVANCED_CATEGORY, WORK_QUEUE_FOLDER),
+                         (ADVANCED_CATEGORY, RESTAURANT_FOLDER)]
+            assert len(scenarios) == 17, scenarios
             expected_file_count = 0
             for category, scenario in scenarios:
                 published_folder = publish / "Decisions" / category / scenario
@@ -2337,9 +2638,9 @@ def main():
                 expected_file_count += len(filenames)
                 for filename in filenames:
                     assert (published_folder / filename).read_bytes() == (scenario_source / filename).read_bytes(), (scenario, filename)
-            assert expected_file_count == 57, expected_file_count
+            assert expected_file_count == 60, expected_file_count
             published_assets = [file for file in (publish / "Decisions").rglob("*") if file.suffix in (".txt", ".json")]
-            assert len(published_assets) == 57, published_assets
+            assert len(published_assets) == 60, published_assets
             checks += 1
 
             text = run("1\n7\n\n1\n\n4\n\n0\n0\n")
@@ -2481,40 +2782,42 @@ def main():
             text = run(" 1 \n 0 \n 2 \n 0 \n 0 \n")
             assert "Error:" not in text and not server.requests, text
             assert text.count("1) Basic Decision Examples") == 3, text
-            assert text.count("1) Local SystemOne - Choice") == 1, text
+            assert text.count("1) Local (SystemOne API) - Choice") == 1, text
             assert f"\n{BASIC_CATEGORY}\n" in text, text
             assert f"\n{ADVANCED_CATEGORY}\n" in text, text
-            assert "1) Local SystemOne - Football Game Probability Foreacast" in text and "0) Back" in text, text
-            assert "2) Local SystemOne - Football Total Points Cumulative Probability" in text, text
-            assert "3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating" in text, text
+            assert "1) Local (SystemOne API) - Football Game Probability Foreacast" in text and "0) Back" in text, text
+            assert "2) Local (SystemOne API) - Football Total Points Cumulative Probability" in text, text
+            assert "3) Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating" in text, text
             assert CUSTOMER_MENU in text, text
-            assert "5) Foundry SystemOne - Apple Watch Step Goal with 10,000 Step Decision Rule" in text, text
+            assert "5) Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule" in text, text
             assert ENERGY_MENU in text, text
             assert WORK_QUEUE_MENU in text, text
+            assert RESTAURANT_MENU in text, text
             assert "Calling local API..." not in text and not TIMING.search(text), text
             if os.name != "nt":
                 colored_menus = "\n".join(re.findall(
                     r"\x1b\[38;2;255;215;0m(.*?)\x1b\[39m", raw_text, re.DOTALL))
                 for label in ("1) Basic Decision Examples", "2) Advanced Decision Examples",
-                              "1) Local SystemOne - Choice", "2) Local SystemOne - Yes/No (noul)",
-                              "3) Local SystemOne - Score", "4) Local Decisions - Choice",
-                              "5) Local Decisions - Yes/No (predicate)", "6) Local Decisions - Score",
-                              "7) Foundry SystemOne - Choice", "8) Foundry SystemOne - Yes/No (noul)",
-                              "9) Foundry SystemOne - Score",
-                              "1) Local SystemOne - Football Game Probability Foreacast",
-                              "2) Local SystemOne - Football Total Points Cumulative Probability",
-                              "3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating",
+                              "1) Local (SystemOne API) - Choice", "2) Local (SystemOne API) - Yes/No (noul)",
+                              "3) Local (SystemOne API) - Score", "4) Local (Decisions API) - Choice",
+                              "5) Local (Decisions API) - Yes/No (predicate)", "6) Local (Decisions API) - Score",
+                              "7) Foundry (SystemOne API) - Choice", "8) Foundry (SystemOne API) - Yes/No (noul)",
+                              "9) Foundry (SystemOne API) - Score",
+                              "1) Local (SystemOne API) - Football Game Probability Foreacast",
+                              "2) Local (SystemOne API) - Football Total Points Cumulative Probability",
+                              "3) Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating",
                               CUSTOMER_MENU,
-                              "5) Foundry SystemOne - Apple Watch Step Goal with 10,000 Step Decision Rule",
+                              "5) Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule",
                               ENERGY_MENU,
                               WORK_QUEUE_MENU,
+                              RESTAURANT_MENU,
                               "0) Exit", "0) Back"):
                     assert label in colored_menus, (label, raw_text)
             checks += 1
 
             text = run(basic_input(1))
             pause = text.index("Press Enter to return to the menu:")
-            returned_to_basic = text.index("1) Local SystemOne - Choice", pause)
+            returned_to_basic = text.index("1) Local (SystemOne API) - Choice", pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_basic < returned_to_startup, text
             assert len(server.requests) == 1, text
@@ -2522,7 +2825,7 @@ def main():
 
             text = run(football_input())
             pause = text.index("Press Enter to return to the menu:")
-            returned_to_advanced = text.index("1) Local SystemOne - Football Game Probability Foreacast", pause)
+            returned_to_advanced = text.index("1) Local (SystemOne API) - Football Game Probability Foreacast", pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 1, text
@@ -2530,7 +2833,7 @@ def main():
 
             text = run(total_points_input())
             pause = text.index("Press Enter to return to the menu:")
-            returned_to_advanced = text.index("2) Local SystemOne - Football Total Points Cumulative Probability", pause)
+            returned_to_advanced = text.index("2) Local (SystemOne API) - Football Total Points Cumulative Probability", pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 1, text
@@ -2538,7 +2841,7 @@ def main():
 
             text = run(shipment_input())
             pause = text.index("Press Enter to return to the menu:")
-            returned_to_advanced = text.index("3) Local SystemOne - Shipment Arrival Evidence with Bayesian updating", pause)
+            returned_to_advanced = text.index("3) Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating", pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 3 and text.count("Press Enter to return to the menu:") == 1, text
@@ -2577,7 +2880,7 @@ def main():
 
             text = run(apple_watch_input())
             pause = text.index("Press Enter to return to the menu:")
-            returned_to_advanced = text.index("5) Foundry SystemOne - Apple Watch Step Goal with 10,000 Step Decision Rule", pause)
+            returned_to_advanced = text.index("5) Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule", pause)
             returned_to_startup = text.index("1) Basic Decision Examples", pause)
             assert returned_to_advanced < returned_to_startup, text
             assert len(server.requests) == 1 and text.count("Press Enter to return to the menu:") == 1, text
@@ -2595,6 +2898,12 @@ def main():
             pause = text.index("Press Enter to return to the menu:")
             assert text.index(WORK_QUEUE_MENU, pause) < text.index("1) Basic Decision Examples", pause), text
             assert len(server.requests) == 8 and text.count("Press Enter to return to the menu:") == 1, text
+            checks += 1
+
+            text = run(restaurant_input())
+            pause = text.index("Press Enter to return to the menu:")
+            assert text.index(RESTAURANT_MENU, pause) < text.index("1) Basic Decision Examples", pause), text
+            assert len(server.requests) == 1 and text.count("Press Enter to return to the menu:") == 1, text
             checks += 1
 
             text = run("2\n 1 \n\n1\n\n0\n1\n2\n\n0\n0\n")
@@ -2670,10 +2979,26 @@ def main():
                    [f"{index} of 8) Work Queue Action:" for index in range(1, 9)] * 2, text
             checks += 1
 
+            server.response = lambda payload, path, number: restaurant_answers(payload, "Exploit" if number == 3 else "Explore") \
+                if list(payload["questions"]) == RESTAURANT_QUESTIONS else answers_for(payload, path)
+            text = run("2\n 8 \n\n1\n\n8\n\n0\n0\n")
+            assert "Error:" not in text and len(server.requests) == 3, text
+            assert server.requests[0][1] == server.requests[2][1] == restaurant_payload, server.requests
+            assert [path for path, _ in server.requests] == [FOUNDRY_PATH, "/v1/systemone", FOUNDRY_PATH], server.requests
+            assert server.request_headers[0].get("api-key") == server.request_headers[2].get("api-key") == FOUNDRY_KEY, server.request_headers
+            assert "api-key" not in server.request_headers[1], server.request_headers
+            assert re.findall(r"^\d+\) (?:Dining Strategy|Dish if Exploring|Dish if Exploiting): [^\n]+$", text, re.MULTILINE) == \
+                   ["1) Dining Strategy: Explore", "2) Dish if Exploring: Ginger Soy Salmon",
+                    "1) Dining Strategy: Exploit", "2) Dish if Exploiting: Lemon Herb Chicken"], text
+            assert text.count("Final recommendation:") == 2 and text.count("Press Enter to return to the menu:") == 3, text
+            assert len(TIMING.findall(text)) == text.count("Response JSON:\n") == 3, text
+            server.response = None
+            checks += 1
+
             for input_text, message, count in (
                 ("bad\n\n3\n 0 \n", "Please enter 0, 1, or 2", 3),
                 ("1\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4),
-                ("2\nbad\n\n8\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, or 7", 4),
+                ("2\nbad\n\n9\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, or 8", 4),
             ):
                 text = run(input_text)
                 assert text.count(message) == count, text
@@ -2681,13 +3006,13 @@ def main():
                 checks += 1
 
             for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n", "1\n7\n",
-                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n", "2\n4\n", "2\n4\n\n", "2\n5\n", "2\n5\n\n", "2\n6\n", "2\n6\n\n", "2\n7\n", "2\n7\n\n"):
+                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n3\n", "2\n3\n\n", "2\n4\n", "2\n4\n\n", "2\n5\n", "2\n5\n\n", "2\n6\n", "2\n6\n\n", "2\n7\n", "2\n7\n\n", "2\n8\n", "2\n8\n\n"):
                 text = run(input_text, timeout=60)
                 assert "Error:" not in text, text
                 expected_requests = CUSTOMER_CASE_COUNT if input_text in ("2\n4\n", "2\n4\n\n") else \
                     8 if input_text in ("2\n7\n", "2\n7\n\n") else \
                     3 if input_text in ("2\n3\n", "2\n3\n\n", "2\n6\n", "2\n6\n\n") else \
-                    1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n5\n", "2\n5\n\n") else 0
+                    1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n", "2\n5\n", "2\n5\n\n", "2\n8\n", "2\n8\n\n") else 0
                 assert len(server.requests) == expected_requests, text
                 checks += 1
             check_failure("missing endpoint", overrides={"LocalSystemOneAPI": ""}, timed=False)
@@ -2812,8 +3137,17 @@ def main():
                 assert "Work Queue Summary:" not in text and "\nEisenhower Matrix:\n" not in text, text
                 assert all(heading not in text for heading in CHART_HEADINGS), text
                 checks += 1
+                text = run(restaurant_input(), timeout=70)
+                assert server.requests == [(FOUNDRY_PATH, restaurant_payload)], text
+                assert "Error: Restaurant choice: API request timed out after 60 seconds." in text, text
+                assert "Response JSON:" not in text and len(TIMING.findall(text)) == 1, text
+                assert int(TIMING.search(text)[1]) >= 59000, text
+                assert all(heading not in text for heading in CHART_HEADINGS), text
+                assert not re.search(r"^(?:\d+\) (?:Dining Strategy|Dish if Exploring|Dish if Exploiting):|Conditional recommendation given|Final recommendation:)", text, re.MULTILINE), text
+                assert text.count("Press Enter to return to the menu:") == 1, text
+                checks += 1
                 server.delay = 0
-            print(f"PASS: {checks} console integration scenarios (nine Basic examples and seven Advanced examples included).")
+            print(f"PASS: {checks} console integration scenarios (nine Basic examples and eight Advanced examples included).")
     finally:
         server.shutdown()
         server.server_close()

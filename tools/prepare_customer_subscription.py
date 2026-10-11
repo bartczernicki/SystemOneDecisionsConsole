@@ -222,7 +222,7 @@ def build_assets(archive_bytes):
         "excludedFields": list(EXCLUDED_FIELDS),
         "cohorts": cohorts,
     }
-    description = """Local SystemOne - Customer Subscription Calibration
+    description = """Local (SystemOne API) - Customer Subscription Calibration
 
 Forecast 200 real historical customer outcomes from the original UCI Bank Marketing dataset in two separately scored groups. The Representative holdout retains the original 100 customers selected across the full dataset. The Previous campaign success diagnostic adds 100 different customers whose previous campaign outcome was success. Both selections use fixed hash rules without consulting the current campaign's outcome.
 

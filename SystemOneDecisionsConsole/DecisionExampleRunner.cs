@@ -29,37 +29,40 @@ internal sealed record DecisionBinaryEvaluation(
 
 internal sealed record DecisionTaskClassification(string QuestionId, string TasksFile, int TaskCount);
 
+internal sealed record DecisionExplorationExploitation(
+    string StrategyQuestionId, string ExploreQuestionId, string ExploitQuestionId);
+
 internal sealed record DecisionExample(string Label, string Folder, DecisionBackend Backend, string QuestionType,
     ScoreProbabilityAggregation? Aggregation = null, IReadOnlyList<DecisionEvidenceStage>? EvidenceStages = null,
     IReadOnlyList<DecisionFrame>? Frames = null, DecisionBinaryEvaluation? Evaluation = null,
-    DecisionTaskClassification? Tasks = null);
+    DecisionTaskClassification? Tasks = null, DecisionExplorationExploitation? ExplorationExploitation = null);
 
 internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
 {
     internal static IReadOnlyList<DecisionExample> Examples { get; } =
     [
-        new("Local SystemOne - Choice", Path.Combine("Basic Decision Examples", "LocalSystemOne-Choice"), DecisionBackend.LocalSystemOne, "choice"),
-        new("Local SystemOne - Yes/No (noul)", Path.Combine("Basic Decision Examples", "LocalSystemOne-YesNo"), DecisionBackend.LocalSystemOne, "noul"),
-        new("Local SystemOne - Score", Path.Combine("Basic Decision Examples", "LocalSystemOne-Score"), DecisionBackend.LocalSystemOne, "score"),
-        new("Local Decisions - Choice", Path.Combine("Basic Decision Examples", "LocalDecisions-Choice"), DecisionBackend.LocalDecisions, "choice"),
-        new("Local Decisions - Yes/No (predicate)", Path.Combine("Basic Decision Examples", "LocalDecisions-YesNo"), DecisionBackend.LocalDecisions, "predicate"),
-        new("Local Decisions - Score", Path.Combine("Basic Decision Examples", "LocalDecisions-Score"), DecisionBackend.LocalDecisions, "score"),
-        new("Foundry SystemOne - Choice", Path.Combine("Basic Decision Examples", "FoundrySystemOne-Choice"), DecisionBackend.FoundrySystemOne, "choice"),
-        new("Foundry SystemOne - Yes/No (noul)", Path.Combine("Basic Decision Examples", "FoundrySystemOne-YesNo"), DecisionBackend.FoundrySystemOne, "noul"),
-        new("Foundry SystemOne - Score", Path.Combine("Basic Decision Examples", "FoundrySystemOne-Score"), DecisionBackend.FoundrySystemOne, "score")
+        new("Local (SystemOne API) - Choice", Path.Combine("Basic Decision Examples", "LocalSystemOne-Choice"), DecisionBackend.LocalSystemOne, "choice"),
+        new("Local (SystemOne API) - Yes/No (noul)", Path.Combine("Basic Decision Examples", "LocalSystemOne-YesNo"), DecisionBackend.LocalSystemOne, "noul"),
+        new("Local (SystemOne API) - Score", Path.Combine("Basic Decision Examples", "LocalSystemOne-Score"), DecisionBackend.LocalSystemOne, "score"),
+        new("Local (Decisions API) - Choice", Path.Combine("Basic Decision Examples", "LocalDecisions-Choice"), DecisionBackend.LocalDecisions, "choice"),
+        new("Local (Decisions API) - Yes/No (predicate)", Path.Combine("Basic Decision Examples", "LocalDecisions-YesNo"), DecisionBackend.LocalDecisions, "predicate"),
+        new("Local (Decisions API) - Score", Path.Combine("Basic Decision Examples", "LocalDecisions-Score"), DecisionBackend.LocalDecisions, "score"),
+        new("Foundry (SystemOne API) - Choice", Path.Combine("Basic Decision Examples", "FoundrySystemOne-Choice"), DecisionBackend.FoundrySystemOne, "choice"),
+        new("Foundry (SystemOne API) - Yes/No (noul)", Path.Combine("Basic Decision Examples", "FoundrySystemOne-YesNo"), DecisionBackend.FoundrySystemOne, "noul"),
+        new("Foundry (SystemOne API) - Score", Path.Combine("Basic Decision Examples", "FoundrySystemOne-Score"), DecisionBackend.FoundrySystemOne, "score")
     ];
 
     internal static IReadOnlyList<DecisionExample> AdvancedExamples { get; } =
     [
-        new("Local SystemOne - Football Game Probability Foreacast",
+        new("Local (SystemOne API) - Football Game Probability Foreacast",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-FootballGamePrediction"),
             DecisionBackend.LocalSystemOne, "mixed"),
-        new("Local SystemOne - Football Total Points Cumulative Probability",
+        new("Local (SystemOne API) - Football Total Points Cumulative Probability",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-FootballTotalPointsProbability"),
             DecisionBackend.LocalSystemOne, "score",
             new("Final Total Points Band", ["Under 30", "30-40", "41-49", "50-59", "60 or More"],
                 [2, 3, 4], "Chance of more than 40 total points")),
-        new("Local SystemOne - Shipment Arrival Evidence with Bayesian updating",
+        new("Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-ShipmentArrivalEvidenceUpdates"),
             DecisionBackend.LocalSystemOne, "choice", EvidenceStages:
             [
@@ -67,7 +70,7 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
                 new("Carrier records", "evidence-2.txt"),
                 new("Verified delivery readiness", "evidence-3.txt")
             ]),
-        new("Local SystemOne - Customer Subscription Brier Score and Calibration",
+        new("Local (SystemOne API) - Customer Subscription Brier Score and Calibration",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-CustomerSubscriptionCalibration"),
             DecisionBackend.LocalSystemOne, "noul", Evaluation:
                 new("Customer Subscription", "cases.json", "outcomes.json", "provenance.json", 200,
@@ -75,10 +78,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
                     new("representative", "Representative holdout", 100),
                     new("prior-success", "Previous campaign success diagnostic", 100)
                 ])),
-        new("Foundry SystemOne - Apple Watch Step Goal with 10,000 Step Decision Rule",
+        new("Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-AppleWatchStepGoal"),
             DecisionBackend.FoundrySystemOne, "noul"),
-        new("Foundry SystemOne - Energy Plant Investment Strategy with Decision Framing",
+        new("Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming"),
             DecisionBackend.FoundrySystemOne, "choice", Frames:
             [
@@ -86,9 +89,13 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
                 new("Caution Hat (Black)", "Caution", "frame-caution.txt"),
                 new("Benefits Hat (Yellow)", "Benefits", "frame-benefits.txt")
             ]),
-        new("Foundry SystemOne - Work Queue Prioritization with the Eisenhower Matrix",
+        new("Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-WorkQueueEisenhowerMatrix"),
-            DecisionBackend.FoundrySystemOne, "choice", Tasks: new("Work Queue Action", "tasks.json", 8))
+            DecisionBackend.FoundrySystemOne, "choice", Tasks: new("Work Queue Action", "tasks.json", 8)),
+        new("Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation?",
+            Path.Combine("Advanced Decision Examples", "FoundrySystemOne-RestaurantExploreExploit"),
+            DecisionBackend.FoundrySystemOne, "choice", ExplorationExploitation:
+                new("Dining Strategy", "Dish if Exploring", "Dish if Exploiting"))
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -105,6 +112,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
         string? responseBody = null;
         try
         {
+            if (example.ExplorationExploitation is not null)
+            {
+                ValidateExplorationExploitationMetadata(example);
+            }
             if (example.Tasks is not null)
             {
                 ValidateTaskClassificationMetadata(example);
@@ -150,6 +161,11 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
                 {
                     model = "clef-flash";
                 }
+            }
+            if (example.ExplorationExploitation is not null)
+            {
+                await RunExplorationExploitationAsync(example, folder, uri, model, apiKey);
+                return;
             }
             if (example.Tasks is not null)
             {

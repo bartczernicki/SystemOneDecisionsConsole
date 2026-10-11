@@ -110,7 +110,8 @@ internal sealed partial class DecisionExampleRunner
     {
         DecisionBinaryEvaluation metadata = example.Evaluation!;
         if (example.Backend != DecisionBackend.LocalSystemOne || example.QuestionType != "noul" ||
-            example.Aggregation is not null || example.EvidenceStages is not null || example.Frames is not null || example.Tasks is not null ||
+            example.Aggregation is not null || example.EvidenceStages is not null || example.Frames is not null ||
+            example.Tasks is not null || example.ExplorationExploitation is not null ||
             metadata.CaseCount != 200 || string.IsNullOrWhiteSpace(metadata.QuestionId) ||
             metadata.Cohorts is null || metadata.Cohorts.Count != 2 ||
             metadata.Cohorts.Any(cohort => cohort is null || string.IsNullOrWhiteSpace(cohort.Label) || cohort.CaseCount != 100) ||

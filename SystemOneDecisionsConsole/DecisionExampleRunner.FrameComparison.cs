@@ -79,7 +79,7 @@ internal sealed partial class DecisionExampleRunner
         IReadOnlyList<DecisionFrame> frames = example.Frames!;
         if (example.Backend is not (DecisionBackend.LocalSystemOne or DecisionBackend.FoundrySystemOne) ||
             example.QuestionType != "choice" || example.Aggregation is not null || example.EvidenceStages is not null ||
-            example.Evaluation is not null || example.Tasks is not null ||
+            example.Evaluation is not null || example.Tasks is not null || example.ExplorationExploitation is not null ||
             frames.Count != 3 || frames.Any(frame => frame is null || string.IsNullOrWhiteSpace(frame.QuestionId) ||
                 string.IsNullOrWhiteSpace(frame.Label) || string.IsNullOrWhiteSpace(frame.InputFile)) ||
             frames.Select(frame => frame.QuestionId).Distinct(StringComparer.Ordinal).Count() != frames.Count ||
