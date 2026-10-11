@@ -1,0 +1,13 @@
+{
+  "Final Total Points Band": {
+    "type": "score",
+    "instructions": "Forecast the combined final points for Atlanta and Green Bay from the supplied halftime evidence, including first-half points and any overtime. Use the ordered bands with indices 0 through 4. The returned score is a probability-weighted band index and may be fractional; it is not a predicted point total. Return the probabilities for all five bands. The application will sum the probabilities for indices 2, 3, and 4 to calculate the chance of strictly more than 40 total points; exactly 40 belongs to index 1.",
+    "criteria": [
+      "Under 30: The combined final score is fewer than 30 points, including any overtime (index 0).",
+      "30-40: The combined final score is 30 through 40 points, including any overtime (index 1).",
+      "41-49: The combined final score is 41 through 49 points, including any overtime (index 2).",
+      "50-59: The combined final score is 50 through 59 points, including any overtime (index 3).",
+      "60 or More: The combined final score is at least 60 points, including any overtime (index 4)."
+    ]
+  }
+}

@@ -31,6 +31,7 @@ Select **Advanced Decision Examples** to open its submenu:
 Advanced Decision Examples
 
 1) Local SystemOne - Football Game Prediction
+2) Local SystemOne - Football Total Points Probability
 0) Back
 ```
 
@@ -48,9 +49,32 @@ The first advanced example forecasts an Atlanta Falcons at Green Bay Packers gam
 
 The total-points answer is a probability-weighted band index from 0 to 4 and may be fractional; it is not a predicted point total. The scenario does not supply a game date, second-half kickoff possession, injuries, or additional statistics.
 
+### Football Total Points Probability
+
+The second advanced example reuses the same halftime snapshot and sends one `score` question, **Final Total Points Band**, in one local SystemOne request. Its bands align with the threshold of strictly more than 40 combined final points, including any overtime:
+
+| Index | Final combined points |
+| --- | --- |
+| 0 | Under 30 |
+| 1 | 30–40 |
+| 2 | 41–49 |
+| 3 | 50–59 |
+| 4 | 60 or more |
+
+The score is a probability-weighted band index, not a point total. The application uses the individual band probabilities to calculate `P(total points > 40) = P(2) + P(3) + P(4)`. Exactly 40 belongs to band 1 and is excluded; band 2 contributes fully. The application adds raw probabilities before rounding and displays the result and arithmetic beneath the score chart, without another model call.
+
+For an illustrative fixture distribution `[0.10, 0.25, 0.30, 0.20, 0.15]`, every band probability is below 40%, yet their combined probability above the point threshold is 65%:
+
+```text
+Chance of more than 40 total points: 65.00 %
+30.00 % + 20.00 % + 15.00 % = 65.00 %
+```
+
+This aggregation example requires the configured band order and all five returned indices, with finite probabilities from 0 to 1 whose sum is within `1e-6` of one. Invalid distributions are reported as errors. These additional checks apply to this example.
+
 ## Run
 
-Install the .NET 10 SDK. For Basic options 1–6 and Advanced option 1, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9, configure the Foundry settings below. Run from the repository root:
+Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–2, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9, configure the Foundry settings below. Run from the repository root:
 
 ```sh
 dotnet run --project SystemOneDecisionsConsole
@@ -60,7 +84,7 @@ Use a terminal that supports ANSI RGB colors to display the cyan banner and gold
 
 ## Download LM Studio and a decision model
 
-For local examples (Basic options 1–6 and Advanced option 1), install LM Studio and load a decision model such as Clef or Clef-Flash:
+For local examples (Basic options 1–6 and Advanced options 1–2), install LM Studio and load a decision model such as Clef or Clef-Flash:
 
 1. Download the installer for your operating system from the [LM Studio download page](https://lmstudio.ai/download) and install the application.
 2. Open **Discover** and search for `Clef` or `Clef-Flash`. For a concrete download, paste the [ggml-org/Clef-Flash-GGUF model URL](https://huggingface.co/ggml-org/Clef-Flash-GGUF) into the search bar. LM Studio supports searching by model name or Hugging Face URL; see its [model download guide](https://lmstudio.ai/docs/app/basics/download-model).
@@ -87,7 +111,7 @@ The project has a `UserSecretsId` configured and loads these settings with `Micr
 
 Run the following commands from the repository root for the backend you use.
 
-For **local examples (Basic options 1–6 and Advanced option 1)**, these endpoints assume LM Studio runs on the same machine. If it runs on another computer, enable [Serve on Local Network](https://lmstudio.ai/docs/developer/core/server/serve-on-network) and replace `localhost:1234` with the server's address and port, such as `10.0.0.37:1234`:
+For **local examples (Basic options 1–6 and Advanced options 1–2)**, these endpoints assume LM Studio runs on the same machine. If it runs on another computer, enable [Serve on Local Network](https://lmstudio.ai/docs/developer/core/server/serve-on-network) and replace `localhost:1234` with the server's address and port, such as `10.0.0.37:1234`:
 
 ```sh
 dotnet user-secrets set "LocalSystemOneAPI" "http://localhost:1234/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
@@ -116,7 +140,7 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder groups ten examples by category: nine in **Basic Decision Examples** and one in **Advanced Decision Examples**:
+The repository-root `Decisions` folder groups eleven examples by category: nine in **Basic Decision Examples** and two in **Advanced Decision Examples**:
 
 ```text
 Decisions/
@@ -132,10 +156,11 @@ Decisions/
     FoundrySystemOne-Score/
   Advanced Decision Examples/
     LocalSystemOne-FootballGamePrediction/
+    LocalSystemOne-FootballTotalPointsProbability/
     .gitkeep
 ```
 
-Each example directory contains the following three files, for 30 example files in total. The existing Advanced category `.gitkeep` is retained.
+Each example directory contains the following three files, for 33 example files in total. The existing Advanced category `.gitkeep` is retained.
 
 | File | Purpose |
 | --- | --- |
@@ -143,7 +168,7 @@ Each example directory contains the following three files, for 30 example files 
 | `input.txt` | This is the input/state prompt that is passed into the decision model. |
 | `questions.json` | These are the questions (choices, yes/no, score) on howto process the decision input. |
 
-Basic examples each demonstrate one question type. The advanced football example combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers.
+Basic examples each demonstrate one question type. Advanced option 1 combines `choice`, `noul`, and `score` questions in one SystemOne dictionary, preserving question-file order for the displayed answers. Advanced option 2 demonstrates how to derive a cumulative probability from one score distribution; its aggregation settings are internal application metadata and do not change the API request or response schemas.
 
 Edit the repository-root files to change the scenarios, then rebuild or run again. 
 

@@ -14,7 +14,11 @@ internal enum DecisionBackend
     FoundrySystemOne
 }
 
-internal sealed record DecisionExample(string Label, string Folder, DecisionBackend Backend, string QuestionType);
+internal sealed record ScoreProbabilityAggregation(
+    string QuestionId, IReadOnlyList<string> ExpectedBandTitles, IReadOnlyList<int> IncludedIndices, string Label);
+
+internal sealed record DecisionExample(string Label, string Folder, DecisionBackend Backend, string QuestionType,
+    ScoreProbabilityAggregation? Aggregation = null);
 
 internal sealed class DecisionExampleRunner(HttpClient httpClient)
 {
@@ -35,7 +39,12 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
     [
         new("Local SystemOne - Football Game Prediction",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-FootballGamePrediction"),
-            DecisionBackend.LocalSystemOne, "mixed")
+            DecisionBackend.LocalSystemOne, "mixed"),
+        new("Local SystemOne - Football Total Points Probability",
+            Path.Combine("Advanced Decision Examples", "LocalSystemOne-FootballTotalPointsProbability"),
+            DecisionBackend.LocalSystemOne, "score",
+            new("Final Total Points Band", ["Under 30", "30-40", "41-49", "50-59", "60 or More"],
+                [2, 3, 4], "Chance of more than 40 total points"))
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -94,6 +103,10 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
             {
                 var questions = Deserialize<Dictionary<string, SystemOneQuestion>>(questionsJson);
                 ValidateQuestions(questions, example.QuestionType);
+                if (example.Aggregation is { } aggregation)
+                {
+                    ValidateAggregationRubric(aggregation, questions);
+                }
                 var request = new SystemOneRequest { Model = model, State = input, Questions = questions };
                 responseBody = await SendAsync(uri, request, example.Backend, apiKey);
                 var response = Deserialize<SystemOneResponse>(responseBody);
@@ -116,6 +129,9 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
                         throw new InvalidDataException($"Malformed response: expected a {SystemOneQuestionType(question)} answer for {name}.");
                     }
                 }
+                (double[] Terms, double Total)? aggregate = example.Aggregation is { } metadata
+                    ? CalculateScoreAggregate(metadata, (SystemOneScoreAnswer)response.Answers[metadata.QuestionId])
+                    : null;
                 int questionNumber = 1;
                 foreach (var (name, question) in questions)
                 {
@@ -124,6 +140,10 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
                         Console.WriteLine();
                     }
                     DisplaySystemOneAnswer(name, response.Answers[name], SystemOneQuestionType(question), questionNumber++);
+                    if (example.Aggregation is { } config && config.QuestionId == name && aggregate is { } result)
+                    {
+                        DisplayScoreAggregate(config, result);
+                    }
                 }
             }
             else
@@ -325,6 +345,50 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
         _ => throw new InvalidDataException("Unsupported SystemOne question type.")
     };
 
+    private static void ValidateAggregationRubric(ScoreProbabilityAggregation aggregation,
+        Dictionary<string, SystemOneQuestion> questions)
+    {
+        if (!questions.TryGetValue(aggregation.QuestionId, out SystemOneQuestion? question) ||
+            question is not SystemOneScoreQuestion score ||
+            !score.Criteria.Select(ScoreBandTitle).SequenceEqual(aggregation.ExpectedBandTitles, StringComparer.Ordinal))
+        {
+            throw new InvalidDataException($"questions.json must retain the expected ordered score bands for {aggregation.QuestionId}.");
+        }
+    }
+
+    private static (double[] Terms, double Total) CalculateScoreAggregate(ScoreProbabilityAggregation aggregation,
+        SystemOneScoreAnswer answer)
+    {
+        Dictionary<string, double> probabilities = answer.Probabilities;
+        if (probabilities is null || probabilities.Count != aggregation.ExpectedBandTitles.Count ||
+            Enumerable.Range(0, aggregation.ExpectedBandTitles.Count)
+                .Any(index => !probabilities.ContainsKey(index.ToString(CultureInfo.InvariantCulture))))
+        {
+            throw new InvalidDataException("Malformed response: the score distribution must contain exactly the expected band indices 0 through 4.");
+        }
+        if (probabilities.Values.Any(value => !double.IsFinite(value) || value < 0 || value > 1))
+        {
+            throw new InvalidDataException("Malformed response: score band probabilities must be finite and between 0 and 1.");
+        }
+        if (Math.Abs(probabilities.Values.Sum() - 1) > 1e-6)
+        {
+            throw new InvalidDataException("Malformed response: score band probabilities must sum to 1 within 1e-6.");
+        }
+
+        double[] terms = aggregation.IncludedIndices
+            .Select(index => probabilities[index.ToString(CultureInfo.InvariantCulture)]).ToArray();
+        return (terms, terms.Sum());
+    }
+
+    private static void DisplayScoreAggregate(ScoreProbabilityAggregation aggregation, (double[] Terms, double Total) result)
+    {
+        // Format only after summing raw probabilities. The accepted distribution total can differ from 1 by 1e-6.
+        string total = result.Total.ToString("P2", CultureInfo.InvariantCulture);
+        Console.WriteLine();
+        Console.WriteLine($"{aggregation.Label}: {total}");
+        Console.WriteLine($"{string.Join(" + ", result.Terms.Select(Probability))} = {total}");
+    }
+
     private static void ValidateQuestions(List<DecisionQuestion> questions, string type)
     {
         if (questions.Count == 0 || questions.Any(question => question is null || string.IsNullOrWhiteSpace(question.Instructions)))
@@ -418,9 +482,18 @@ internal sealed class DecisionExampleRunner(HttpClient httpClient)
         {
             return value;
         }
-        int separator = label.IndexOf(": ", StringComparison.Ordinal);
-        string title = (separator >= 0 ? label[..separator] : label).Trim();
+        string title = ScoreBandTitle(label);
         return string.IsNullOrEmpty(title) ? value : $"{value} ({title})";
+    }
+
+    private static string ScoreBandTitle(string? criterion)
+    {
+        if (string.IsNullOrWhiteSpace(criterion))
+        {
+            return "";
+        }
+        int separator = criterion.IndexOf(": ", StringComparison.Ordinal);
+        return (separator >= 0 ? criterion[..separator] : criterion).Trim();
     }
 
     private static string Probability(double value) => ProbabilityDistributionRenderer.FormatProbability(value);

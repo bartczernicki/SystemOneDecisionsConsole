@@ -1,0 +1,7 @@
+Forecast the final combined points for Atlanta and Green Bay from the supplied halftime statistics. Atlanta leads 17-7, Green Bay is the home team, and Green Bay was the pregame favorite at -7.5 points. Include any overtime in the final total.
+
+One local SystemOne request asks one score question: Final Total Points Band. The five ordered bands are Under 30 (index 0), 30-40 (index 1), 41-49 (index 2), 50-59 (index 3), and 60 or More (index 4). The returned score represents a probability-weighted band index and may be fractional between 0 and 4; it is not a predicted point total.
+
+After the model responds, the application calculates the chance of strictly more than 40 total points by adding the raw probabilities for indices 2, 3, and 4, then rounding for display. Exactly 40 points belongs to index 1 and contributes nothing to this sum. Each point total above 40 belongs to an included band, so no probability within a band needs to be estimated and no additional model request is made.
+
+For an illustrative distribution of 10%, 25%, 30%, 20%, and 15% across indices 0 through 4, the chance of more than 40 total points is 30% + 20% + 15% = 65%, although every individual band probability is below 40%. Forecasts use only the supplied evidence; the game date, second-half kickoff possession, injuries, and other unprovided details are unknown.

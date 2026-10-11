@@ -21,6 +21,9 @@ FOLDERS += [f"FoundrySystemOne-{mode}" for mode in ("Choice", "YesNo", "Score")]
 BASIC_CATEGORY = "Basic Decision Examples"
 ADVANCED_CATEGORY = "Advanced Decision Examples"
 FOOTBALL_FOLDER = "LocalSystemOne-FootballGamePrediction"
+TOTAL_POINTS_FOLDER = "LocalSystemOne-FootballTotalPointsProbability"
+TOTAL_POINTS_QUESTION = "Final Total Points Band"
+TOTAL_POINTS_TITLES = ["Under 30", "30-40", "41-49", "50-59", "60 or More"]
 FOOTBALL_QUESTIONS = {
     "Final Game Winner": "choice",
     "Packers Cover -7.5": "noul",
@@ -104,12 +107,25 @@ def football_answers(payload):
     return {"model": payload["model"], "answers": dict(reversed(list(answers.items())))}
 
 
+def total_points_answers(payload, probabilities=(0.10, 0.25, 0.30, 0.20, 0.15)):
+    """Return shuffled band keys so cumulative probability cannot rely on wire order."""
+    answer = {
+        "type": "score", "score": sum(index * probability for index, probability in enumerate(probabilities)),
+        "confidence": max(probabilities),
+        "probabilities": {str(index): probabilities[index] for index in (4, 2, 0, 3, 1)},
+        "legend": dict(enumerate(payload["questions"][TOTAL_POINTS_QUESTION]["criteria"])),
+    }
+    return {"model": payload["model"], "answers": {TOTAL_POINTS_QUESTION: answer}}
+
+
 def answers_for(payload, path):
     """Return representative responses, including deliberately fractional scores."""
     system_one = path in ("/v1/systemone", FOUNDRY_PATH)
     questions = payload["questions"]
     if system_one and list(questions) == list(FOOTBALL_QUESTIONS):
         return football_answers(payload)
+    if system_one and list(questions) == [TOTAL_POINTS_QUESTION]:
+        return total_points_answers(payload)
     items = questions.items() if system_one else ((q["name"], q) for q in questions)
     answers = {} if system_one else []
     for name, question in items:
@@ -219,6 +235,12 @@ def main():
 
             def football_input():
                 return "2\n1\n\n0\n0\n"
+
+            def total_points_folder():
+                return output / "Decisions" / ADVANCED_CATEGORY / TOTAL_POINTS_FOLDER
+
+            def total_points_input():
+                return "2\n2\n\n0\n0\n"
 
             def check_failure(label, input_text=None, overrides=None, timeout=15, timed=True):
                 nonlocal checks
@@ -412,15 +434,140 @@ def main():
             finally:
                 questions_file.write_bytes(original)
 
+            # One score distribution supplies both the chart and an exact cumulative probability.
+            probability_folder = total_points_folder()
+            probability_source_folder = ROOT / "Decisions" / ADVANCED_CATEGORY / TOTAL_POINTS_FOLDER
+            for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
+                assert (probability_folder / filename).read_bytes() == \
+                       (probability_source_folder / filename).read_bytes(), filename
+            assert (probability_folder / "input.txt").read_bytes() == (folder / "input.txt").read_bytes()
+            probability_questions = json.loads((probability_folder / "questions.json").read_text(encoding="utf-8"))
+            assert list(probability_questions) == [TOTAL_POINTS_QUESTION], probability_questions
+            question = probability_questions[TOTAL_POINTS_QUESTION]
+            assert question["type"] == "score", question
+            assert [band.split(": ", 1)[0] for band in question["criteria"]] == TOTAL_POINTS_TITLES, question
+            assert "overtime" in json.dumps(question).lower(), question
+            probability_payload = {"model": "fixture", "questions": probability_questions}
+            text = run(total_points_input())
+            assert "Error:" not in text and len(server.requests) == 1, text
+            path, payload = server.requests[0]
+            assert path == "/v1/systemone" and set(payload) == {"model", "state", "questions"}, payload
+            assert payload["model"] == "console-test-model" and payload["questions"] == probability_questions, payload
+            state = payload["state"]
+            assert state == (probability_folder / "input.txt").read_bytes().decode("utf-8-sig").strip(), state
+            assert "Atlanta leads 17-7 at halftime" in state, state
+            assert "Green Bay Packers are the home team" in state, state
+            assert "pregame favorite at -7.5 points" in state, state
+            rows = [tuple(cell.strip().replace("**", "") for cell in line.strip().strip("|").split("|"))
+                    for line in state.splitlines() if line.strip().startswith("|")]
+            assert {row[0]: row[1:] for row in rows if row[0] in FOOTBALL_STATISTICS} == FOOTBALL_STATISTICS
+            description = (probability_folder / "ScenarioDescription.txt").read_text(encoding="utf-8").strip()
+            start, displayed_description = displayed_section(text, "Scenario Description:")
+            input_start, displayed_input = displayed_section(text, "Input:", start)
+            assert " ".join(displayed_description.split()) == " ".join(description.split())
+            assert " ".join(displayed_input.split()) == " ".join(state.split())
+            assert start < input_start < text.index("Calling local API..."), text
+            assert "api-key" not in server.request_headers[0], server.request_headers
+            assert text.count("Response JSON:\n") == len(TIMING.findall(text)) == 1, text
+            assert text.count("Press Enter to return to the menu:") == 1, text
+            assert re.search(r"Response time: \d+ ms\n\n1\) Final Total Points Band: Score: 2\.05", text), text
+            assert "Confidence: 30.00 %" in text, text
+            assert_distribution(text, [(f"{index} ({title})", percent) for index, (title, percent) in
+                                       enumerate(zip(TOTAL_POINTS_TITLES, ("10.00", "25.00", "30.00", "20.00", "15.00")))])
+            aggregate_label = "Chance of more than 40 total points:"
+            assert f"{aggregate_label} 65.00 %\n30.00 % + 20.00 % + 15.00 % = 65.00 %" in text, text
+            assert text.index("4 (60 or More)") < text.index(aggregate_label) < text.index("Response JSON:"), text
+            response_start = text.index("Response JSON:\n")
+            response_json = json.loads(text[response_start + len("Response JSON:\n"):text.index("Press Enter", response_start)].strip())
+            expected_response = total_points_answers({**probability_payload, "model": payload["model"]})
+            assert response_json == json.loads(json.dumps(expected_response)), response_json
+            assert list(response_json["answers"][TOTAL_POINTS_QUESTION]["probabilities"]) == ["4", "2", "0", "3", "1"]
+            assert all(probability < 0.4 for probability in response_json["answers"][TOTAL_POINTS_QUESTION]["probabilities"].values())
+            checks += 1
+
+            # Exactly 40 is excluded; the complete 41-49 band and all higher bands are included.
+            # The fractional fixture proves raw probabilities are summed before display rounding.
+            for probabilities, percent, arithmetic in (
+                ((0, 1, 0, 0, 0), "0.00", "0.00 % + 0.00 % + 0.00 % = 0.00 %"),
+                ((0, 0, 1, 0, 0), "100.00", "100.00 % + 0.00 % + 0.00 % = 100.00 %"),
+                ((0, 0, 0.3, 0.2, 0.5), "100.00", "30.00 % + 20.00 % + 50.00 % = 100.00 %"),
+                ((0.33336, 0.33336, 0.11112, 0.11112, 0.11104), "33.33",
+                 "11.11 % + 11.11 % + 11.10 % = 33.33 %"),
+                ((0.1000005, 0.25, 0.30, 0.20, 0.15), "65.00",
+                 "30.00 % + 20.00 % + 15.00 % = 65.00 %"),
+            ):
+                server.response = total_points_answers(probability_payload, probabilities)
+                text = run(total_points_input())
+                assert "Error:" not in text and len(server.requests) == 1, text
+                assert f"{aggregate_label} {percent} %\n{arithmetic}" in text, text
+                assert_distribution(text, [(f"{index} ({title})", f"{probability * 100:.2f}")
+                                           for index, (title, probability) in enumerate(zip(TOTAL_POINTS_TITLES, probabilities))])
+                checks += 1
+
+            # Invalid distributions cannot produce a chart or an apparently valid derived chance.
+            for label, modify in (
+                ("missing aggregation band", lambda answer: answer["probabilities"].pop("4")),
+                ("extra aggregation band", lambda answer: answer["probabilities"].update({"5": 0})),
+                ("noncanonical aggregation band", lambda answer: answer["probabilities"].update(
+                    {"02": answer["probabilities"].pop("2")})),
+                ("decimal aggregation band", lambda answer: answer["probabilities"].update(
+                    {"2.0": answer["probabilities"].pop("2")})),
+                ("negative aggregation probability", lambda answer: answer["probabilities"].update({"0": -0.1})),
+                ("excessive aggregation probability", lambda answer: answer["probabilities"].update({"4": 1.01})),
+                ("nonfinite aggregation probability", lambda answer: answer["probabilities"].update({"0": float("nan")})),
+                ("infinite aggregation probability", lambda answer: answer["probabilities"].update({"0": float("inf")})),
+                ("aggregation probability total too low", lambda answer: answer["probabilities"].update({"0": 0.09})),
+                ("aggregation probability total too high", lambda answer: answer["probabilities"].update({"0": 0.11})),
+                ("empty aggregation distribution", lambda answer: answer.update(probabilities={})),
+                ("null aggregation distribution", lambda answer: answer.update(probabilities=None)),
+            ):
+                server.response = total_points_answers(probability_payload)
+                modify(server.response["answers"][TOTAL_POINTS_QUESTION])
+                check_failure(label, total_points_input())
+                assert len(server.requests) == 1 and aggregate_label not in raw_text, raw_text
+            for label, modify in (
+                ("missing aggregation answer", lambda answers: answers.pop(TOTAL_POINTS_QUESTION)),
+                ("extra aggregation answer", lambda answers: answers.update(Unexpected={"type": "noul", "noul": 0.5})),
+                ("wrong aggregation answer type", lambda answers: answers.update(
+                    **{TOTAL_POINTS_QUESTION: {"type": "noul", "noul": 0.65}})),
+            ):
+                server.response = total_points_answers(probability_payload)
+                modify(server.response["answers"])
+                check_failure(label, total_points_input())
+                assert len(server.requests) == 1 and aggregate_label not in raw_text, raw_text
+            server.response = None
+
+            # The aggregation contract guards against a silently edited or reordered rubric.
+            questions_file = probability_folder / "questions.json"
+            original = questions_file.read_bytes()
+            try:
+                for label, modify in (
+                    ("reordered aggregation rubric", lambda question: question["criteria"].reverse()),
+                    ("changed aggregation band title", lambda question: question["criteria"].__setitem__(
+                        1, "30-39: Includes fewer points than the configured aggregation rubric.")),
+                    ("incomplete aggregation rubric", lambda question: question["criteria"].pop()),
+                    ("extra aggregation rubric band", lambda question: question["criteria"].append("70 or More: Extra band.")),
+                ):
+                    invalid_questions = json.loads(original.decode("utf-8"))
+                    modify(invalid_questions[TOTAL_POINTS_QUESTION])
+                    questions_file.write_text(json.dumps(invalid_questions), encoding="utf-8")
+                    check_failure(label, total_points_input(), timed=False)
+                    assert not server.requests and aggregate_label not in raw_text, raw_text
+            finally:
+                questions_file.write_bytes(original)
+
             # Publish must include the same scenario files, using the existing project content glob.
             publish = Path(temporary) / "publish"
             result = subprocess.run(["dotnet", "publish", str(ROOT / "SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj"),
                                      "--no-restore", "-c", "Debug", "-o", str(publish)],
                                     capture_output=True, text=True, encoding="utf-8", cwd=ROOT, timeout=60)
             assert result.returncode == 0, result.stdout + result.stderr
-            published_folder = publish / "Decisions" / ADVANCED_CATEGORY / FOOTBALL_FOLDER
-            for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
-                assert (published_folder / filename).read_bytes() == (source_folder / filename).read_bytes(), filename
+            for category, scenario in [(BASIC_CATEGORY, name) for name in FOLDERS] + \
+                                      [(ADVANCED_CATEGORY, FOOTBALL_FOLDER), (ADVANCED_CATEGORY, TOTAL_POINTS_FOLDER)]:
+                published_folder = publish / "Decisions" / category / scenario
+                scenario_source = ROOT / "Decisions" / category / scenario
+                for filename in ("ScenarioDescription.txt", "input.txt", "questions.json"):
+                    assert (published_folder / filename).read_bytes() == (scenario_source / filename).read_bytes(), (scenario, filename)
             checks += 1
 
             text = run("1\n7\n\n1\n\n4\n\n0\n0\n")
@@ -566,6 +713,7 @@ def main():
             assert f"\n{BASIC_CATEGORY}\n" in text, text
             assert f"\n{ADVANCED_CATEGORY}\n" in text, text
             assert "1) Local SystemOne - Football Game Prediction" in text and "0) Back" in text, text
+            assert "2) Local SystemOne - Football Total Points Probability" in text, text
             assert "Calling local API..." not in text and not TIMING.search(text), text
             if os.name != "nt":
                 colored_menus = "\n".join(re.findall(
@@ -577,6 +725,7 @@ def main():
                               "7) Foundry SystemOne - Choice", "8) Foundry SystemOne - Yes/No (noul)",
                               "9) Foundry SystemOne - Score",
                               "1) Local SystemOne - Football Game Prediction",
+                              "2) Local SystemOne - Football Total Points Probability",
                               "0) Exit", "0) Back"):
                     assert label in colored_menus, (label, raw_text)
             checks += 1
@@ -597,6 +746,14 @@ def main():
             assert len(server.requests) == 1, text
             checks += 1
 
+            text = run(total_points_input())
+            pause = text.index("Press Enter to return to the menu:")
+            returned_to_advanced = text.index("2) Local SystemOne - Football Total Points Probability", pause)
+            returned_to_startup = text.index("1) Basic Decision Examples", pause)
+            assert returned_to_advanced < returned_to_startup, text
+            assert len(server.requests) == 1, text
+            checks += 1
+
             text = run("2\n 1 \n\n1\n\n0\n1\n2\n\n0\n0\n")
             assert "Error:" not in text and len(server.requests) == 3, text
             assert [list(payload["questions"]) for _, payload in server.requests[:2]] == [list(FOOTBALL_QUESTIONS)] * 2
@@ -607,20 +764,30 @@ def main():
             assert text.count("Press Enter to return to the menu:") == 3, text
             checks += 1
 
+            text = run("2\n 2 \n\n1\n\n2\n\n0\n0\n")
+            assert "Error:" not in text and len(server.requests) == 3, text
+            assert [list(payload["questions"]) for _, payload in server.requests] == \
+                   [[TOTAL_POINTS_QUESTION], list(FOOTBALL_QUESTIONS), [TOTAL_POINTS_QUESTION]], server.requests
+            assert text.count("Chance of more than 40 total points: 65.00 %") == 2, text
+            assert text.count("Press Enter to return to the menu:") == 3, text
+            checks += 1
+
             for input_text, message, count in (
                 ("bad\n\n3\n 0 \n", "Please enter 0, 1, or 2", 3),
                 ("1\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4),
-                ("2\nbad\n\n2\n-1\n 0 \n0\n", "Please enter 0 or 1", 4),
+                ("2\nbad\n\n3\n-1\n 0 \n0\n", "Please enter 0, 1, or 2", 4),
             ):
                 text = run(input_text)
                 assert text.count(message) == count, text
                 assert "Error:" not in text and not server.requests, text
                 checks += 1
 
-            for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n"):
+            for input_text in ("0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n", "1\n1\n", "1\n7\n",
+                               "2\n1\n", "2\n1\n\n", "2\n2\n", "2\n2\n\n"):
                 text = run(input_text)
                 assert "Error:" not in text, text
-                assert len(server.requests) == (1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n") else 0), text
+                assert len(server.requests) == (1 if input_text in ("1\n1\n", "1\n7\n", "2\n1\n", "2\n1\n\n",
+                                                                   "2\n2\n", "2\n2\n\n") else 0), text
                 checks += 1
             check_failure("missing endpoint", overrides={"LocalSystemOneAPI": ""}, timed=False)
             assert not server.requests
@@ -722,7 +889,7 @@ def main():
                 check_failure("60-second timeout", timeout=70)
                 check_failure("Foundry 60-second timeout", basic_input(7), timeout=70)
                 server.delay = 0
-            print(f"PASS: {checks} console integration scenarios (nine Basic examples and advanced football included).")
+            print(f"PASS: {checks} console integration scenarios (nine Basic examples and both advanced football examples included).")
     finally:
         server.shutdown()
         server.server_close()
