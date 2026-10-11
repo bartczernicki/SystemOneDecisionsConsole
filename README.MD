@@ -73,6 +73,24 @@ LocalSystemOneAPI="http://127.0.0.1:1234/v1/systemone" LocalDecisionsAPI="http:/
 
 An empty endpoint override is treated as missing configuration. User Secrets are a local development store and are not encrypted. These endpoints are URLs, not authentication tokens. Calls go to the configured local URLs without authentication headers; the application does not call hosted APIs.
 
+## Microsoft Foundry User Secrets
+
+Store these Microsoft Foundry settings in the same project’s User Secrets. The gateway name is hidden in this README; replace `<your-gateway-name>` with your actual gateway name when running the setup command locally.
+
+| Secret key | Value |
+| --- | --- |
+| `MicrosoftFoundrySystemOneAPI` | `https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone` |
+| `MicrosoftFoundryDecisionModelDeploymentName` | `Decision-1-Global` |
+| `MicrosoftFoundryAPIKey` | `Secret Key` |
+
+Run these commands from the repository root:
+
+```sh
+dotnet user-secrets set "MicrosoftFoundrySystemOneAPI" "https://<your-gateway-name>.azure-api.net/foundrybart/providers/microsoft/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+dotnet user-secrets set "MicrosoftFoundryDecisionModelDeploymentName" "Decision-1-Global" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+dotnet user-secrets set "MicrosoftFoundryAPIKey" "your-api-key" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+```
+
 ## Example files
 
 The repository-root `Decisions` folder groups examples by category. All six current examples are in **Basic Decision Examples**:
