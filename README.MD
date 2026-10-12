@@ -59,11 +59,10 @@ For local examples (Basic options 1–6 and Advanced options 1–5), install LM 
 
 1. Download the installer for your operating system from the [LM Studio download page](https://lmstudio.ai/download) and install the application.
 2. Open **Discover** and search for `Clef` or `Clef-Flash`. For a concrete download, paste the [ggml-org/Clef-Flash-GGUF model URL](https://huggingface.co/ggml-org/Clef-Flash-GGUF) into the search bar. LM Studio supports searching by model name or Hugging Face URL; see its [model download guide](https://lmstudio.ai/docs/app/basics/download-model).
-3. Download a supported GGUF quantization that fits your available memory, such as `Q4_K_M`.
-4. Load the downloaded model in LM Studio and note its model identifier. Use that exact identifier for `LocalDecisionModel` in the User Secrets section below; the console defaults to `clef-flash`.
-5. Open the **Developer** tab and turn on **Start server**. The usual local address is `http://localhost:1234`; use the address and port shown by your server. See the [LM Studio server guide](https://lmstudio.ai/docs/developer/core/server).
+3. Open the **Model Server** tab and turn on **Start server**. The usual local address is `http://localhost:1234`; use the address and port shown by your server. See the [LM Studio server guide](https://lmstudio.ai/docs/developer/core/server).
+4. Select **Load Model** to load the downloaded model in LM Studio and note its model identifier. Use that exact identifier for `LocalDecisionModel` in the User Secrets section below; the console defaults to `clef-flash`.
 
-**Note:** For multi-question and image examples, both **Eval Batch Size** and **Physical Batch Size** must accommodate the combined input and questions. The effective physical batch is capped by Eval Batch Size. Start with `4096` for both and reload the model after changing load settings; if a request exceeds that limit, increase both to accommodate it. Larger physical batches require more working memory. See the [llama.cpp batch limit implementation](https://github.com/ggml-org/llama.cpp/blob/master/src/llama-context.cpp).
+**Important Note:** For multi-question and image examples, both **Eval Batch Size** and **Physical Batch Size** must accommodate the combined input and questions. The effective physical batch is capped by Eval Batch Size. Start with `4096` for both and reload the model after changing load settings; if a request exceeds that limit, increase both to accommodate it. Larger physical batches require more working memory. See the [llama.cpp batch limit implementation](https://github.com/ggml-org/llama.cpp/blob/master/src/llama-context.cpp).
 
 Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. The courier example (Advanced #5) also requires image-capable Clef/Clef-Flash support and its matching vision adapter (`mmproj`). Foundry examples (Basic options 7–9 and Advanced options 6–9) use the hosted deployment and do not require a local model.
 
@@ -80,24 +79,12 @@ The project has a `UserSecretsId` configured and loads these settings with `Micr
 | Foundry | `MicrosoftFoundryDecisionModelDeploymentName` | Your deployment name, for example `Decision-1-Global` |
 | Foundry | `MicrosoftFoundryAPIKey` | Required for Foundry calls; set your key locally. |
 
-Run the following commands from the repository root for the backend you use.
-
-For **local examples (Basic options 1–6 and Advanced options 1–5)**, these endpoints assume LM Studio runs on the same machine. If it runs on another computer, enable [Serve on Local Network](https://lmstudio.ai/docs/developer/core/server/serve-on-network) and replace `localhost:1234` with the server's address and port, such as `10.0.0.37:1234`:
+Run the following commands from the repository root for the backend you use to add the appropriate User Secrets.
 
 ```sh
 dotnet user-secrets set "LocalSystemOneAPI" "http://localhost:1234/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet user-secrets set "LocalDecisionsAPI" "http://localhost:1234/v1/decisions" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
-```
-
-If the loaded model's identifier differs from `clef-flash`, replace `your-loaded-model-id` with that identifier:
-
-```sh
 dotnet user-secrets set "LocalDecisionModel" "your-loaded-model-id" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
-```
-
-For **Foundry examples (Basic options 7–9 and Advanced options 6–9)**, replace `<your-gateway-name>`, `<your-foundry-name>`, the example deployment name, and `your-api-key` with your own values. The gateway and resource names are hidden in this README.
-
-```sh
 dotnet user-secrets set "MicrosoftFoundrySystemOneAPI" "https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet user-secrets set "MicrosoftFoundryDecisionModelDeploymentName" "Decision-1-Global" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet user-secrets set "MicrosoftFoundryAPIKey" "your-api-key" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
@@ -116,13 +103,11 @@ The repository-root `Decisions` folder contains **18 examples** and **65 scenari
 | File | Purpose |
 | --- | --- |
 | `ScenarioDescription.txt` | Scenario explanation displayed in the console; excluded from the API request. |
-| `input.txt` | Input/state supplied to the model. |
-| `questions.json` | Question definitions for choice, Yes/No, or score answers. |
-| `*.png` | Package photographs supplied as inline images by the courier example. |
+| `input.txt` | Input/state supplied to the model. Some scenarios have multiple input.txt files. |
+| `questions.json` | Question (JSON) definitions for choice, Yes/No, or score answers. |
+| `*.png` | For image input, the photographs supplied as inline images by the courier example. |
 
 Some advanced examples include additional evidence, evaluation, decision-frame, or task assets. Edit the repository-root files, then rebuild or run again.
-
-The courier example contains the two original package PNGs and uses the same fictional policy and inspection record for both. The stated measurements (30 x 20 x 15 cm, 1.09 kg) and internal cushioning are demonstration facts, not measurements inferred from a photograph. Each package gets its own request, response, timing, checklist, and shipping recommendation. Package failures are reported independently, and the other package is still processed. Filenames and reference outcomes are excluded from model input; actual model answers are shown even when they differ from the references.
 
 ## JSON formats
 
