@@ -1,0 +1,701 @@
+﻿{
+    "standardChecks":  806,
+    "blocks":  [
+                   {
+                       "line":  1115,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "BasicExamplesTests"
+                   },
+                   {
+                       "line":  1163,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "CourierTests"
+                   },
+                   {
+                       "line":  1172,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "CourierTests"
+                   },
+                   {
+                       "line":  1181,
+                       "checks":  27,
+                       "label":  "",
+                       "nativeClass":  "CourierTests"
+                   },
+                   {
+                       "line":  1230,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "CourierTests"
+                   },
+                   {
+                       "line":  1241,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "CourierTests"
+                   },
+                   {
+                       "line":  1286,
+                       "checks":  24,
+                       "label":  "",
+                       "nativeClass":  "CourierTests"
+                   },
+                   {
+                       "line":  1299,
+                       "checks":  2,
+                       "label":  "",
+                       "nativeClass":  "CourierTests"
+                   },
+                   {
+                       "line":  1310,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "CourierTests"
+                   },
+                   {
+                       "line":  1321,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "CourierTests"
+                   },
+                   {
+                       "line":  1335,
+                       "checks":  3,
+                       "label":  "",
+                       "nativeClass":  "CourierTests"
+                   },
+                   {
+                       "line":  1401,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "FootballTests"
+                   },
+                   {
+                       "line":  1421,
+                       "checks":  6,
+                       "label":  "mismatched advanced answer type",
+                       "nativeClass":  "FootballTests"
+                   },
+                   {
+                       "line":  1432,
+                       "checks":  2,
+                       "label":  "invalid advanced score criteria",
+                       "nativeClass":  "FootballTests"
+                   },
+                   {
+                       "line":  1487,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "TotalPointsTests"
+                   },
+                   {
+                       "line":  1506,
+                       "checks":  5,
+                       "label":  "",
+                       "nativeClass":  "TotalPointsTests"
+                   },
+                   {
+                       "line":  1527,
+                       "checks":  12,
+                       "label":  "null aggregation distribution",
+                       "nativeClass":  "TotalPointsTests"
+                   },
+                   {
+                       "line":  1537,
+                       "checks":  3,
+                       "label":  "wrong aggregation answer type",
+                       "nativeClass":  "TotalPointsTests"
+                   },
+                   {
+                       "line":  1555,
+                       "checks":  4,
+                       "label":  "extra aggregation rubric band",
+                       "nativeClass":  "TotalPointsTests"
+                   },
+                   {
+                       "line":  1618,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ShipmentTests"
+                   },
+                   {
+                       "line":  1645,
+                       "checks":  3,
+                       "label":  "",
+                       "nativeClass":  "ShipmentTests"
+                   },
+                   {
+                       "line":  1719,
+                       "checks":  30,
+                       "label":  "",
+                       "nativeClass":  "ShipmentTests"
+                   },
+                   {
+                       "line":  1740,
+                       "checks":  3,
+                       "label":  "",
+                       "nativeClass":  "ShipmentTests"
+                   },
+                   {
+                       "line":  1749,
+                       "checks":  5,
+                       "label":  "missing shipment questions.json",
+                       "nativeClass":  "ShipmentTests"
+                   },
+                   {
+                       "line":  1759,
+                       "checks":  6,
+                       "label":  "empty shipment evidence-3.txt",
+                       "nativeClass":  "ShipmentTests"
+                   },
+                   {
+                       "line":  1773,
+                       "checks":  7,
+                       "label":  "invalid shipment questions",
+                       "nativeClass":  "ShipmentTests"
+                   },
+                   {
+                       "line":  1829,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "AppleWatchTests"
+                   },
+                   {
+                       "line":  1839,
+                       "checks":  3,
+                       "label":  "",
+                       "nativeClass":  "AppleWatchTests"
+                   },
+                   {
+                       "line":  1859,
+                       "checks":  9,
+                       "label":  "infinite Apple Watch noul",
+                       "nativeClass":  "AppleWatchTests"
+                   },
+                   {
+                       "line":  1878,
+                       "checks":  2,
+                       "label":  "",
+                       "nativeClass":  "AppleWatchTests"
+                   },
+                   {
+                       "line":  1886,
+                       "checks":  3,
+                       "label":  "missing Apple Watch questions.json",
+                       "nativeClass":  "AppleWatchTests"
+                   },
+                   {
+                       "line":  1895,
+                       "checks":  3,
+                       "label":  "invalid Apple Watch questions",
+                       "nativeClass":  "AppleWatchTests"
+                   },
+                   {
+                       "line":  1900,
+                       "checks":  3,
+                       "label":  "missing Apple Watch MicrosoftFoundryAPIKey",
+                       "nativeClass":  "AppleWatchTests"
+                   },
+                   {
+                       "line":  1903,
+                       "checks":  1,
+                       "label":  "invalid Apple Watch Foundry endpoint",
+                       "nativeClass":  "AppleWatchTests"
+                   },
+                   {
+                       "line":  1906,
+                       "checks":  1,
+                       "label":  "invalid Apple Watch Foundry key header",
+                       "nativeClass":  "AppleWatchTests"
+                   },
+                   {
+                       "line":  1911,
+                       "checks":  3,
+                       "label":  "Apple Watch Foundry HTTP 500",
+                       "nativeClass":  "AppleWatchTests"
+                   },
+                   {
+                       "line":  1974,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "EnergyFramingTests"
+                   },
+                   {
+                       "line":  1990,
+                       "checks":  3,
+                       "label":  "",
+                       "nativeClass":  "EnergyFramingTests"
+                   },
+                   {
+                       "line":  2029,
+                       "checks":  99,
+                       "label":  "",
+                       "nativeClass":  "EnergyFramingTests"
+                   },
+                   {
+                       "line":  2110,
+                       "checks":  14,
+                       "label":  "blank shared criterion name",
+                       "nativeClass":  "EnergyFramingTests"
+                   },
+                   {
+                       "line":  2113,
+                       "checks":  1,
+                       "label":  "malformed framing questions JSON",
+                       "nativeClass":  "EnergyFramingTests"
+                   },
+                   {
+                       "line":  2122,
+                       "checks":  6,
+                       "label":  "missing framing frame-benefits.txt",
+                       "nativeClass":  "EnergyFramingTests"
+                   },
+                   {
+                       "line":  2132,
+                       "checks":  6,
+                       "label":  "empty framing frame-benefits.txt",
+                       "nativeClass":  "EnergyFramingTests"
+                   },
+                   {
+                       "line":  2137,
+                       "checks":  3,
+                       "label":  "missing framing MicrosoftFoundryAPIKey",
+                       "nativeClass":  "EnergyFramingTests"
+                   },
+                   {
+                       "line":  2145,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "FrameMetadataHarnessTests"
+                   },
+                   {
+                       "line":  2234,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "CustomerCalibrationTests"
+                   },
+                   {
+                       "line":  2250,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "CustomerCalibrationTests"
+                   },
+                   {
+                       "line":  2252,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "BinaryEvaluationHarnessTests"
+                   },
+                   {
+                       "line":  2283,
+                       "checks":  27,
+                       "label":  "",
+                       "nativeClass":  "CustomerCalibrationTests"
+                   },
+                   {
+                       "line":  2319,
+                       "checks":  105,
+                       "label":  "",
+                       "nativeClass":  "CustomerCalibrationTests"
+                   },
+                   {
+                       "line":  2329,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "CustomerCalibrationTests"
+                   },
+                   {
+                       "line":  2504,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "WorkQueueTests"
+                   },
+                   {
+                       "line":  2515,
+                       "checks":  4,
+                       "label":  "",
+                       "nativeClass":  "WorkQueueTests"
+                   },
+                   {
+                       "line":  2517,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "WorkQueueHarnessTests"
+                   },
+                   {
+                       "line":  2560,
+                       "checks":  62,
+                       "label":  "",
+                       "nativeClass":  "WorkQueueTests"
+                   },
+                   {
+                       "line":  2618,
+                       "checks":  39,
+                       "label":  "invalid work queue Foundry endpoint",
+                       "nativeClass":  "WorkQueueTests"
+                   },
+                   {
+                       "line":  2683,
+                       "checks":  1,
+                       "label":  "invalid work queue key header",
+                       "nativeClass":  "WorkQueueTests"
+                   },
+                   {
+                       "line":  2721,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "RestaurantTests"
+                   },
+                   {
+                       "line":  2737,
+                       "checks":  6,
+                       "label":  "",
+                       "nativeClass":  "RestaurantTests"
+                   },
+                   {
+                       "line":  2739,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "RestaurantHarnessTests"
+                   },
+                   {
+                       "line":  2769,
+                       "checks":  87,
+                       "label":  "",
+                       "nativeClass":  "RestaurantTests"
+                   },
+                   {
+                       "line":  2842,
+                       "checks":  29,
+                       "label":  "invalid restaurant Foundry endpoint",
+                       "nativeClass":  "RestaurantTests"
+                   },
+                   {
+                       "line":  2897,
+                       "checks":  4,
+                       "label":  "",
+                       "nativeClass":  "RestaurantTests"
+                   },
+                   {
+                       "line":  2906,
+                       "checks":  1,
+                       "label":  "invalid restaurant key header",
+                       "nativeClass":  "RestaurantTests"
+                   },
+                   {
+                       "line":  2941,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "PublishingTests"
+                   },
+                   {
+                       "line":  2948,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  2964,
+                       "checks":  6,
+                       "label":  "",
+                       "nativeClass":  "BasicExamplesTests"
+                   },
+                   {
+                       "line":  2981,
+                       "checks":  3,
+                       "label":  "",
+                       "nativeClass":  "BasicExamplesTests"
+                   },
+                   {
+                       "line":  3000,
+                       "checks":  2,
+                       "label":  "",
+                       "nativeClass":  "BasicExamplesTests"
+                   },
+                   {
+                       "line":  3006,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "BasicExamplesTests"
+                   },
+                   {
+                       "line":  3014,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "BasicExamplesTests"
+                   },
+                   {
+                       "line":  3033,
+                       "checks":  2,
+                       "label":  "",
+                       "nativeClass":  "BasicExamplesTests"
+                   },
+                   {
+                       "line":  3042,
+                       "checks":  6,
+                       "label":  "invalid choice probability",
+                       "nativeClass":  "BasicExamplesTests"
+                   },
+                   {
+                       "line":  3047,
+                       "checks":  3,
+                       "label":  "invalid Bernoulli probability",
+                       "nativeClass":  "BasicExamplesTests"
+                   },
+                   {
+                       "line":  3054,
+                       "checks":  3,
+                       "label":  "invalid score probability",
+                       "nativeClass":  "BasicExamplesTests"
+                   },
+                   {
+                       "line":  3074,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "BasicExamplesTests"
+                   },
+                   {
+                       "line":  3115,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3123,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3131,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3139,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3147,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3155,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3178,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "CustomerCalibrationTests"
+                   },
+                   {
+                       "line":  3186,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3194,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3200,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3206,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3216,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3224,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3235,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3251,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3266,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3279,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3295,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3305,
+                       "checks":  3,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3317,
+                       "checks":  26,
+                       "label":  "",
+                       "nativeClass":  "ConsoleMenuTests"
+                   },
+                   {
+                       "line":  3318,
+                       "checks":  1,
+                       "label":  "missing endpoint",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3320,
+                       "checks":  1,
+                       "label":  "missing Decisions endpoint",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3325,
+                       "checks":  6,
+                       "label":  "missing/blank MicrosoftFoundryAPIKey",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3329,
+                       "checks":  1,
+                       "label":  "invalid Foundry endpoint",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3332,
+                       "checks":  1,
+                       "label":  "invalid Foundry key header",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3340,
+                       "checks":  3,
+                       "label":  "missing questions.json",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3346,
+                       "checks":  1,
+                       "label":  "invalid questions JSON",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3349,
+                       "checks":  1,
+                       "label":  "unknown question discriminator",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3360,
+                       "checks":  6,
+                       "label":  "wrong basic question type",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3368,
+                       "checks":  5,
+                       "label":  "malformed SystemOne response",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3371,
+                       "checks":  3,
+                       "label":  "malformed Decisions response",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3375,
+                       "checks":  3,
+                       "label":  "malformed Foundry response",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3383,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3385,
+                       "checks":  1,
+                       "label":  "HTTP 500",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3388,
+                       "checks":  2,
+                       "label":  "Foundry HTTP 403",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3396,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3402,
+                       "checks":  2,
+                       "label":  "",
+                       "nativeClass":  "TransportConfigurationTests"
+                   },
+                   {
+                       "line":  3407,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "TransportConfigurationTests",
+                       "active":  false,
+                       "retiredReason":  "Timing-only check removed at user request."
+                   },
+                   {
+                       "line":  3411,
+                       "checks":  1,
+                       "label":  "",
+                       "nativeClass":  "TransportConfigurationTests",
+                       "active":  false,
+                       "retiredReason":  "Timing-only check removed at user request."
+                   }
+               ],
+    "originalRunnerSha256":  "3700B6C0793BD91D9F1DE38F80780B5D16A3C60D94B62D0E74CA8C4B1DA41C72",
+    "activeFunctionalityChecks":  804
+}

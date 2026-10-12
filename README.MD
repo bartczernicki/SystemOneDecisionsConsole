@@ -1,6 +1,6 @@
 # SystemOne Decisions
 
-A .NET 10 console application demonstrating decisions through Local (SystemOne API), Local (Decisions API), and Foundry (SystemOne API).
+A .NET Console application demonstrating decisions through Local (SystemOne API), Local (Decisions API), and Foundry (SystemOne API).
 
 ## Contents
 
@@ -185,20 +185,20 @@ The courier example uses a typed multimodal request instead of a string `input`.
 ## Build and publish
 
 ```sh
-dotnet build SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+dotnet build SystemOneDecisionsConsole.sln
 dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Release -o ./publish
 ```
 
-Build and publish copy all 65 scenario assets, including both courier PNGs, and retain their nested `Decisions/Basic Decision Examples/` and `Decisions/Advanced Decision Examples/` folders beside the application. User Secrets remain machine-local and are not copied during publishing. Generated `Results` reports are separate and are not copied during publishing. The root `.gitignore` excludes generated reports, Visual Studio settings, and .NET build artifacts.
-
 ## Validation
 
-Build first, then run the standard-library Python integration checks:
+The solution includes the application and the native MSTest 4.0.2 project, `SystemOneDecisionConsole.Tests`, targeting .NET 10 with the standard VSTest runner. Run all 881 functionality tests in either configuration:
 
 ```sh
-python3 tests/verify_console.py
-python3 tests/verify_console.py --include-timeout
+dotnet test SystemOneDecisionsConsole.sln
+dotnet test SystemOneDecisionsConsole.sln -c Release
 ```
+
+The tests use isolated copies of the application's complete output for the active configuration and a concurrent loopback HTTP fixture. They require no configured model or API credentials. The suite runs serially, verifies console workflows and private validators, checks generated reports, and compares all 18 scenarios and 65 assets across source, build, and publish outputs, including the original PNG bytes. The migration coverage inventory is in [SystemOneDecisionConsole.Tests/Coverage.md](SystemOneDecisionConsole.Tests/Coverage.md).
 
 ## Sources
 

@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="SystemOneDecisionConsole.Tests" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.8" />
     <Content Include="../Decisions/**/*">
       <Link>Decisions/%(RecursiveDir)%(Filename)%(Extension)</Link>

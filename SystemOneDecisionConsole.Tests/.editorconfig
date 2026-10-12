@@ -1,0 +1,2 @@
+[*.cs]
+dotnet_diagnostic.MSTEST0037.severity = none
