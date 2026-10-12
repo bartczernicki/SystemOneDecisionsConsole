@@ -5,6 +5,7 @@ A .NET Console application demonstrating (Jev-like) AI decisions through Local (
 ## Contents
 
 - [Intro](#intro)
+- [How do these (Jev-like) Decision Models work?](#how-do-these-jev-like-decision-models-work)
 - [Basic Decision Examples](#basic-decision-examples)
 - [Advanced Decision Examples](#advanced-decision-examples)
 - [Run the Console Application](#run-the-console-application)
@@ -24,7 +25,66 @@ Decision APIs are important because applications need actionable judgments for t
 
 Quantitative structured outputs make those judgments easier to integrate. Why? Because they output probabilities, confidence scores based on math! I can add, subtract, compare, sort numbers...can't really do that easily with a Generative AI output that is many paragraphs. They also make decision quality measurable: predictions can be compared with observed outcomes using Brier scores and macro calibration checks. This repository demonstrates these ideas through local and hosted APIs, combining decision outputs with decision rules, framing, and updates as new evidence arrives.
 
-**How do these (Jev-like) Decision Models work?**
+## How do these (Jev-like) Decision Models work?
+
+| Type | Use it to | Main result |
+| --- | --- | --- |
+| `predicate` (Decisions) / `noul` (SystemOne) | Check a condition, such as a duplicate charge or visible damage. | `probability` (Decisions) / `noul` (SystemOne): an estimate from 0 to 1 that the condition is true. Statistically,it returns a Bernoulli distribution with a probability of a Yes and a probability of a No. |
+| `choice` | Select one option, such as a department or content category. | `choice`: one of your supplied values with a probability of each. Statistically,it is a discrete probability distribution. |
+| `score` | Rate an input against ordered levels, such as issue severity. | `score`: the probability-weighted average of the level indices. Statistically, it is a weight-normalized discrete distribution. |
+
+Both APIs evaluate the supplied situation against questions you define. SystemOne calls this shared input `state`; Decisions calls it `input`. The three question types cover selecting an option, estimating a Yes/No probability, and rating against an ordered scale. See the [OpenAI Decisions guide](https://developers.openai.com/api/docs/guides/decisions) for the Decisions API concepts and examples.
+
+The examples below supply **text input**, like a Gen AI prompt, and a **JSON document** defining the question and its criteria. In each diagram, blue highlights the text input and yellow highlights the question JSON document.
+
+All probabilities and results in the diagrams below are illustrative, not recorded model responses.
+
+### Choice: select one option
+
+Use `choice` to select one category from a fixed set. Describe when each option applies: Billing handles payments and refunds, Technical handles product problems, and Shipping handles deliveries.
+
+```mermaid
+flowchart LR
+    A["<b>Text input</b><br/>Like a Gen AI prompt<br/>Two charges for<br/>one purchase"] --> B["<b>Question JSON document</b><br/>Which department?<br/>Billing / Technical / Shipping"]
+    B --> C["Option probabilities<br/>Billing: 0.95<br/>Technical: 0.03<br/>Shipping: 0.02"]
+    C --> D["Result<br/>Billing<br/>Distribution + confidence"]
+    style A fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style B fill:#fef3c7,stroke:#d97706,color:#78350f
+```
+
+**API fields:** SystemOne defines options in a `criteria` object; Decisions uses a `choices` array with `value` and `description`. Both return `choice`, `probabilities`, and a separate `confidence` value.
+
+### Yes/No: noul / predicate
+
+Use SystemOne's `noul` or Decisions' `predicate` to estimate the probability that a condition is true. The probability ranges from 0 to 1; the probability of No is `1 - P(Yes)`. The console displays both probabilities without applying a boolean threshold.
+
+```mermaid
+flowchart LR
+    A["<b>Text input</b><br/>Like a Gen AI prompt<br/>Two charges for<br/>one purchase"] --> B["<b>Question JSON document</b><br/>Yes/No question<br/>Duplicate charge reported?"]
+    B --> C["Estimate likelihood<br/>P(Yes) = 0.90"]
+    C --> D["Result<br/>Yes: 0.90<br/>No: 1 - 0.90 = 0.10"]
+    style A fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style B fill:#fef3c7,stroke:#d97706,color:#78350f
+```
+
+**API fields:** SystemOne uses `type: "noul"`, can describe true/false outcomes in `criteria`, and returns the Yes probability as `noul`. Decisions uses `type: "predicate"` and returns it as `probability`. Both use `instructions` to define the condition.
+
+### Score: rate against ordered levels
+
+Use `score` to rate an input against a rubric ordered from lowest to highest. For the export example, Cosmetic means no lost functionality, Workaround Available means the task can be completed another way, and Fully Blocked means no workaround exists.
+
+```mermaid
+flowchart LR
+    A["<b>Text input</b><br/>Like a Gen AI prompt<br/>Export fails in Safari<br/>but works in Chrome"] --> B["<b>Question JSON document</b><br/>Ordered severity levels<br/>0: Cosmetic<br/>1: Workaround Available<br/>2: Fully Blocked"]
+    B --> C["Level probabilities<br/>0: 0.10<br/>1: 0.70<br/>2: 0.20"]
+    C --> D["Result<br/>Score: 1.1<br/>Distribution + confidence"]
+    style A fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style B fill:#fef3c7,stroke:#d97706,color:#78350f
+```
+
+The score is the probability-weighted average of the level indices: `0 * 0.10 + 1 * 0.70 + 2 * 0.20 = 1.1`. Indices start at 0, so three levels give a score range of 0 to 2. A score can fall between levels; it summarizes the distribution rather than selecting a single category.
+
+**API fields:** SystemOne supplies an ordered `criteria` array; Decisions supplies an ordered `levels` array with `label` and `description`. Both return `score`, `probabilities`, and a separate `confidence` value.
 
 The concepts in this repository are based on Bart Czernicki's book, [Decision Intelligence with AI](https://github.com/bartczernicki/decision-intelligence-with-ai). The [interactive version](https://www.decisionintelligencebook.ai) provides further context and examples for applying Decision Intelligence with AI.
 
