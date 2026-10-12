@@ -1,6 +1,6 @@
 # SystemOne Decisions
 
-A .NET Console application demonstrating decisions through Local (SystemOne API), Local (Decisions API), and Foundry (SystemOne API). Over 18 (basic & advanced) examples are showcased focusing on business decision examples, where these new AI decision models are a potential great fit. 
+A .NET Console application demonstrating (Jev-like) AI decisions through Local (SystemOne API), Local (Decisions API), and Foundry (SystemOne API). Over 18 (basic & advanced) examples are showcased focusing on business decision examples, where these new AI decision models are a potential great fit. 
 
 ## Contents
 
