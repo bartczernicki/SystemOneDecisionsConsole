@@ -27,13 +27,11 @@ Quantitative structured outputs make those judgments easier to integrate. Why? B
 
 ## How do these (Jev-like) Decision Models work?
 
-| Type | Use it to | Main result |
-| --- | --- | --- |
-| `predicate` (Decisions) / `noul` (SystemOne) | Check a condition, such as a duplicate charge or visible damage. | `probability` (Decisions) / `noul` (SystemOne): an estimate from 0 to 1 that the condition is true. Statistically,it returns a Bernoulli distribution with a probability of a Yes and a probability of a No. |
-| `choice` | Select one option, such as a department or content category. | `choice`: one of your supplied values with a probability of each. Statistically,it is a discrete probability distribution. |
-| `score` | Rate an input against ordered levels, such as issue severity. | `score`: the probability-weighted average of the level indices. Statistically, it is a weight-normalized discrete distribution. |
+<img style="display: block; margin: auto;" width ="700px" src="https://raw.githubusercontent.com/bartczernicki/SystemOneDecisionsConsole/refs/heads/main/SystemOneDecisionsConsole/Images/Infographic_DecisionAPI_ProbabilityOutput.png">
+<br/>  
 
-Both APIs evaluate the supplied situation against questions you define. SystemOne calls this shared input `state`; Decisions calls it `input`. The three question types cover selecting an option, estimating a Yes/No probability, and rating against an ordered scale. See the [OpenAI Decisions guide](https://developers.openai.com/api/docs/guides/decisions) for the Decisions API concepts and examples.
+See the [OpenAI Decisions Guide](https://developers.openai.com/api/docs/guides/decisions) for the Decisions API concepts and examples.
+See the [TypeSafe SystemOne Guide](https://docs.typesafe.ai/api) for the SystemOne API concepts and examples.
 
 The examples below supply **text input**, like a Gen AI prompt, and a **JSON document** defining the question and its criteria. In each diagram, blue highlights the text input and yellow highlights the question JSON document.
 
