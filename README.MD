@@ -30,7 +30,7 @@ Quantitative structured outputs make those judgments easier to integrate. Why? B
 <img style="display: block; margin: auto;" width ="700px" src="https://raw.githubusercontent.com/bartczernicki/SystemOneDecisionsConsole/refs/heads/main/SystemOneDecisionsConsole/Images/Infographic_DecisionAPI_ProbabilityOutput.png">
 <br/>  
 
-See the [OpenAI Decisions Guide](https://developers.openai.com/api/docs/guides/decisions) for the Decisions API concepts and examples.
+See the [OpenAI Decisions Guide](https://developers.openai.com/api/docs/guides/decisions) for the Decisions API concepts and examples.  
 See the [TypeSafe SystemOne Guide](https://docs.typesafe.ai/api) for the SystemOne API concepts and examples.
 
 The examples below supply **text input**, like a Gen AI prompt, and a **JSON document** defining the question and its criteria. In each diagram, blue highlights the text input and yellow highlights the question JSON document.
