@@ -212,12 +212,15 @@ internal sealed partial class DecisionExampleRunner
                 await TryCheckpointIncompleteAsync(resultsDirectory, report);
                 Console.WriteLine($"Run incomplete: {report.CompletedCases} of {metadata.CaseCount} cases completed.");
                 Console.WriteLine($"Saved results: {resultsDirectory}");
-                // Keep the current response reviewable even if storage has failed.
-                if (record.RawResponse is not null)
-                {
-                    DisplayResponseJson(record.RawResponse);
-                }
                 return;
+            }
+            finally
+            {
+                // Keep every captured response reviewable even if storage has failed.
+                if (capture.Body is not null)
+                {
+                    DisplayResponseJson(capture.Body);
+                }
             }
         }
 

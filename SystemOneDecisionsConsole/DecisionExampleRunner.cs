@@ -40,7 +40,7 @@ internal sealed record DecisionExample(string Label, string Folder, DecisionBack
     DecisionTaskClassification? Tasks = null, DecisionExplorationExploitation? ExplorationExploitation = null,
     IReadOnlyList<DecisionImageCase>? ImageCases = null);
 
-internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
+internal sealed partial class DecisionExampleRunner(HttpClient httpClient, ConsoleConfiguration configuration)
 {
     internal static IReadOnlyList<DecisionExample> Examples { get; } =
     [
@@ -300,8 +300,13 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
         }
     }
 
-    private static void DisplayResponseJson(string responseBody)
+    private void DisplayResponseJson(string responseBody)
     {
+        if (!configuration.ShowDecisionJson)
+        {
+            return;
+        }
+
         Console.WriteLine();
         DisplayColoredLine("Response JSON:", ConsoleColor.Blue, "\u001b[38;2;128;192;255m");
         try
@@ -437,7 +442,9 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient)
             }
             if (!response.IsSuccessStatusCode)
             {
-                throw new HttpRequestException($"HTTP {(int)response.StatusCode} ({response.ReasonPhrase}): {body}");
+                string status = $"HTTP {(int)response.StatusCode} ({response.ReasonPhrase})";
+                // Captured bodies are displayed separately, once, by the calling workflow.
+                throw new HttpRequestException(configuration.ShowDecisionJson && capture is null ? $"{status}: {body}" : status);
             }
             return body;
         }

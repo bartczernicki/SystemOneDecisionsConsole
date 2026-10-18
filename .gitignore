@@ -9,6 +9,9 @@
 # Saved probability evaluation runs
 Results/
 
+# Local console preferences
+/Configuration.json
+
 # User-specific files
 *.rsuser
 *.suo

@@ -15,6 +15,9 @@ public abstract class ConsoleScenarioTestBase
     {
         Server = new FixtureServer();
         App = new ConsoleFixture(Server);
+        // Legacy rendering regressions exercise the explicitly enabled JSON display.
+        App.WriteJson(Path.Combine(App.WorkingDirectory, "Configuration.json"),
+            new JsonObject { ["ShowDecisionJson"] = true });
     }
 
     [TestCleanup]

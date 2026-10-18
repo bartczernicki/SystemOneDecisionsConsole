@@ -18,7 +18,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
         if (!OperatingSystem.IsWindows())
         {
             string colored = string.Join('\n', Regex.Matches(LastRawOutput, "\u001b\\[38;2;255;215;0m(.*?)\u001b\\[39m", RegexOptions.Singleline).Select(m => m.Groups[1].Value));
-            foreach (string label in new[] { "1) Basic Decision Examples", "2) Advanced Decision Examples", "0) Exit", "0) Back" }) Contains(colored, label);
+            foreach (string label in new[] { "1) Basic Decision Examples", "2) Advanced Decision Examples", "3) Configure", "0) Exit", "0) Back" }) Contains(colored, label);
             for (int i = 0; i < 9; i++) { Contains(colored, $"{i + 1}) {BasicLabels[i]}"); Contains(colored, $"{i + 1}) {AdvancedLabels[i]}"); }
         }
     }
@@ -124,7 +124,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
     }
 
     [TestMethod]
-    [DataRow("Startup", "bad\n\n3\n 0 \n", "Please enter 0, 1, or 2", 3)]
+    [DataRow("Startup", "bad\n\n4\n 0 \n", "Please enter 0, 1, 2, or 3", 3)]
     [DataRow("Basic", "1\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4)]
     [DataRow("Advanced", "2\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4)]
     public void InvalidMenuSelectionsUseCurrentRanges(string menu, string input, string message, int expected)

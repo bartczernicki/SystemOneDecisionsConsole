@@ -124,6 +124,18 @@ dotnet run --project SystemOneDecisionsConsole
 
 Use a terminal that supports ANSI RGB colors to display the cyan banner and gold menu.
 
+The top-level menu includes **3) Configure**. Select **1) Show / Hide Decision JSON** to toggle the raw `Response JSON:` blocks; the menu shows the current state. JSON starts **hidden**, and each toggle is saved immediately for subsequent responses and future runs.
+
+Preferences are stored in `Configuration.json` in the current working folder (the repository root when using the command above). The application creates this file on first run with:
+
+```json
+{
+  "ShowDecisionJson": false
+}
+```
+
+Manual edits take effect the next time the application starts. When JSON is hidden, HTTP errors still show their status and reason, while raw response bodies are omitted. Summaries, charts, and saved evaluation reports remain available. Enabling JSON also displays each of the 200 customer calibration responses. If configuration cannot be loaded, the application warns and uses the hidden default without overwriting the file; failed saves retain the previous setting.
+
 ## Download LM Studio and a Decision Model
 
 For local examples (Basic options 1–6 and Advanced options 1–5), install LM Studio and load a decision model such as Clef or Clef-Flash:
@@ -247,7 +259,7 @@ dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Rel
 
 ## Validation
 
-The solution includes the application and the native MSTest 4.0.2 project, `SystemOneDecisionConsole.Tests`, targeting .NET 10 with the standard VSTest runner. Run all 881 functionality tests in either configuration:
+The solution includes the application and the native MSTest 4.0.2 project, `SystemOneDecisionConsole.Tests`, targeting .NET 10 with the standard VSTest runner. Run the functionality tests in either configuration:
 
 ```sh
 dotnet test SystemOneDecisionsConsole.sln

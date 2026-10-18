@@ -21,26 +21,71 @@ class Program
             """);
         RestoreColor(originalColor);
 
+        var configurationStore = new ConfigurationStore(Path.Combine(Environment.CurrentDirectory, "Configuration.json"));
+        ConsoleConfiguration configuration;
+        try
+        {
+            configuration = configurationStore.Load();
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+        {
+            Console.WriteLine($"Warning: Could not load Configuration.json: {error.Message} Using defaults (Decision JSON hidden).");
+            configuration = new ConsoleConfiguration();
+        }
+
         using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-        var runner = new DecisionExampleRunner(httpClient);
+        var runner = new DecisionExampleRunner(httpClient, configuration);
 
         while (true)
         {
-            WriteMenu(null, ["Basic Decision Examples", "Advanced Decision Examples"], "Exit");
-            int? category = ReadMenuSelection(2, "Please enter 0, 1, or 2");
+            WriteMenu(null, ["Basic Decision Examples", "Advanced Decision Examples", "Configure"], "Exit");
+            int? category = ReadMenuSelection(3, "Please enter 0, 1, 2, or 3");
             if (category is null or 0)
             {
                 return;
             }
 
-            bool returnToMain = category == 1
-                ? await ShowExamplesAsync(runner, DecisionExampleRunner.Examples, "Basic Decision Examples",
-                    "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9")
-                : await ShowExamplesAsync(runner, DecisionExampleRunner.AdvancedExamples, "Advanced Decision Examples",
-                    "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9");
+            bool returnToMain = category switch
+            {
+                1 => await ShowExamplesAsync(runner, DecisionExampleRunner.Examples, "Basic Decision Examples",
+                    "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9"),
+                2 => await ShowExamplesAsync(runner, DecisionExampleRunner.AdvancedExamples, "Advanced Decision Examples",
+                    "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9"),
+                _ => ShowConfiguration(configurationStore, configuration)
+            };
             if (!returnToMain)
             {
                 return;
+            }
+        }
+    }
+
+    private static bool ShowConfiguration(ConfigurationStore store, ConsoleConfiguration configuration)
+    {
+        while (true)
+        {
+            string state = configuration.ShowDecisionJson ? "Shown" : "Hidden";
+            WriteMenu("Configure", [$"Show / Hide Decision JSON (currently {state})"], "Back");
+            int? option = ReadMenuSelection(1, "Please enter 0 or 1");
+            if (option is null)
+            {
+                return false;
+            }
+            if (option == 0)
+            {
+                return true;
+            }
+
+            var updated = new ConsoleConfiguration { ShowDecisionJson = !configuration.ShowDecisionJson };
+            try
+            {
+                store.Save(updated);
+                configuration.ShowDecisionJson = updated.ShowDecisionJson;
+                Console.WriteLine($"Decision JSON is now {(configuration.ShowDecisionJson ? "shown" : "hidden")}.");
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                Console.WriteLine($"Error: Could not save Configuration.json: {error.Message}");
             }
         }
     }
