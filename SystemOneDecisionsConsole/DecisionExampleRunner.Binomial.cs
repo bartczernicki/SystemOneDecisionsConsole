@@ -12,7 +12,8 @@ internal sealed partial class DecisionExampleRunner
             metadata.Trials is < 1 or > 1000 || metadata.ExclusiveThreshold < 0 ||
             metadata.ExclusiveThreshold >= metadata.Trials || example.Aggregation is not null ||
             example.EvidenceStages is not null || example.Frames is not null || example.Evaluation is not null ||
-            example.Tasks is not null || example.ExplorationExploitation is not null || example.ImageCases is not null)
+            example.Tasks is not null || example.ExplorationExploitation is not null || example.ImageCases is not null ||
+            example.PoissonBinomial is not null)
         {
             throw new InvalidDataException("Invalid Binomial metadata: use one SystemOne noul question, 1–1000 trials, and a threshold from 0 to trials minus 1.");
         }
@@ -31,13 +32,22 @@ internal sealed partial class DecisionExampleRunner
     {
         if (trials is < 1 or > 1000)
             throw new InvalidDataException("Binomial trial count must be between 1 and 1000.");
-        _ = ProbabilityDistributionRenderer.FormatProbability(probability);
-        var mass = new double[trials + 1];
+        return CalculatePoissonBinomialDistribution(Enumerable.Repeat(probability, trials).ToArray());
+    }
+
+    internal static double[] CalculatePoissonBinomialDistribution(IReadOnlyList<double> probabilities)
+    {
+        if (probabilities.Count is < 1 or > 1000)
+            throw new InvalidDataException("Poisson-binomial requires between 1 and 1000 probabilities.");
+        foreach (double probability in probabilities)
+            _ = ProbabilityDistributionRenderer.FormatProbability(probability);
+        var mass = new double[probabilities.Count + 1];
         mass[0] = 1;
         // Convolve with one Bernoulli trial at a time, descending to preserve the previous trial's values.
         // This avoids factorial overflow and division by p or (1-p), including at the endpoints.
-        for (int trial = 1; trial <= trials; trial++)
+        for (int trial = 1; trial <= probabilities.Count; trial++)
         {
+            double probability = probabilities[trial - 1];
             for (int successes = trial; successes >= 1; successes--)
                 mass[successes] = mass[successes] * (1 - probability) + mass[successes - 1] * probability;
             mass[0] *= 1 - probability;

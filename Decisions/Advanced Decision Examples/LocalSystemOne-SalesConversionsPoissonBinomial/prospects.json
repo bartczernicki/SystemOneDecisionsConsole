@@ -1,0 +1,502 @@
+[
+  {
+    "id": "prospect-001",
+    "name": "Consulting Firm 001",
+    "evidence": "Engagement stage: Early interest. Firm size: 6 people. 1 colleagues invited. Task assignments were used on 0 of the last ten days. The trial ends in 1 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-002",
+    "name": "Consulting Firm 002",
+    "evidence": "Engagement stage: Early interest. Firm size: 8 people. 2 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 2 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-003",
+    "name": "Consulting Firm 003",
+    "evidence": "Engagement stage: Early interest. Firm size: 10 people. 3 colleagues invited. Task assignments were used on 0 of the last ten days. The trial ends in 3 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-004",
+    "name": "Consulting Firm 004",
+    "evidence": "Engagement stage: Early interest. Firm size: 12 people. 4 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 4 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-005",
+    "name": "Consulting Firm 005",
+    "evidence": "Engagement stage: Early interest. Firm size: 14 people. 5 colleagues invited. Task assignments were used on 0 of the last ten days. The trial ends in 1 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-006",
+    "name": "Consulting Firm 006",
+    "evidence": "Engagement stage: Early interest. Firm size: 16 people. 6 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 2 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-007",
+    "name": "Consulting Firm 007",
+    "evidence": "Engagement stage: Early interest. Firm size: 18 people. 7 colleagues invited. Task assignments were used on 0 of the last ten days. The trial ends in 3 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-008",
+    "name": "Consulting Firm 008",
+    "evidence": "Engagement stage: Early interest. Firm size: 20 people. 1 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 4 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-009",
+    "name": "Consulting Firm 009",
+    "evidence": "Engagement stage: Early interest. Firm size: 22 people. 2 colleagues invited. Task assignments were used on 0 of the last ten days. The trial ends in 1 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-010",
+    "name": "Consulting Firm 010",
+    "evidence": "Engagement stage: Early interest. Firm size: 24 people. 3 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 2 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-011",
+    "name": "Consulting Firm 011",
+    "evidence": "Engagement stage: Early interest. Firm size: 26 people. 4 colleagues invited. Task assignments were used on 0 of the last ten days. The trial ends in 3 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-012",
+    "name": "Consulting Firm 012",
+    "evidence": "Engagement stage: Early interest. Firm size: 28 people. 5 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 4 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-013",
+    "name": "Consulting Firm 013",
+    "evidence": "Engagement stage: Early interest. Firm size: 30 people. 6 colleagues invited. Task assignments were used on 0 of the last ten days. The trial ends in 1 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-014",
+    "name": "Consulting Firm 014",
+    "evidence": "Engagement stage: Early interest. Firm size: 32 people. 7 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 2 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-015",
+    "name": "Consulting Firm 015",
+    "evidence": "Engagement stage: Early interest. Firm size: 34 people. 1 colleagues invited. Task assignments were used on 0 of the last ten days. The trial ends in 3 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-016",
+    "name": "Consulting Firm 016",
+    "evidence": "Engagement stage: Early interest. Firm size: 36 people. 2 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 4 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-017",
+    "name": "Consulting Firm 017",
+    "evidence": "Engagement stage: Early interest. Firm size: 38 people. 3 colleagues invited. Task assignments were used on 0 of the last ten days. The trial ends in 1 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-018",
+    "name": "Consulting Firm 018",
+    "evidence": "Engagement stage: Early interest. Firm size: 40 people. 4 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 2 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-019",
+    "name": "Consulting Firm 019",
+    "evidence": "Engagement stage: Early interest. Firm size: 42 people. 5 colleagues invited. Task assignments were used on 0 of the last ten days. The trial ends in 3 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-020",
+    "name": "Consulting Firm 020",
+    "evidence": "Engagement stage: Early interest. Firm size: 44 people. 6 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 4 days. The operations coordinator is researching tools; the owner has not reviewed the product. No budget discussion has taken place. Three alternatives are being researched. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-021",
+    "name": "Consulting Firm 021",
+    "evidence": "Engagement stage: Light trial. Firm size: 7 people. 2 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 1 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-022",
+    "name": "Consulting Firm 022",
+    "evidence": "Engagement stage: Light trial. Firm size: 9 people. 3 colleagues invited. Task assignments were used on 2 of the last ten days. The trial ends in 2 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-023",
+    "name": "Consulting Firm 023",
+    "evidence": "Engagement stage: Light trial. Firm size: 11 people. 4 colleagues invited. Task assignments were used on 3 of the last ten days. The trial ends in 3 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-024",
+    "name": "Consulting Firm 024",
+    "evidence": "Engagement stage: Light trial. Firm size: 13 people. 5 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 4 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-025",
+    "name": "Consulting Firm 025",
+    "evidence": "Engagement stage: Light trial. Firm size: 15 people. 6 colleagues invited. Task assignments were used on 2 of the last ten days. The trial ends in 1 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-026",
+    "name": "Consulting Firm 026",
+    "evidence": "Engagement stage: Light trial. Firm size: 17 people. 7 colleagues invited. Task assignments were used on 3 of the last ten days. The trial ends in 2 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-027",
+    "name": "Consulting Firm 027",
+    "evidence": "Engagement stage: Light trial. Firm size: 19 people. 8 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 3 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-028",
+    "name": "Consulting Firm 028",
+    "evidence": "Engagement stage: Light trial. Firm size: 21 people. 2 colleagues invited. Task assignments were used on 2 of the last ten days. The trial ends in 4 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-029",
+    "name": "Consulting Firm 029",
+    "evidence": "Engagement stage: Light trial. Firm size: 23 people. 3 colleagues invited. Task assignments were used on 3 of the last ten days. The trial ends in 1 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-030",
+    "name": "Consulting Firm 030",
+    "evidence": "Engagement stage: Light trial. Firm size: 25 people. 4 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 2 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-031",
+    "name": "Consulting Firm 031",
+    "evidence": "Engagement stage: Light trial. Firm size: 27 people. 5 colleagues invited. Task assignments were used on 2 of the last ten days. The trial ends in 3 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-032",
+    "name": "Consulting Firm 032",
+    "evidence": "Engagement stage: Light trial. Firm size: 29 people. 6 colleagues invited. Task assignments were used on 3 of the last ten days. The trial ends in 4 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-033",
+    "name": "Consulting Firm 033",
+    "evidence": "Engagement stage: Light trial. Firm size: 31 people. 7 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 1 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-034",
+    "name": "Consulting Firm 034",
+    "evidence": "Engagement stage: Light trial. Firm size: 33 people. 8 colleagues invited. Task assignments were used on 2 of the last ten days. The trial ends in 2 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-035",
+    "name": "Consulting Firm 035",
+    "evidence": "Engagement stage: Light trial. Firm size: 35 people. 2 colleagues invited. Task assignments were used on 3 of the last ten days. The trial ends in 3 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-036",
+    "name": "Consulting Firm 036",
+    "evidence": "Engagement stage: Light trial. Firm size: 37 people. 3 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 4 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-037",
+    "name": "Consulting Firm 037",
+    "evidence": "Engagement stage: Light trial. Firm size: 39 people. 4 colleagues invited. Task assignments were used on 2 of the last ten days. The trial ends in 1 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-038",
+    "name": "Consulting Firm 038",
+    "evidence": "Engagement stage: Light trial. Firm size: 41 people. 5 colleagues invited. Task assignments were used on 3 of the last ten days. The trial ends in 2 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-039",
+    "name": "Consulting Firm 039",
+    "evidence": "Engagement stage: Light trial. Firm size: 43 people. 6 colleagues invited. Task assignments were used on 1 of the last ten days. The trial ends in 3 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-040",
+    "name": "Consulting Firm 040",
+    "evidence": "Engagement stage: Light trial. Firm size: 45 people. 7 colleagues invited. Task assignments were used on 2 of the last ten days. The trial ends in 4 days. The operations manager is running the trial; the owner has not joined. A budget request has been drafted but not reviewed. Two competing tools are in active trials. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-041",
+    "name": "Consulting Firm 041",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 8 people. 3 colleagues invited. Task assignments were used on 4 of the last ten days. The trial ends in 1 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-042",
+    "name": "Consulting Firm 042",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 10 people. 4 colleagues invited. Task assignments were used on 5 of the last ten days. The trial ends in 2 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-043",
+    "name": "Consulting Firm 043",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 12 people. 5 colleagues invited. Task assignments were used on 6 of the last ten days. The trial ends in 3 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-044",
+    "name": "Consulting Firm 044",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 14 people. 6 colleagues invited. Task assignments were used on 4 of the last ten days. The trial ends in 4 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-045",
+    "name": "Consulting Firm 045",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 16 people. 7 colleagues invited. Task assignments were used on 5 of the last ten days. The trial ends in 1 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-046",
+    "name": "Consulting Firm 046",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 18 people. 8 colleagues invited. Task assignments were used on 6 of the last ten days. The trial ends in 2 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-047",
+    "name": "Consulting Firm 047",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 20 people. 9 colleagues invited. Task assignments were used on 4 of the last ten days. The trial ends in 3 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-048",
+    "name": "Consulting Firm 048",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 22 people. 3 colleagues invited. Task assignments were used on 5 of the last ten days. The trial ends in 4 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-049",
+    "name": "Consulting Firm 049",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 24 people. 4 colleagues invited. Task assignments were used on 6 of the last ten days. The trial ends in 1 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-050",
+    "name": "Consulting Firm 050",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 26 people. 5 colleagues invited. Task assignments were used on 4 of the last ten days. The trial ends in 2 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-051",
+    "name": "Consulting Firm 051",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 28 people. 6 colleagues invited. Task assignments were used on 5 of the last ten days. The trial ends in 3 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-052",
+    "name": "Consulting Firm 052",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 30 people. 7 colleagues invited. Task assignments were used on 6 of the last ten days. The trial ends in 4 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-053",
+    "name": "Consulting Firm 053",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 32 people. 8 colleagues invited. Task assignments were used on 4 of the last ten days. The trial ends in 1 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-054",
+    "name": "Consulting Firm 054",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 34 people. 9 colleagues invited. Task assignments were used on 5 of the last ten days. The trial ends in 2 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-055",
+    "name": "Consulting Firm 055",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 36 people. 3 colleagues invited. Task assignments were used on 6 of the last ten days. The trial ends in 3 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-056",
+    "name": "Consulting Firm 056",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 38 people. 4 colleagues invited. Task assignments were used on 4 of the last ten days. The trial ends in 4 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-057",
+    "name": "Consulting Firm 057",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 40 people. 5 colleagues invited. Task assignments were used on 5 of the last ten days. The trial ends in 1 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-058",
+    "name": "Consulting Firm 058",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 42 people. 6 colleagues invited. Task assignments were used on 6 of the last ten days. The trial ends in 2 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-059",
+    "name": "Consulting Firm 059",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 44 people. 7 colleagues invited. Task assignments were used on 4 of the last ten days. The trial ends in 3 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-060",
+    "name": "Consulting Firm 060",
+    "evidence": "Engagement stage: Active evaluation. Firm size: 46 people. 8 colleagues invited. Task assignments were used on 5 of the last ten days. The trial ends in 4 days. The operations manager has discussed workflow fit with the owner. The owner is reviewing the monthly expense. One competing tool remains under consideration. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-061",
+    "name": "Consulting Firm 061",
+    "evidence": "Engagement stage: Team adoption. Firm size: 9 people. 4 colleagues invited. Task assignments were used on 7 of the last ten days. The trial ends in 1 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-062",
+    "name": "Consulting Firm 062",
+    "evidence": "Engagement stage: Team adoption. Firm size: 11 people. 5 colleagues invited. Task assignments were used on 8 of the last ten days. The trial ends in 2 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-063",
+    "name": "Consulting Firm 063",
+    "evidence": "Engagement stage: Team adoption. Firm size: 13 people. 6 colleagues invited. Task assignments were used on 7 of the last ten days. The trial ends in 3 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-064",
+    "name": "Consulting Firm 064",
+    "evidence": "Engagement stage: Team adoption. Firm size: 15 people. 7 colleagues invited. Task assignments were used on 8 of the last ten days. The trial ends in 4 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-065",
+    "name": "Consulting Firm 065",
+    "evidence": "Engagement stage: Team adoption. Firm size: 17 people. 8 colleagues invited. Task assignments were used on 7 of the last ten days. The trial ends in 1 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-066",
+    "name": "Consulting Firm 066",
+    "evidence": "Engagement stage: Team adoption. Firm size: 19 people. 9 colleagues invited. Task assignments were used on 8 of the last ten days. The trial ends in 2 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-067",
+    "name": "Consulting Firm 067",
+    "evidence": "Engagement stage: Team adoption. Firm size: 21 people. 10 colleagues invited. Task assignments were used on 7 of the last ten days. The trial ends in 3 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-068",
+    "name": "Consulting Firm 068",
+    "evidence": "Engagement stage: Team adoption. Firm size: 23 people. 4 colleagues invited. Task assignments were used on 8 of the last ten days. The trial ends in 4 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-069",
+    "name": "Consulting Firm 069",
+    "evidence": "Engagement stage: Team adoption. Firm size: 25 people. 5 colleagues invited. Task assignments were used on 7 of the last ten days. The trial ends in 1 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-070",
+    "name": "Consulting Firm 070",
+    "evidence": "Engagement stage: Team adoption. Firm size: 27 people. 6 colleagues invited. Task assignments were used on 8 of the last ten days. The trial ends in 2 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-071",
+    "name": "Consulting Firm 071",
+    "evidence": "Engagement stage: Team adoption. Firm size: 29 people. 7 colleagues invited. Task assignments were used on 7 of the last ten days. The trial ends in 3 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-072",
+    "name": "Consulting Firm 072",
+    "evidence": "Engagement stage: Team adoption. Firm size: 31 people. 8 colleagues invited. Task assignments were used on 8 of the last ten days. The trial ends in 4 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-073",
+    "name": "Consulting Firm 073",
+    "evidence": "Engagement stage: Team adoption. Firm size: 33 people. 9 colleagues invited. Task assignments were used on 7 of the last ten days. The trial ends in 1 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-074",
+    "name": "Consulting Firm 074",
+    "evidence": "Engagement stage: Team adoption. Firm size: 35 people. 10 colleagues invited. Task assignments were used on 8 of the last ten days. The trial ends in 2 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-075",
+    "name": "Consulting Firm 075",
+    "evidence": "Engagement stage: Team adoption. Firm size: 37 people. 4 colleagues invited. Task assignments were used on 7 of the last ten days. The trial ends in 3 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-076",
+    "name": "Consulting Firm 076",
+    "evidence": "Engagement stage: Team adoption. Firm size: 39 people. 5 colleagues invited. Task assignments were used on 8 of the last ten days. The trial ends in 4 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-077",
+    "name": "Consulting Firm 077",
+    "evidence": "Engagement stage: Team adoption. Firm size: 41 people. 6 colleagues invited. Task assignments were used on 7 of the last ten days. The trial ends in 1 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-078",
+    "name": "Consulting Firm 078",
+    "evidence": "Engagement stage: Team adoption. Firm size: 43 people. 7 colleagues invited. Task assignments were used on 8 of the last ten days. The trial ends in 2 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-079",
+    "name": "Consulting Firm 079",
+    "evidence": "Engagement stage: Team adoption. Firm size: 45 people. 8 colleagues invited. Task assignments were used on 7 of the last ten days. The trial ends in 3 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-080",
+    "name": "Consulting Firm 080",
+    "evidence": "Engagement stage: Team adoption. Firm size: 47 people. 9 colleagues invited. Task assignments were used on 8 of the last ten days. The trial ends in 4 days. The owner attended a demo and the team is using task assignments. A purchase decision is scheduled before trial expiry. The team favors this product but has not ruled out a competitor. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-081",
+    "name": "Consulting Firm 081",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 10 people. 5 colleagues invited. Task assignments were used on 9 of the last ten days. The trial ends in 1 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. A payment method has been entered, but checkout is incomplete. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-082",
+    "name": "Consulting Firm 082",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 12 people. 6 colleagues invited. Task assignments were used on 10 of the last ten days. The trial ends in 2 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-083",
+    "name": "Consulting Firm 083",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 14 people. 7 colleagues invited. Task assignments were used on 9 of the last ten days. The trial ends in 3 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. A payment method has been entered, but checkout is incomplete. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-084",
+    "name": "Consulting Firm 084",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 16 people. 8 colleagues invited. Task assignments were used on 10 of the last ten days. The trial ends in 4 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-085",
+    "name": "Consulting Firm 085",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 18 people. 9 colleagues invited. Task assignments were used on 9 of the last ten days. The trial ends in 1 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. A payment method has been entered, but checkout is incomplete. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-086",
+    "name": "Consulting Firm 086",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 20 people. 10 colleagues invited. Task assignments were used on 10 of the last ten days. The trial ends in 2 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-087",
+    "name": "Consulting Firm 087",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 22 people. 11 colleagues invited. Task assignments were used on 9 of the last ten days. The trial ends in 3 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. A payment method has been entered, but checkout is incomplete. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-088",
+    "name": "Consulting Firm 088",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 24 people. 5 colleagues invited. Task assignments were used on 10 of the last ten days. The trial ends in 4 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-089",
+    "name": "Consulting Firm 089",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 26 people. 6 colleagues invited. Task assignments were used on 9 of the last ten days. The trial ends in 1 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. A payment method has been entered, but checkout is incomplete. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-090",
+    "name": "Consulting Firm 090",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 28 people. 7 colleagues invited. Task assignments were used on 10 of the last ten days. The trial ends in 2 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-091",
+    "name": "Consulting Firm 091",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 30 people. 8 colleagues invited. Task assignments were used on 9 of the last ten days. The trial ends in 3 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. A payment method has been entered, but checkout is incomplete. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-092",
+    "name": "Consulting Firm 092",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 32 people. 9 colleagues invited. Task assignments were used on 10 of the last ten days. The trial ends in 4 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-093",
+    "name": "Consulting Firm 093",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 34 people. 10 colleagues invited. Task assignments were used on 9 of the last ten days. The trial ends in 1 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. A payment method has been entered, but checkout is incomplete. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-094",
+    "name": "Consulting Firm 094",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 36 people. 11 colleagues invited. Task assignments were used on 10 of the last ten days. The trial ends in 2 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-095",
+    "name": "Consulting Firm 095",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 38 people. 5 colleagues invited. Task assignments were used on 9 of the last ten days. The trial ends in 3 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. A payment method has been entered, but checkout is incomplete. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-096",
+    "name": "Consulting Firm 096",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 40 people. 6 colleagues invited. Task assignments were used on 10 of the last ten days. The trial ends in 4 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  },
+  {
+    "id": "prospect-097",
+    "name": "Consulting Firm 097",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 42 people. 7 colleagues invited. Task assignments were used on 9 of the last ten days. The trial ends in 1 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. A payment method has been entered, but checkout is incomplete. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is client handoffs."
+  },
+  {
+    "id": "prospect-098",
+    "name": "Consulting Firm 098",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 44 people. 8 colleagues invited. Task assignments were used on 10 of the last ten days. The trial ends in 2 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is weekly reporting."
+  },
+  {
+    "id": "prospect-099",
+    "name": "Consulting Firm 099",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 46 people. 9 colleagues invited. Task assignments were used on 9 of the last ten days. The trial ends in 3 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. A payment method has been entered, but checkout is incomplete. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is resource scheduling."
+  },
+  {
+    "id": "prospect-100",
+    "name": "Consulting Firm 100",
+    "evidence": "Engagement stage: Purchase preparation. Firm size: 48 people. 10 colleagues invited. Task assignments were used on 10 of the last ten days. The trial ends in 4 days. The owner requested a subscription setup walkthrough. The expense is approved in principle, but no paid subscription has started. The team has paused competing trials; migration effort remains a concern. No payment method has been entered. One standard reminder email is scheduled. The firm currently uses shared spreadsheets. Its primary workflow is project milestones."
+  }
+]

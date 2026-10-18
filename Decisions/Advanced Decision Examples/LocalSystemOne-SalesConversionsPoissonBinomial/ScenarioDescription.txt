@@ -1,0 +1,5 @@
+Sales Conversions Extension: Bernoulli to Poisson-Binomial
+
+Option 10 forecasts 100 comparable prospects using one shared conversion probability. This extension forecasts 100 distinct prospects, obtaining one Bernoulli probability for each in 100 isolated model requests. The application combines their independent outcomes into a Poisson-binomial count distribution and calculates the chance of more than 30 conversions (at least 31).
+
+The expected count is the sum of individual probabilities. A comparison with Binomial(100, average probability) uses those same predictions to show equal expected counts but potentially different distributions. Neither distribution accounts for uncertainty in the probability estimates or dependencies between prospects. All evidence is synthetic.

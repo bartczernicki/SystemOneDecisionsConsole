@@ -358,6 +358,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
             yield return [provider, 2, 8, 8, "Work Queue Summary:"];
             yield return [provider, 2, 9, 1, "Final recommendation:"];
             yield return [provider, 2, 10, 1, "Chance of more than 30 conversions:"];
+            yield return [provider, 2, 11, 100, "Comparison with Shared-Probability Binomial:"];
         }
     }
 

@@ -1,0 +1,10 @@
+{
+  "Prospect Subscription": {
+    "type": "noul",
+    "instructions": "Estimate the probability that only the individual prospect supplied in the state starts a paid subscription within 30 days of trial start. Use its engagement, purchasing authority, budget approval, competitive interest, and shared historical context. Do not copy the historical fraction or estimate a cohort average. Return its single Bernoulli success probability; the application calculates the Poisson-binomial distribution locally.",
+    "criteria": {
+      "true": "The prospect starts a paid subscription within 30 days of its trial start, including day 30.",
+      "false": "The prospect does not start a paid subscription within 30 days of its trial start."
+    }
+  }
+}

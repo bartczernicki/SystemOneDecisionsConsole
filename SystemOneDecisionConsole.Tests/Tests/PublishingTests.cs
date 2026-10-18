@@ -36,11 +36,11 @@ public sealed class PublishingTests : BasicTestBase
         catch (OperationCanceledException) { if (!process.HasExited) process.Kill(entireProcessTree: true); await process.WaitForExitAsync(); Assert.Fail("Publishing exceeded 60 seconds."); }
         Assert.AreEqual(0, process.ExitCode, await stdout + await stderr);
         string[] expectedAssets = AssetPaths(source);
-        Assert.AreEqual(68, expectedAssets.Length);
+        Assert.AreEqual(72, expectedAssets.Length);
         foreach (string assetsRoot in new[] { source, Path.Combine(build, "Decisions"), Path.Combine(copied, "Decisions"), Path.Combine(App.Root, "Decisions"), Path.Combine(publish, "Decisions") })
         {
             int scenarios = Directory.EnumerateFiles(assetsRoot, "questions.json", SearchOption.AllDirectories).Count();
-            Assert.AreEqual(19, scenarios, assetsRoot);
+            Assert.AreEqual(20, scenarios, assetsRoot);
             CollectionAssert.AreEqual(expectedAssets, AssetPaths(assetsRoot), assetsRoot);
             foreach (string relative in expectedAssets) CollectionAssert.AreEqual(File.ReadAllBytes(Path.Combine(source, relative)), File.ReadAllBytes(Path.Combine(assetsRoot, relative)), $"Asset bytes differ: {assetsRoot}/{relative}");
         }

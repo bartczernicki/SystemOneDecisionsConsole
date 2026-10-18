@@ -1,6 +1,6 @@
 # SystemOne Decisions
 
-A .NET Console application demonstrating (Jev-like) AI decisions through the SystemOne API on Local AI or Microsoft Foundry AI, and the Decisions API on Local AI. The 16 basic and advanced menu examples focus on business decisions where these decision models are a potential great fit.
+A .NET Console application demonstrating (Jev-like) AI decisions through the SystemOne API on Local AI or Microsoft Foundry AI, and the Decisions API on Local AI. The 17 basic and advanced menu examples focus on business decisions where these decision models are a potential great fit.
 
 ## Contents
 
@@ -149,8 +149,11 @@ Every SystemOne menu item includes the selected provider, for example **SystemOn
 | 8 | SystemOne API - Work Queue Prioritization with the Eisenhower Matrix | Classifies eight operations-manager tasks by urgency and importance using separate requests. Shows the returned actions in a summary and an Eisenhower Matrix: Do Now, Schedule, Delegate, or Eliminate. |
 | 9 | SystemOne API - Restaurant Choice: Decision Exploration or Exploitation? | Chooses whether a regular restaurant customer should try an unfamiliar dish or order a familiar favorite. One request evaluates the strategy and both conditional dish choices, then displays the strategy and its matching recommendation. |
 | 10 | SystemOne API - Sales Conversions: Bernoulli to Binomial | Predicts one prospect’s subscription probability, then calculates the count distribution for 100 independent comparable prospects and the chance of more than 30 conversions (31 or more). |
+| 11 | SystemOne API - Sales Conversions Extension: Bernoulli to Poisson-Binomial | Extends option 10 to 100 distinct prospects, using 100 isolated requests. Combines their individual conversion probabilities and compares the resulting count distribution with a Binomial using their average probability. |
 
 The sales conversion example uses one `noul` response as the success probability `p` in `X ~ Binomial(100, p)`. It displays the Bernoulli chart, all 101 count probabilities, expected conversions `100p`, and `P(X > 30) = P(X >= 31)`. These are local calculations, with no sampling or extra model calls. The synthetic cohort assumes independent prospects sharing the same probability; uncertainty in the estimated `p` is not modeled separately.
+
+The Poisson-binomial extension stores 100 synthetic profiles in `prospects.json`, with 20 at each of five engagement stages. It validates all profiles before calling the model, then predicts each prospect in isolation. The console shows progress, a probability table, the count distribution, expected conversions, standard deviation, and `P(X > 30)`. The comparison `Binomial(100, average p)` uses the same predictions and therefore the same expected count, while its variance and tail probability can differ. Outcomes are assumed independent and each estimated probability is treated as fixed. If any request fails, processing stops without a completed-cohort forecast.
 
 ## Run the Console Application
 
@@ -224,7 +227,7 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder contains **19 scenario folders** and **68 scenario assets**, grouped into Basic and Advanced categories. The menus expose **16 distinct examples**; the three original basic Foundry folders are retained for compatibility, while both providers use the shared basic SystemOne assets.
+The repository-root `Decisions` folder contains **20 scenario folders** and **72 scenario assets**, grouped into Basic and Advanced categories. The menus expose **17 distinct examples**; the three original basic Foundry folders are retained for compatibility, while both providers use the shared basic SystemOne assets.
 
 | File | Purpose |
 | --- | --- |
@@ -309,7 +312,7 @@ dotnet test SystemOneDecisionsConsole.sln
 dotnet test SystemOneDecisionsConsole.sln -c Release
 ```
 
-The tests use isolated copies of the application's complete output for the active configuration and a concurrent loopback HTTP fixture. They require no configured model or API credentials. The suite runs serially, verifies console workflows and private validators, checks generated reports, and compares all 19 scenarios and 68 assets across source, build, and publish outputs, including the original PNG bytes. The migration coverage inventory is in [SystemOneDecisionConsole.Tests/Coverage.md](SystemOneDecisionConsole.Tests/Coverage.md).
+The tests use isolated copies of the application's complete output for the active configuration and a concurrent loopback HTTP fixture. They require no configured model or API credentials. The suite runs serially, verifies console workflows and private validators, checks generated reports, and compares all 20 scenarios and 72 assets across source, build, and publish outputs, including the original PNG bytes. The migration coverage inventory is in [SystemOneDecisionConsole.Tests/Coverage.md](SystemOneDecisionConsole.Tests/Coverage.md).
 
 ## Sources
 

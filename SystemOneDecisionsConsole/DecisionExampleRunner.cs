@@ -41,11 +41,14 @@ internal sealed record DecisionImageCase(string Label, string ImageFile);
 
 internal sealed record DecisionBinomial(string QuestionId, int Trials, int ExclusiveThreshold);
 
+internal sealed record DecisionPoissonBinomial(string QuestionId, string ProspectsFile, int ProspectCount, int ExclusiveThreshold);
+
 internal sealed record DecisionExample(string Label, string Folder, DecisionApi Api, string QuestionType,
     ScoreProbabilityAggregation? Aggregation = null, IReadOnlyList<DecisionEvidenceStage>? EvidenceStages = null,
     IReadOnlyList<DecisionFrame>? Frames = null, DecisionBinaryEvaluation? Evaluation = null,
     DecisionTaskClassification? Tasks = null, DecisionExplorationExploitation? ExplorationExploitation = null,
-    IReadOnlyList<DecisionImageCase>? ImageCases = null, DecisionBinomial? Binomial = null);
+    IReadOnlyList<DecisionImageCase>? ImageCases = null, DecisionBinomial? Binomial = null,
+    DecisionPoissonBinomial? PoissonBinomial = null);
 
 internal sealed partial class DecisionExampleRunner(HttpClient httpClient, ConsoleConfiguration configuration)
 {
@@ -112,7 +115,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
                 new("Dining Strategy", "Dish if Exploring", "Dish if Exploiting")),
         new("Sales Conversions: Bernoulli to Binomial",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-SalesConversionsBinomial"),
-            DecisionApi.SystemOne, "noul", Binomial: new("Prospect Subscription", 100, 30))
+            DecisionApi.SystemOne, "noul", Binomial: new("Prospect Subscription", 100, 30)),
+        new("Sales Conversions Extension: Bernoulli to Poisson-Binomial",
+            Path.Combine("Advanced Decision Examples", "LocalSystemOne-SalesConversionsPoissonBinomial"),
+            DecisionApi.SystemOne, "noul", PoissonBinomial: new("Prospect Subscription", "prospects.json", 100, 30))
     ];
 
     internal string GetLabel(DecisionExample example) => example.Api == DecisionApi.Decisions
@@ -133,6 +139,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
         string? responseBody = null;
         try
         {
+            if (example.PoissonBinomial is not null)
+            {
+                ValidatePoissonBinomialMetadata(example);
+            }
             if (example.Binomial is not null)
             {
                 ValidateBinomialMetadata(example);
@@ -162,6 +172,11 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
             string folder = Path.Combine(AppContext.BaseDirectory, "Decisions", example.Folder);
             DisplayTextSection("Scenario Description:", await ReadTextAsync(folder, "ScenarioDescription.txt"),
                 ConsoleColor.Magenta, "\u001b[38;2;255;128;224m");
+            if (example.PoissonBinomial is not null)
+            {
+                await RunPoissonBinomialAsync(example, folder, connection);
+                return;
+            }
             if (example.ImageCases is not null)
             {
                 await RunImageCasesAsync(example, folder, connection);

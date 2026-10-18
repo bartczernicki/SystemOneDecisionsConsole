@@ -1,0 +1,7 @@
+Synthetic sales conversion scenario: individual prospect extension
+
+Product: a project-management subscription for small consulting firms, priced at $49 per month per firm after a 14-day free trial. Success means starting a paid subscription within 30 days of trial start, including day 30. Pricing and standard outreach are the same for every prospect.
+
+Historical context: in a synthetic previous campaign, 84 of 240 comparable firms subscribed within 30 days of starting their trial. Treat that historical fraction as evidence, not a mandated probability.
+
+Assess only the individual prospect supplied below, using its engagement, buying authority, budget approval, and competitive interest. Do not predict other prospects or the overall cohort. No outcome is yet known. The application will assume independent conversion outcomes and combine 100 individual predictions locally; there are no shared budget constraints, referrals, or coordinated purchasing decisions in this illustrative cohort.
