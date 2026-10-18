@@ -37,6 +37,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
     [DataRow(2, 9, 1)]
     [DataRow(2, 10, 1)]
     [DataRow(2, 11, 100)]
+    [DataRow(2, 12, 1)]
     public void CompletedWorkflowReturnsToItsOwnMenuBeforeStartup(int category, int option, int requests)
     {
         string text = Run(category == 1 ? BasicInput(option) : AdvancedInput(option), timeout: 60);
@@ -136,7 +137,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
     [TestMethod]
     [DataRow("Startup", "bad\n\n4\n 0 \n", "Please enter 0, 1, 2, or 3", 3)]
     [DataRow("Basic", "1\nbad\n\n7\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, or 6", 4)]
-    [DataRow("Advanced", "2\nbad\n\n12\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, or 11", 4)]
+    [DataRow("Advanced", "2\nbad\n\n13\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, or 12", 4)]
     public void InvalidMenuSelectionsUseCurrentRanges(string menu, string input, string message, int expected)
     {
         string text = Run(input); Assert.AreEqual(expected, Count(text, message), menu); NotContains(text, "Error:"); Assert.AreEqual(0, Server.Requests.Count);

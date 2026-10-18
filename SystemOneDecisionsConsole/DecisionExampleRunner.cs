@@ -43,12 +43,16 @@ internal sealed record DecisionBinomial(string QuestionId, int Trials, int Exclu
 
 internal sealed record DecisionPoissonBinomial(string QuestionId, string ProspectsFile, int ProspectCount, int ExclusiveThreshold);
 
+internal sealed record DecisionDurationStage(string QuestionId, IReadOnlyDictionary<string, int> Durations);
+
+internal sealed record DecisionProjectCompletion(IReadOnlyList<DecisionDurationStage> Stages, int DeadlineWorkingDays);
+
 internal sealed record DecisionExample(string Label, string Folder, DecisionApi Api, string QuestionType,
     ScoreProbabilityAggregation? Aggregation = null, IReadOnlyList<DecisionEvidenceStage>? EvidenceStages = null,
     IReadOnlyList<DecisionFrame>? Frames = null, DecisionBinaryEvaluation? Evaluation = null,
     DecisionTaskClassification? Tasks = null, DecisionExplorationExploitation? ExplorationExploitation = null,
     IReadOnlyList<DecisionImageCase>? ImageCases = null, DecisionBinomial? Binomial = null,
-    DecisionPoissonBinomial? PoissonBinomial = null);
+    DecisionPoissonBinomial? PoissonBinomial = null, DecisionProjectCompletion? ProjectCompletion = null);
 
 internal sealed partial class DecisionExampleRunner(HttpClient httpClient, ConsoleConfiguration configuration)
 {
@@ -118,7 +122,18 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
             DecisionApi.SystemOne, "noul", Binomial: new("Prospect Subscription", 100, 30)),
         new("Sales Conversions Extension: Bernoulli to Poisson-Binomial",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-SalesConversionsPoissonBinomial"),
-            DecisionApi.SystemOne, "noul", PoissonBinomial: new("Prospect Subscription", "prospects.json", 100, 30))
+            DecisionApi.SystemOne, "noul", PoissonBinomial: new("Prospect Subscription", "prospects.json", 100, 30)),
+        new("Project Completion from Task Duration Distributions",
+            Path.Combine("Advanced Decision Examples", "LocalSystemOne-ProjectCompletionDistributions"),
+            DecisionApi.SystemOne, "choice", ProjectCompletion: new(
+            [
+                new("Design Duration", new Dictionary<string, int>
+                    { ["3 working days"] = 3, ["5 working days"] = 5, ["7 working days"] = 7 }),
+                new("Implementation Duration", new Dictionary<string, int>
+                    { ["5 working days"] = 5, ["8 working days"] = 8, ["11 working days"] = 11 }),
+                new("Testing and Release Duration", new Dictionary<string, int>
+                    { ["2 working days"] = 2, ["4 working days"] = 4, ["6 working days"] = 6 })
+            ], 20))
     ];
 
     internal string GetLabel(DecisionExample example) => example.Api == DecisionApi.Decisions
@@ -139,6 +154,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
         string? responseBody = null;
         try
         {
+            if (example.ProjectCompletion is not null)
+            {
+                ValidateProjectCompletionMetadata(example);
+            }
             if (example.PoissonBinomial is not null)
             {
                 ValidatePoissonBinomialMetadata(example);
@@ -172,6 +191,11 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
             string folder = Path.Combine(AppContext.BaseDirectory, "Decisions", example.Folder);
             DisplayTextSection("Scenario Description:", await ReadTextAsync(folder, "ScenarioDescription.txt"),
                 ConsoleColor.Magenta, "\u001b[38;2;255;128;224m");
+            if (example.ProjectCompletion is not null)
+            {
+                await RunProjectCompletionAsync(example, folder, connection);
+                return;
+            }
             if (example.PoissonBinomial is not null)
             {
                 await RunPoissonBinomialAsync(example, folder, connection);

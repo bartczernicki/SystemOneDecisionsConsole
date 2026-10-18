@@ -76,6 +76,7 @@ public static class TestSupport
             return EnergyFramingTests.Answers(payload).AsObject();
         if (systemOne && names.SequenceEqual(["Work Queue Action"])) return WorkQueueTests.Answers(payload).AsObject();
         if (systemOne && names.SequenceEqual(["Dining Strategy", "Dish if Exploring", "Dish if Exploiting"])) return RestaurantTests.Answers(payload).AsObject();
+        if (systemOne && names.SequenceEqual(ProjectCompletionTests.Names)) return ProjectCompletionTests.Answers(payload);
         JsonObject? objectAnswers = systemOne ? new() : null;
         JsonArray? arrayAnswers = systemOne ? null : new();
         var items = systemOne ? questions.AsObject().Select(item => (Name: item.Key, Question: item.Value!.AsObject())) :

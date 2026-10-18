@@ -1,0 +1,21 @@
+Synthetic software-delivery forecast
+
+Project: Add a self-service invoice export feature to an existing business application. The scope and acceptance criteria are frozen: users select an invoice date range, request a CSV export, and download an auditable file using their existing permissions. Forecast from immediately before design begins, using working days rather than calendar days.
+
+Execution assumptions for this exercise:
+- Design, implementation, and testing and release run sequentially in that order.
+- Separate, fully staffed teams are reserved for the stages. Each team starts immediately when the preceding stage completes; there are no overlaps, queues, idle handoff days, or additional stages.
+- The only possible durations are the exact values listed for each stage below. They are mutually exclusive and exhaustive within this simplified synthetic exercise; they are not duration bands, bounds, or rounded measurements.
+- Stage durations are independent conditional on this evidence. Assume no shared staffing problems, scope changes, infrastructure outages, or other common shocks.
+- Total project duration is the sum of the three stage durations. The target is completion within 20 working days, inclusive of day 20.
+
+Stage 1 - Design: exactly 3, 5, or 7 working days.
+The design team has the existing application patterns and a draft export workflow. Product has approved the basic CSV fields, and the security reviewer is scheduled on the first design day. Two edge cases remain unresolved: refunds spanning the chosen date range and permission changes during an export. A final audit-field review is required before handoff. Of 12 comparable fixed-scope design stages, four took 3 days, six took 5 days, and two took 7 days. The current feature reuses more UI patterns than most of those cases, but the audit review adds uncertainty.
+
+Stage 2 - Implementation: exactly 5, 8, or 11 working days.
+The implementation team owns the invoice service and has a working background-job framework, CSV library, and deployment pipeline. A spike confirmed that an export job can read the needed data with current permissions. Large date ranges still need performance tuning, and cancellation of an in-flight export has not been implemented. Of 15 comparable implementation stages, three took 5 days, eight took 8 days, and four took 11 days. This team has experience with the existing code, while the larger export workloads are less familiar. Assume an approved design is available when this stage starts.
+
+Stage 3 - Testing and release: exactly 2, 4, or 6 working days.
+The testing and release team has an isolated test environment, realistic invoice fixtures, automated permission tests, and a reserved release slot available at any stage completion time. Exploratory testing must cover the audit record, refunds, cancellation, and large exports. Of 10 comparable testing and release stages, three took 2 days, five took 4 days, and two took 6 days. Existing automation reduces routine work, but this export feature has new combinations of edge cases. Assume the implementation is ready for validation when this stage starts; the listed duration includes any local fixes and retesting.
+
+Estimate a complete probability distribution for each stage from all its evidence. The historical counts provide context, not prescribed probabilities. Return all three choice answers in one response. The application will convolve the distributions to calculate completion probabilities. Do not treat a selected duration or its confidence as the project's probability of finishing by the deadline.

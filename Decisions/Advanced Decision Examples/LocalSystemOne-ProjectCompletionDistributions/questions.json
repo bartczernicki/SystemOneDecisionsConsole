@@ -1,0 +1,29 @@
+{
+  "Design Duration": {
+    "type": "choice",
+    "instructions": "Forecast the duration of the design stage from its supplied readiness, unresolved issues, and historical evidence. In this synthetic exercise the stage takes exactly 3, 5, or 7 working days; these exact outcomes are mutually exclusive and exhaustive. Estimate the full probability distribution rather than copying historical frequencies. The application uses every outcome probability to calculate total project completion time; the selected choice and separate confidence do not represent the project's on-time probability.",
+    "criteria": {
+      "3 working days": "Design completes in exactly 3 working days, with its reviews and edge cases resolved quickly.",
+      "5 working days": "Design completes in exactly 5 working days, allowing a normal review and clarification cycle.",
+      "7 working days": "Design completes in exactly 7 working days, requiring additional audit or edge-case clarification."
+    }
+  },
+  "Implementation Duration": {
+    "type": "choice",
+    "instructions": "Forecast the duration of implementation once the approved design is handed over, using the supplied code readiness, remaining work, and historical evidence. In this synthetic exercise implementation takes exactly 5, 8, or 11 working days; these exact outcomes are mutually exclusive and exhaustive. Estimate the full probability distribution rather than copying historical frequencies. Treat this duration as independent of the other stage durations under the stated assumptions. The application convolves the distributions locally.",
+    "criteria": {
+      "5 working days": "Implementation completes in exactly 5 working days, with straightforward reuse and limited tuning.",
+      "8 working days": "Implementation completes in exactly 8 working days, including expected cancellation and performance work.",
+      "11 working days": "Implementation completes in exactly 11 working days, requiring more extensive tuning or rework."
+    }
+  },
+  "Testing and Release Duration": {
+    "type": "choice",
+    "instructions": "Forecast the duration of testing and release once implementation is handed over, including local fixes and retesting, using the supplied test readiness, edge-case complexity, and historical evidence. In this synthetic exercise this stage takes exactly 2, 4, or 6 working days; these exact outcomes are mutually exclusive and exhaustive. Estimate the full probability distribution rather than copying historical frequencies. Treat this duration as independent of the other stage durations under the stated assumptions. The application uses the complete distribution to calculate total project duration and P(T <= 20 working days), including completion on day 20.",
+    "criteria": {
+      "2 working days": "Testing and release completes in exactly 2 working days, with automation passing and few local fixes.",
+      "4 working days": "Testing and release completes in exactly 4 working days, including a normal exploratory test and fix cycle.",
+      "6 working days": "Testing and release completes in exactly 6 working days, with additional edge-case fixes and retesting."
+    }
+  }
+}
