@@ -35,6 +35,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
     [DataRow(2, 7, 3)]
     [DataRow(2, 8, 8)]
     [DataRow(2, 9, 1)]
+    [DataRow(2, 10, 1)]
     public void CompletedWorkflowReturnsToItsOwnMenuBeforeStartup(int category, int option, int requests)
     {
         string text = Run(category == 1 ? BasicInput(option) : AdvancedInput(option), timeout: 60);
@@ -134,7 +135,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
     [TestMethod]
     [DataRow("Startup", "bad\n\n4\n 0 \n", "Please enter 0, 1, 2, or 3", 3)]
     [DataRow("Basic", "1\nbad\n\n7\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, or 6", 4)]
-    [DataRow("Advanced", "2\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4)]
+    [DataRow("Advanced", "2\nbad\n\n11\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, or 10", 4)]
     public void InvalidMenuSelectionsUseCurrentRanges(string menu, string input, string message, int expected)
     {
         string text = Run(input); Assert.AreEqual(expected, Count(text, message), menu); NotContains(text, "Error:"); Assert.AreEqual(0, Server.Requests.Count);
@@ -144,7 +145,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
     {
         foreach (string input in new[] { "0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n" }) yield return [input.Replace('\n', '|'), input, 0];
         foreach (int option in new[] { 1, 6 }) yield return [$"Basic {option}", $"1\n{option}\n", 1];
-        for (int option = 1; option <= 9; option++) foreach (string pause in new[] { "", "\n" })
+        for (int option = 1; option <= AdvancedLabels.Length; option++) foreach (string pause in new[] { "", "\n" })
             yield return [$"Advanced {option} pause={pause.Length}", $"2\n{option}\n{pause}", option switch { 3 or 7 => 3, 4 => 200, 5 => 2, 8 => 8, _ => 1 }];
     }
     [TestMethod]

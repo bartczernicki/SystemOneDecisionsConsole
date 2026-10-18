@@ -1,0 +1,10 @@
+{
+  "Prospect Subscription": {
+    "type": "noul",
+    "instructions": "Estimate the probability that this one representative prospect starts a paid subscription within 30 days of starting its trial. Use the supplied engagement, purchase approval, competing tools, and historical evidence. Do not simply copy the historical conversion fraction. Return a single-trial Bernoulli success probability; the application will calculate the cohort Binomial distribution locally.",
+    "criteria": {
+      "true": "The prospect starts a paid subscription within 30 days of its trial start, including day 30.",
+      "false": "The prospect does not start a paid subscription within 30 days of its trial start."
+    }
+  }
+}

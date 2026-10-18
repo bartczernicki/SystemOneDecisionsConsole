@@ -39,11 +39,13 @@ internal sealed record DecisionExplorationExploitation(
 
 internal sealed record DecisionImageCase(string Label, string ImageFile);
 
+internal sealed record DecisionBinomial(string QuestionId, int Trials, int ExclusiveThreshold);
+
 internal sealed record DecisionExample(string Label, string Folder, DecisionApi Api, string QuestionType,
     ScoreProbabilityAggregation? Aggregation = null, IReadOnlyList<DecisionEvidenceStage>? EvidenceStages = null,
     IReadOnlyList<DecisionFrame>? Frames = null, DecisionBinaryEvaluation? Evaluation = null,
     DecisionTaskClassification? Tasks = null, DecisionExplorationExploitation? ExplorationExploitation = null,
-    IReadOnlyList<DecisionImageCase>? ImageCases = null);
+    IReadOnlyList<DecisionImageCase>? ImageCases = null, DecisionBinomial? Binomial = null);
 
 internal sealed partial class DecisionExampleRunner(HttpClient httpClient, ConsoleConfiguration configuration)
 {
@@ -107,7 +109,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
         new("Restaurant Choice: Decision Exploration or Exploitation?",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-RestaurantExploreExploit"),
             DecisionApi.SystemOne, "choice", ExplorationExploitation:
-                new("Dining Strategy", "Dish if Exploring", "Dish if Exploiting"))
+                new("Dining Strategy", "Dish if Exploring", "Dish if Exploiting")),
+        new("Sales Conversions: Bernoulli to Binomial",
+            Path.Combine("Advanced Decision Examples", "LocalSystemOne-SalesConversionsBinomial"),
+            DecisionApi.SystemOne, "noul", Binomial: new("Prospect Subscription", 100, 30))
     ];
 
     internal string GetLabel(DecisionExample example) => example.Api == DecisionApi.Decisions
@@ -128,6 +133,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
         string? responseBody = null;
         try
         {
+            if (example.Binomial is not null)
+            {
+                ValidateBinomialMetadata(example);
+            }
             if (example.ImageCases is not null)
             {
                 ValidateImageCasesMetadata(example);
@@ -192,6 +201,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
             {
                 var questions = Deserialize<Dictionary<string, SystemOneQuestion>>(questionsJson);
                 ValidateQuestions(questions, example.QuestionType);
+                if (example.Binomial is { } binomial)
+                {
+                    ValidateBinomialQuestion(binomial, questions);
+                }
                 if (example.Aggregation is { } aggregation)
                 {
                     ValidateAggregationRubric(aggregation, questions);
@@ -222,6 +235,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
                     ? CalculateScoreAggregate(metadata, (SystemOneScoreAnswer)response.Answers[metadata.QuestionId])
                     : null;
                 int questionNumber = 1;
+                double[]? binomialMass = example.Binomial is { } forecast
+                    ? CalculateBinomialDistribution(forecast.Trials,
+                        ((SystemOneNoulAnswer)response.Answers[forecast.QuestionId]).Noul)
+                    : null;
                 foreach (var (name, question) in questions)
                 {
                     if (questionNumber > 1)
@@ -229,6 +246,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
                         Console.WriteLine();
                     }
                     DisplaySystemOneAnswer(name, response.Answers[name], SystemOneQuestionType(question), questionNumber++);
+                    if (example.Binomial is { } binomialConfig && binomialConfig.QuestionId == name && binomialMass is not null)
+                    {
+                        DisplayBinomial(binomialConfig, ((SystemOneNoulAnswer)response.Answers[name]).Noul, binomialMass);
+                    }
                     if (example.Aggregation is { } config && config.QuestionId == name && aggregate is { } result)
                     {
                         DisplayScoreAggregate(config, result);

@@ -1,0 +1,5 @@
+Predict whether one prospect will subscribe, then use that Bernoulli success probability p to forecast conversions across 100 comparable prospects: X ~ Binomial(100, p).
+
+The application calculates the count distribution and P(X > 30), meaning at least 31 conversions, locally from one model response. It also displays the expected count, 100p. It does not sample outcomes or make 100 model calls.
+
+This synthetic example assumes independent prospects with the same conversion probability and a 30-day subscription window. The forecast is conditional on the estimated p; uncertainty in p and differences or dependencies among real prospects are not modeled.

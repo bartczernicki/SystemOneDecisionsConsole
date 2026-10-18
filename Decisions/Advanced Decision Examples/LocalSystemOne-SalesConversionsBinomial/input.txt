@@ -1,0 +1,8 @@
+Synthetic sales conversion scenario
+
+Product: a project-management subscription for small consulting firms, priced at $49 per month per firm after a 14-day free trial.
+Representative prospect: a 10-person consulting firm currently using shared spreadsheets. The operations manager requested a demo, invited five colleagues into the trial, and used task assignments on eight of the last ten days. The manager reports that the product fits the team's workflow, but the owner has not yet approved the expense. No payment method has been added. Two competing tools are also being evaluated. The trial ends in four days; one standard reminder email is scheduled.
+
+Historical context: in a synthetic previous campaign, 84 of 240 comparable firms subscribed within 30 days of starting their trial. Current pricing and outreach are unchanged. Treat this as evidence, not a mandated probability or a guarantee.
+
+Forecast the representative prospect's probability of starting a paid subscription within 30 days of trial start. For the subsequent local Binomial calculation, assume a cohort of 100 independent prospects with this same profile, evidence, and success probability. There are no shared budget constraints, referrals, or coordinated purchasing decisions in this illustrative cohort.
