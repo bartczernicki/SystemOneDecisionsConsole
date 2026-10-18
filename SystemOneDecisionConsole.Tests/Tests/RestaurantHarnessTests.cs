@@ -21,8 +21,7 @@ public sealed class RestaurantHarnessTests
         yield return ["duplicate explore", valid with { ExplorationExploitation = metadata with { ExploreQuestionId = metadata.ExploitQuestionId } }];
         yield return ["duplicate exploit", valid with { ExplorationExploitation = metadata with { ExploitQuestionId = metadata.StrategyQuestionId } }];
         yield return ["wrong type", valid with { QuestionType = "noul" }];
-        yield return ["local SystemOne", valid with { Backend = DecisionBackend.LocalSystemOne }];
-        yield return ["local Decisions", valid with { Backend = DecisionBackend.LocalDecisions }];
+        yield return ["Decisions API", valid with { Api = DecisionApi.Decisions }];
         yield return ["aggregation", valid with { Aggregation = MetadataAssertions.Example("Aggregation").Aggregation }];
         yield return ["stages", valid with { EvidenceStages = MetadataAssertions.Example("EvidenceStages").EvidenceStages }];
         yield return ["frames", valid with { Frames = MetadataAssertions.Example("Frames").Frames }];

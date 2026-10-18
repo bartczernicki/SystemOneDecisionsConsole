@@ -5,8 +5,7 @@ namespace SystemOneDecisionsConsole;
 
 internal sealed partial class DecisionExampleRunner
 {
-    private async Task RunFramesAsync(DecisionExample example, string folder, Uri endpoint,
-        string model, string? apiKey)
+    private async Task RunFramesAsync(DecisionExample example, string folder, DecisionConnection connection)
     {
         IReadOnlyList<DecisionFrame> frames = example.Frames!;
         var questions = Deserialize<Dictionary<string, SystemOneQuestion>>(
@@ -38,11 +37,11 @@ internal sealed partial class DecisionExampleRunner
             {
                 var request = new SystemOneRequest
                 {
-                    Model = model,
+                    Model = connection.Model,
                     State = states[index],
                     Questions = new Dictionary<string, SystemOneQuestion> { [frame.QuestionId] = question }
                 };
-                responseBody = await SendAsync(endpoint, request, example.Backend, apiKey);
+                responseBody = await SendAsync(connection.Endpoint, request, connection.Backend, connection.ApiKey);
                 var response = Deserialize<SystemOneResponse>(responseBody);
                 SystemOneChoiceAnswer answer = ValidateSingleChoiceAnswer(response, frame.QuestionId, question);
                 DisplaySystemOneAnswer(frame.QuestionId, answer, "choice", index + 1, question.Criteria.Keys, frames.Count);
@@ -77,7 +76,7 @@ internal sealed partial class DecisionExampleRunner
     private static void ValidateFrameMetadata(DecisionExample example)
     {
         IReadOnlyList<DecisionFrame> frames = example.Frames!;
-        if (example.Backend is not (DecisionBackend.LocalSystemOne or DecisionBackend.FoundrySystemOne) ||
+        if (example.Api != DecisionApi.SystemOne ||
             example.QuestionType != "choice" || example.Aggregation is not null || example.EvidenceStages is not null ||
             example.Evaluation is not null || example.Tasks is not null || example.ExplorationExploitation is not null ||
             frames.Count != 3 || frames.Any(frame => frame is null || string.IsNullOrWhiteSpace(frame.QuestionId) ||

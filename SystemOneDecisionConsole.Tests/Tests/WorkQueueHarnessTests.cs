@@ -74,7 +74,7 @@ public sealed class WorkQueueHarnessTests
         yield return ["blank filename", valid with { Tasks = metadata with { TasksFile = " " } }];
         yield return ["nested filename", valid with { Tasks = metadata with { TasksFile = "nested/tasks.json" } }];
         yield return ["wrong type", valid with { QuestionType = "noul" }];
-        yield return ["local backend", valid with { Backend = DecisionBackend.LocalSystemOne }];
+        yield return ["Decisions API", valid with { Api = DecisionApi.Decisions }];
         yield return ["aggregation", valid with { Aggregation = MetadataAssertions.Example("Aggregation").Aggregation }];
         yield return ["stages", valid with { EvidenceStages = MetadataAssertions.Example("EvidenceStages").EvidenceStages }];
         yield return ["frames", valid with { Frames = MetadataAssertions.Example("Frames").Frames }];

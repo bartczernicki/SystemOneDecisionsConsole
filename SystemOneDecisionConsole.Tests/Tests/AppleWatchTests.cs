@@ -14,7 +14,11 @@ public sealed class AppleWatchTests : ConsoleScenarioTestBase
     internal static readonly double[] Probabilities = [.15, .65, .95];
     private static readonly int[][] Histories = [[1800, 2200, 2500, 2800, 3100, 3400, 3700, 4100, 4700, 5200], [4400, 4600, 4800, 4900, 5000, 5100, 5200, 5400, 5500, 5700], [7200, 7600, 7900, 8100, 8400, 8700, 9000, 9300, 9600, 9900]];
     private string Folder => App.Folder(Advanced, FolderName);
-    [TestInitialize] public void Responses() => Server.Responder = (r, _) => FixtureResponse.Json(Answers(r.Payload));
+    [TestInitialize] public void Responses()
+    {
+        SetProvider("MicrosoftFoundryAI");
+        Server.Responder = (r, _) => FixtureResponse.Json(Answers(r.Payload));
+    }
     internal static JsonNode Answers(JsonObject payload, double[]? probabilities = null)
     {
         double[] p = probabilities ?? Probabilities; var answers = new JsonObject(); for (int i = 2; i >= 0; i--) answers[Names[i]] = new JsonObject { ["type"] = "noul", ["noul"] = p[i] }; return new JsonObject { ["model"] = S(payload["model"]), ["answers"] = answers };

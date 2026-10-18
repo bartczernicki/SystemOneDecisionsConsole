@@ -13,7 +13,7 @@ public static class TestSupport
     public const string FoundryModel = "console-test-foundry-deployment";
     public const string FoundryKey = "console-test-foundry-key-do-not-print";
     public static readonly string[] BasicFolderNames = ["LocalSystemOne-Choice", "LocalSystemOne-YesNo", "LocalSystemOne-Score",
-        "LocalDecisions-Choice", "LocalDecisions-YesNo", "LocalDecisions-Score", "FoundrySystemOne-Choice", "FoundrySystemOne-YesNo", "FoundrySystemOne-Score"];
+        "LocalDecisions-Choice", "LocalDecisions-YesNo", "LocalDecisions-Score"];
     public static readonly string[] ChartHeadings = ["Probability Distribution:", "Bernoulli Distribution (Yes/No):"];
     public static readonly Regex Ansi = new("\u001b\\[[0-9;]*m", RegexOptions.Compiled);
     public static readonly Regex Timing = new(@"Response time: (\d+) ms", RegexOptions.Compiled);

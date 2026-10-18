@@ -1,5 +1,5 @@
 Forecast an Atlanta Falcons versus Green Bay Packers football game from the supplied halftime statistics. Atlanta leads 17-7, Green Bay is the home team, and Green Bay was the pregame favorite at -7.5 points.
 
-One local SystemOne request processes three decisions: the final game winner, the probability that Green Bay covers -7.5 by winning by at least 8 points, and the final combined total-points band. Final game outcomes and total points include any overtime.
+One SystemOne API request processes three decisions: the final game winner, the probability that Green Bay covers -7.5 by winning by at least 8 points, and the final combined total-points band. Final game outcomes and total points include any overtime.
 
 The total-points rubric uses five ordered bands: Under 30 (0), 30-39 (1), 40-49 (2), 50-59 (3), and 60 or More (4). SystemOne returns a probability-weighted band-index score, which may be fractional between 0 and 4. Forecasts use only the supplied evidence; the game date, second-half kickoff possession, injuries, and other unprovided details are unknown.

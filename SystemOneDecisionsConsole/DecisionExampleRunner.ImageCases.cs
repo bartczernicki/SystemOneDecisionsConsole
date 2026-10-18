@@ -12,7 +12,7 @@ internal sealed partial class DecisionExampleRunner
     private static void ValidateImageCasesMetadata(DecisionExample example)
     {
         IReadOnlyList<DecisionImageCase> cases = example.ImageCases!;
-        if (example.Backend != DecisionBackend.LocalDecisions || example.QuestionType != "choice" ||
+        if (example.Api != DecisionApi.Decisions || example.QuestionType != "choice" ||
             example.Aggregation is not null || example.EvidenceStages is not null || example.Frames is not null ||
             example.Evaluation is not null || example.Tasks is not null || example.ExplorationExploitation is not null ||
             cases.Count != 2 || cases.Any(item => item is null || string.IsNullOrWhiteSpace(item.Label) ||
@@ -25,7 +25,7 @@ internal sealed partial class DecisionExampleRunner
         }
     }
 
-    private async Task RunImageCasesAsync(DecisionExample example, string folder, Uri endpoint, string model)
+    private async Task RunImageCasesAsync(DecisionExample example, string folder, DecisionConnection connection)
     {
         string input = await ReadTextAsync(folder, "input.txt");
         string questionsJson = await ReadTextAsync(folder, "questions.json");
@@ -64,7 +64,7 @@ internal sealed partial class DecisionExampleRunner
             {
                 var request = new DecisionsMultimodalRequest
                 {
-                    Model = model,
+                    Model = connection.Model,
                     Input = [new DecisionInputMessage
                     {
                         Content = [new DecisionInputText { Text = $"Package: {imageCase.Label}\n\n{input}" },
@@ -72,7 +72,7 @@ internal sealed partial class DecisionExampleRunner
                     }],
                     Questions = questions
                 };
-                string body = await SendAsync(endpoint, request, example.Backend, apiKey: null, capture,
+                string body = await SendAsync(connection.Endpoint, request, connection.Backend, connection.ApiKey, capture,
                     responseSanitizer: body => RedactImageData(body, imageUrls));
                 RejectDuplicateJsonProperties(body);
                 var response = Deserialize<DecisionsResponse>(body);

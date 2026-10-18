@@ -11,7 +11,7 @@ public sealed class CourierTests : ConsoleScenarioTestBase
 {
     private const string FolderName = "LocalDecisions-CourierLogisticsPackageShippingDecision";
     private const string Input = "2\n5\n\n0\n0\n";
-    private const string Menu = "5) Local (Decisions API) - Courier Logistics Package Shipping Decision";
+    private const string Menu = "5) Decisions API (Local AI only) - Courier Logistics Package Shipping Decision";
     private static readonly string[] Images = ["Express Delivery - Valid Courier Package.png", "Express Delivery - Invalid Courier Package.png"];
     private static readonly string[] Files = ["ScenarioDescription.txt", "input.txt", "questions.json", .. Images];
     private static readonly string[] Names = ["Size and Weight", "Shipping Label", "Packaging Material", "Exterior Condition", "Sealing", "Internal Protection", "Shipping Decision"];
@@ -105,7 +105,11 @@ public sealed class CourierTests : ConsoleScenarioTestBase
         string text = Run(Input); Requests(); Not(text, "Error:"); Assert.AreEqual(1, Count(text, "Input:\n")); Assert.AreEqual(1, Count(text, "Scenario Description:\n"));
         Assert.AreEqual(2, Count(text, "Calling local API...\n")); Assert.AreEqual(1, Count(text, "Press Enter to return to the menu:"));
         for (int index = 0; index < 2; index++) { Has(Cases(text)[index], $"Image: {Images[index]}"); CaseOutput(Cases(text)[index], Answers(Server.Requests[index].Payload)); }
-        Not(LastRawOutput, "data:image/png;base64,"); Not(LastRawOutput, "iVBORw0KGgo"); int pause = text.IndexOf("Press Enter"); Must(text.IndexOf(Menu, pause) < text.IndexOf("1) Basic Decision Examples", pause));
+        Not(LastRawOutput, "data:image/png;base64,"); Not(LastRawOutput, "iVBORw0KGgo");
+        int pause = text.IndexOf("Press Enter", StringComparison.Ordinal);
+        int returnedMenu = text.IndexOf(Menu, pause, StringComparison.Ordinal);
+        int mainMenu = text.IndexOf("1) Basic Decision Examples", pause, StringComparison.Ordinal);
+        Must(returnedMenu > pause && returnedMenu < mainMenu);
     }
     [TestMethod]
     public void RepeatedCourierSelectionAndFootballKeepIndependentRequests()

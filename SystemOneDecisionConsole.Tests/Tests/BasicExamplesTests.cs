@@ -9,35 +9,37 @@ namespace SystemOneDecisionConsole.Tests;
 public sealed class BasicExamplesTests : BasicTestBase
 {
     [TestMethod]
-    public void AllNineExamplesPreserveWireContractsRenderingAndMenuContinuation()
+    [DataRow(false)]
+    [DataRow(true)]
+    public void AllSixExamplesPreserveWireContractsRenderingAndMenuContinuation(bool useFoundry)
     {
-        for (int option = 1; option <= 9; option++)
+        SetProvider(useFoundry ? "MicrosoftFoundryAI" : "LocalAI");
+        for (int option = 1; option <= 6; option++)
             foreach (string filename in new[] { "ScenarioDescription.txt", "input.txt", "questions.json" })
             {
                 string file = Path.Combine(BasicFolder(option), filename);
                 Assert.IsTrue(File.Exists(file), file);
-                if (option >= 7) CollectionAssert.AreEqual(File.ReadAllBytes(Path.Combine(BasicFolder(option - 6), filename)), File.ReadAllBytes(file));
             }
-        string text = Run("1\nbad\n\n 1 \n\n2\n\n3\n\n4\n\n5\n\n6\n\n 7 \n\n8\n\n9\n\n0\n0\n");
+        string text = Run("1\nbad\n\n 1 \n\n2\n\n3\n\n4\n\n5\n\n6\n\n0\n0\n");
         NotContains(text, "Error:");
-        Assert.AreEqual(9, Server.Requests.Count);
+        Assert.AreEqual(6, Server.Requests.Count);
         Assert.AreEqual(2, Count(text, "Please enter"));
-        Assert.AreEqual(9, Count(text, "Press Enter to return to the menu:"));
-        Assert.AreEqual(9, Times.Matches(text).Count);
-        Assert.AreEqual(6, Count(text, "Probability Distribution:\n"));
-        Assert.AreEqual(3, Count(text, "Bernoulli Distribution (Yes/No):\n"));
-        Assert.AreEqual(9, Count(text, "Scenario Description:\n"));
-        Assert.AreEqual(9, Count(text, "Input:\n"));
-        NotContains(text, "Selected mode:"); NotContains(text, "Model:");
+        Assert.AreEqual(6, Count(text, "Press Enter to return to the menu:"));
+        Assert.AreEqual(6, Times.Matches(text).Count);
+        Assert.AreEqual(4, Count(text, "Probability Distribution:\n"));
+        Assert.AreEqual(2, Count(text, "Bernoulli Distribution (Yes/No):\n"));
+        Assert.AreEqual(6, Count(text, "Scenario Description:\n"));
+        Assert.AreEqual(6, Count(text, "Input:\n"));
+        NotContains(text, "Selected mode:");
         int cursor = 0;
-        for (int index = 0; index < 9; index++)
+        for (int index = 0; index < 6; index++)
         {
             int option = index + 1;
             var request = Server.Requests[index];
             JsonObject payload = request.Payload;
             string folder = BasicFolder(option);
             JsonNode expected = J(File.ReadAllText(Path.Combine(folder, "questions.json")));
-            bool foundry = index >= 6, systemOne = index < 3 || foundry;
+            bool systemOne = index < 3, foundry = useFoundry && systemOne;
             string key = systemOne ? "state" : "input";
             Assert.AreEqual(foundry ? FoundryModel : "console-test-model", payload["model"]!.GetValue<string>());
             EqualJson(expected, payload["questions"]);
@@ -79,25 +81,26 @@ public sealed class BasicExamplesTests : BasicTestBase
                     Contains(LastRawOutput, $"\u001b[38;2;{color}m{row.Bar}\u001b[39m|");
                 }
         }
-        foreach (string answer in new[] { "Department: Billing", "Score: 1.375", "Probability of yes: 87.50" }) Assert.AreEqual(3, Count(text, answer));
+        foreach (string answer in new[] { "Department: Billing", "Score: 1.375", "Probability of yes: 87.50" }) Assert.AreEqual(2, Count(text, answer));
         if (!OperatingSystem.IsWindows())
         {
-            foreach (var (label, color, count) in new[] { ("Scenario Description:\n", "255;128;224", 9), ("Input:\n", "128;255;160", 9), ("Calling local API...\n", "255;180;84", 6), ("Calling Foundry API...\n", "255;180;84", 3), ("Response JSON:\n", "128;192;255", 9) })
+            foreach (var (label, color, count) in new[] { ("Scenario Description:\n", "255;128;224", 6), ("Input:\n", "128;255;160", 6), ("Calling local API...\n", "255;180;84", useFoundry ? 3 : 6), ("Calling Foundry API...\n", "255;180;84", useFoundry ? 3 : 0), ("Response JSON:\n", "128;192;255", 6) })
                 Assert.AreEqual(count, Count(LastRawOutput, $"\u001b[38;2;{color}m{label}"));
-            Assert.AreEqual(6, Count(LastRawOutput, "\u001b[38;2;0;229;255mProbability Distribution:\u001b[39m\n"));
-            Assert.AreEqual(3, Count(LastRawOutput, "\u001b[38;2;0;229;255mBernoulli Distribution (Yes/No):\u001b[39m\n"));
+            Assert.AreEqual(4, Count(LastRawOutput, "\u001b[38;2;0;229;255mProbability Distribution:\u001b[39m\n"));
+            Assert.AreEqual(2, Count(LastRawOutput, "\u001b[38;2;0;229;255mBernoulli Distribution (Yes/No):\u001b[39m\n"));
         }
     }
 
     [TestMethod]
-    [DataRow(2, 0)]
-    [DataRow(2, 1)]
-    [DataRow(5, 0)]
-    [DataRow(5, 1)]
-    [DataRow(8, 0)]
-    [DataRow(8, 1)]
-    public void BernoulliEndpointsRetainProbabilities(int option, int probability)
+    [DataRow(2, false, 0)]
+    [DataRow(2, false, 1)]
+    [DataRow(5, false, 0)]
+    [DataRow(5, false, 1)]
+    [DataRow(2, true, 0)]
+    [DataRow(2, true, 1)]
+    public void BernoulliEndpointsRetainProbabilities(int option, bool foundry, int probability)
     {
+        SetProvider(foundry ? "MicrosoftFoundryAI" : "LocalAI");
         Reply(ResponseFor(option, (JsonObject)J(option == 5 ? $"{{\"type\":\"predicate\",\"probability\":{probability}}}" : $"{{\"type\":\"noul\",\"noul\":{probability}}}")));
         string text = Run(BasicInput(option)); NotContains(text, "Error:");
         var rows = Distribution(text, [("Yes", $"{probability * 100}.00"), ("No", $"{(1 - probability) * 100}.00")], "Bernoulli Distribution (Yes/No):");
@@ -107,11 +110,12 @@ public sealed class BasicExamplesTests : BasicTestBase
     }
 
     [TestMethod]
-    [DataRow(1)]
-    [DataRow(4)]
-    [DataRow(7)]
-    public void BarsUseWireProbabilitiesWithoutNormalization(int option)
+    [DataRow(1, false)]
+    [DataRow(4, false)]
+    [DataRow(1, true)]
+    public void BarsUseWireProbabilitiesWithoutNormalization(int option, bool foundry)
     {
+        SetProvider(foundry ? "MicrosoftFoundryAI" : "LocalAI");
         var probabilities = new JsonObject { ["Full"] = 1, ["Zero"] = 0, ["Fraction"] = .3375, ["Tiny"] = .0001, ["Half Eighth"] = .0015625, ["One And Half Eighths"] = .0046875 };
         var answer = new JsonObject { ["type"] = "choice", ["choice"] = "Full", ["confidence"] = 1, ["probabilities"] = option == 4 ? new JsonArray(probabilities.Select(p => (JsonNode)new JsonObject { ["value"] = p.Key, ["probability"] = p.Value!.DeepClone() }).ToArray()) : probabilities.DeepClone() };
         Reply(ResponseFor(option, answer)); string text = Run(BasicInput(option)); NotContains(text, "Error:");
@@ -120,10 +124,11 @@ public sealed class BasicExamplesTests : BasicTestBase
     }
 
     [TestMethod]
-    [DataRow(3)]
-    [DataRow(9)]
-    public void ScoresSortNumericRowsAndRetainWireOrderForOtherLabels(int option)
+    [DataRow(3, false)]
+    [DataRow(3, true)]
+    public void ScoresSortNumericRowsAndRetainWireOrderForOtherLabels(int option, bool foundry)
     {
+        SetProvider(foundry ? "MicrosoftFoundryAI" : "LocalAI");
         Reply(ResponseFor(option, (JsonObject)J("""{"type":"score","score":1.375,"confidence":0.8,"probabilities":{"2":0.475,"10":0,"0":0.1,"1":0.425,"Later":0,"-2":0,"Alpha":0},"legend":{"2":"Fully Blocked: Verbose explanation stays in JSON.","1":"Workaround Available: A practical workaround exists."}}""")));
         string text = Run(BasicInput(option)); NotContains(text, "Error:"); Contains(text, "Score: 1.375");
         Distribution(text, [("-2", "0.00"), ("0", "10.00"), ("1 (Workaround Available)", "42.50"), ("2 (Fully Blocked)", "47.50"), ("10", "0.00"), ("Later", "0.00"), ("Alpha", "0.00")]);
@@ -157,13 +162,14 @@ public sealed class BasicExamplesTests : BasicTestBase
 
     public static IEnumerable<object[]> InvalidProbabilities()
     {
-        foreach (int option in new[] { 1, 4, 7 }) foreach (double p in new[] { -.01, 1.01 }) yield return [option, p];
-        foreach (int option in new[] { 2, 3, 5, 6, 8, 9 }) yield return [option, option % 3 == 0 ? -.01 : 1.01];
+        foreach (var (option, foundry) in new[] { (1, false), (4, false), (1, true) }) foreach (double p in new[] { -.01, 1.01 }) yield return [option, foundry, p];
+        foreach (var (option, foundry) in new[] { (2, false), (3, false), (5, false), (6, false), (2, true), (3, true) }) yield return [option, foundry, option % 3 == 0 ? -.01 : 1.01];
     }
     [TestMethod]
     [DynamicData(nameof(InvalidProbabilities))]
-    public void MalformedLaterProbabilitiesNeverRenderPartialCharts(int option, double probability)
+    public void MalformedLaterProbabilitiesNeverRenderPartialCharts(int option, bool foundry, double probability)
     {
+        SetProvider(foundry ? "MicrosoftFoundryAI" : "LocalAI");
         var answer = new JsonObject();
         if ((option - 1) % 3 == 0)
         {

@@ -11,10 +11,10 @@ public abstract class BasicTestBase : ConsoleScenarioTestBase
     protected const string FoundryPath = "/gateway/providers/microsoft/v1/systemone?api-version=fixture";
     protected const string FoundryModel = "console-test-foundry-deployment";
     protected const string FoundryKey = "console-test-foundry-key-do-not-print";
-    protected static readonly string[] BasicFolders = ["LocalSystemOne-Choice", "LocalSystemOne-YesNo", "LocalSystemOne-Score", "LocalDecisions-Choice", "LocalDecisions-YesNo", "LocalDecisions-Score", "FoundrySystemOne-Choice", "FoundrySystemOne-YesNo", "FoundrySystemOne-Score"];
+    protected static readonly string[] BasicFolders = ["LocalSystemOne-Choice", "LocalSystemOne-YesNo", "LocalSystemOne-Score", "LocalDecisions-Choice", "LocalDecisions-YesNo", "LocalDecisions-Score"];
     protected static readonly string[] AdvancedFolders = ["LocalSystemOne-FootballGamePrediction", "LocalSystemOne-FootballTotalPointsProbability", "LocalSystemOne-ShipmentArrivalEvidenceUpdates", "LocalSystemOne-CustomerSubscriptionCalibration", "LocalDecisions-CourierLogisticsPackageShippingDecision", "FoundrySystemOne-AppleWatchStepGoal", "FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming", "FoundrySystemOne-WorkQueueEisenhowerMatrix", "FoundrySystemOne-RestaurantExploreExploit"];
-    protected static readonly string[] BasicLabels = ["Local (SystemOne API) - Choice", "Local (SystemOne API) - Yes/No (noul)", "Local (SystemOne API) - Score", "Local (Decisions API) - Choice", "Local (Decisions API) - Yes/No (predicate)", "Local (Decisions API) - Score", "Foundry (SystemOne API) - Choice", "Foundry (SystemOne API) - Yes/No (noul)", "Foundry (SystemOne API) - Score"];
-    protected static readonly string[] AdvancedLabels = ["Local (SystemOne API) - Football Game Probability Foreacast", "Local (SystemOne API) - Football Total Points Cumulative Probability", "Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating", "Local (SystemOne API) - Customer Subscription Brier Score and Calibration", "Local (Decisions API) - Courier Logistics Package Shipping Decision", "Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule", "Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing", "Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix", "Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation?"];
+    protected static readonly string[] BasicLabels = ["SystemOne API (Local AI) - Choice", "SystemOne API (Local AI) - Yes/No (noul)", "SystemOne API (Local AI) - Score", "Decisions API (Local AI only) - Choice", "Decisions API (Local AI only) - Yes/No (predicate)", "Decisions API (Local AI only) - Score"];
+    protected static readonly string[] AdvancedLabels = ["SystemOne API (Local AI) - Football Game Probability Forecast", "SystemOne API (Local AI) - Football Total Points Cumulative Probability", "SystemOne API (Local AI) - Shipment Arrival Evidence with Bayesian updating", "SystemOne API (Local AI) - Customer Subscription Brier Score and Calibration", "Decisions API (Local AI only) - Courier Logistics Package Shipping Decision", "SystemOne API (Local AI) - Apple Watch Step Goal with 10,000 Step Decision Rule", "SystemOne API (Local AI) - Energy Plant Investment Strategy with Decision Framing", "SystemOne API (Local AI) - Work Queue Prioritization with the Eisenhower Matrix", "SystemOne API (Local AI) - Restaurant Choice: Decision Exploration or Exploitation?"];
     protected static readonly Regex Times = new(@"Response time: (\d+) ms");
     protected static readonly Regex Rows = new(@"^  (.{0,25}) \|([ █▏▎▍▌▋▊▉]{40})\| (\d+\.\d{2}) %$", RegexOptions.Multiline);
     protected static readonly Regex Ansi = new("\u001b\\[[0-9;]*m");
@@ -25,9 +25,9 @@ public abstract class BasicTestBase : ConsoleScenarioTestBase
     protected JsonObject ResponseFor(int option, JsonObject answer)
     {
         JsonNode questions = J(File.ReadAllText(Path.Combine(BasicFolder(option), "questions.json")));
-        string name = option <= 3 || option >= 7 ? questions.AsObject().First().Key : questions[0]!["name"]!.GetValue<string>();
+        string name = option <= 3 ? questions.AsObject().First().Key : questions[0]!["name"]!.GetValue<string>();
         JsonNode answers;
-        if (option <= 3 || option >= 7) answers = new JsonObject { [name] = answer.DeepClone() };
+        if (option <= 3) answers = new JsonObject { [name] = answer.DeepClone() };
         else
         {
             var named = (JsonObject)answer.DeepClone();

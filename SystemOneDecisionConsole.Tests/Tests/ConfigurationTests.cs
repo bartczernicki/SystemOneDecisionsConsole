@@ -140,9 +140,9 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
     [TestMethod]
     public void ConfigureMenuHandlesWhitespaceInvalidSelectionsAndBackWithoutRequests()
     {
-        string text = Run(" 3 \nbad\n\n2\n-1\n 0 \n0\n");
+        string text = Run(" 3 \nbad\n\n3\n-1\n 0 \n0\n");
 
-        AssertEx.Count(text, "Please enter 0 or 1", 4);
+        AssertEx.Count(text, "Please enter 0, 1, or 2", 4);
         AssertEx.Count(text, "1) Basic Decision Examples", 2);
         AssertEx.Contains(text, "1) Show / Hide Decision JSON (currently Hidden)");
         AssertEx.Contains(text, "0) Back");
@@ -226,27 +226,28 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
     }
 
     [TestMethod]
-    [DataRow(1, 1, 1, 1, 0, "Department: Billing")]
-    [DataRow(1, 2, 1, 0, 1, "Probability of yes: 87.50 %")]
-    [DataRow(1, 3, 1, 1, 0, "Score: 1.375")]
-    [DataRow(1, 4, 1, 1, 0, "Department: Billing")]
-    [DataRow(1, 5, 1, 0, 1, "Probability of yes: 87.50 %")]
-    [DataRow(1, 6, 1, 1, 0, "Score: 1.375")]
-    [DataRow(1, 7, 1, 1, 0, "Department: Billing")]
-    [DataRow(1, 8, 1, 0, 1, "Probability of yes: 87.50 %")]
-    [DataRow(1, 9, 1, 1, 0, "Score: 1.375")]
-    [DataRow(2, 1, 1, 2, 1, "1) Final Game Winner:")]
-    [DataRow(2, 2, 1, 1, 0, "Chance of more than 40 total points: 65.00 %")]
-    [DataRow(2, 3, 3, 3, 0, "Evidence Stage Comparison:")]
-    [DataRow(2, 4, 200, 0, 0, "Brier Score and Calibration Summary:")]
-    [DataRow(2, 5, 2, 14, 0, "Image case 2 of 2: Package B")]
-    [DataRow(2, 6, 1, 0, 3, "1) Park with Kids:")]
-    [DataRow(2, 7, 3, 3, 0, "Decision Framing Comparison:")]
-    [DataRow(2, 8, 8, 8, 0, "Work Queue Summary:")]
-    [DataRow(2, 9, 1, 2, 0, "Final recommendation:")]
+    [DataRow(1, 1, 1, 1, 0, "Department: Billing", false)]
+    [DataRow(1, 2, 1, 0, 1, "Probability of yes: 87.50 %", false)]
+    [DataRow(1, 3, 1, 1, 0, "Score: 1.375", false)]
+    [DataRow(1, 4, 1, 1, 0, "Department: Billing", false)]
+    [DataRow(1, 5, 1, 0, 1, "Probability of yes: 87.50 %", false)]
+    [DataRow(1, 6, 1, 1, 0, "Score: 1.375", false)]
+    [DataRow(1, 1, 1, 1, 0, "Department: Billing", true)]
+    [DataRow(1, 2, 1, 0, 1, "Probability of yes: 87.50 %", true)]
+    [DataRow(1, 3, 1, 1, 0, "Score: 1.375", true)]
+    [DataRow(2, 1, 1, 2, 1, "1) Final Game Winner:", false)]
+    [DataRow(2, 2, 1, 1, 0, "Chance of more than 40 total points: 65.00 %", false)]
+    [DataRow(2, 3, 3, 3, 0, "Evidence Stage Comparison:", false)]
+    [DataRow(2, 4, 200, 0, 0, "Brier Score and Calibration Summary:", false)]
+    [DataRow(2, 5, 2, 14, 0, "Image case 2 of 2: Package B", false)]
+    [DataRow(2, 6, 1, 0, 3, "1) Park with Kids:", true)]
+    [DataRow(2, 7, 3, 3, 0, "Decision Framing Comparison:", true)]
+    [DataRow(2, 8, 8, 8, 0, "Work Queue Summary:", true)]
+    [DataRow(2, 9, 1, 2, 0, "Final recommendation:", true)]
     public void DefaultHiddenSuppressesRawJsonForEveryWorkflowWhileRetainingResults(
-        int category, int option, int requests, int probabilityCharts, int bernoulliCharts, string result)
+        int category, int option, int requests, int probabilityCharts, int bernoulliCharts, string result, bool foundry)
     {
+        SetProvider(foundry ? "MicrosoftFoundryAI" : "LocalAI");
         MarkResponses();
 
         string text = Run($"{category}\n{option}\n\n0\n0\n", timeout: 60);
@@ -297,6 +298,7 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
     public void HiddenFailedResponsesKeepErrorsAndReportsWithoutDumpingRawBodies(
         int category, int option, int requests, int status)
     {
+        if (category == 2 && option >= 6) SetProvider("MicrosoftFoundryAI");
         Server.Responder = (_, _) => FixtureResponse.Raw(RawMarker, status);
 
         string text = Run($"{category}\n{option}\n\n0\n0\n");

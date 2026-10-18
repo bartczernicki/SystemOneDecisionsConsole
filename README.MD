@@ -1,6 +1,6 @@
 # SystemOne Decisions
 
-A .NET Console application demonstrating (Jev-like) AI decisions through Local (SystemOne API), Local (Decisions API), and Foundry (SystemOne API). Over 18 (basic & advanced) examples are showcased focusing on business decision examples, where these new AI decision models are a potential great fit. 
+A .NET Console application demonstrating (Jev-like) AI decisions through the SystemOne API on Local AI or Microsoft Foundry AI, and the Decisions API on Local AI. The 15 basic and advanced menu examples focus on business decisions where these decision models are a potential great fit.
 
 ## Contents
 
@@ -90,33 +90,32 @@ The concepts in this repository are based on Bart Czernicki's book, [Decision In
 
 | Option | Example | What it demonstrates |
 | --- | --- | --- |
-| 1 | Local (SystemOne API) - Choice | Routes a customer's report of two charges for one purchase to Billing, Technical, or Shipping. Shows the recommended department and its probability distribution. |
-| 2 | Local (SystemOne API) - Yes/No (noul) | Evaluates whether a customer reports being charged twice for the same purchase. Shows the probability of Yes without applying a boolean threshold. |
-| 3 | Local (SystemOne API) - Score | Rates a CSV export failure in Safari when Chrome provides a working alternative. Shows a probability-weighted severity score across Cosmetic, Workaround Available, and Fully Blocked levels. |
-| 4 | Local (Decisions API) - Choice | Routes a customer's report of two charges for one purchase to Billing, Technical, or Shipping. Shows the recommended department and its probability distribution. |
-| 5 | Local (Decisions API) - Yes/No (predicate) | Evaluates whether a customer reports being charged twice for the same purchase. Shows the probability of Yes without applying a boolean threshold. |
-| 6 | Local (Decisions API) - Score | Rates a CSV export failure in Safari when Chrome provides a working alternative. Shows a probability-weighted severity score across Cosmetic, Workaround Available, and Fully Blocked levels. |
-| 7 | Foundry (SystemOne API) - Choice | Routes a customer's report of two charges for one purchase to Billing, Technical, or Shipping. Shows the recommended department and its probability distribution. |
-| 8 | Foundry (SystemOne API) - Yes/No (noul) | Evaluates whether a customer reports being charged twice for the same purchase. Shows the probability of Yes without applying a boolean threshold. |
-| 9 | Foundry (SystemOne API) - Score | Rates a CSV export failure in Safari when Chrome provides a working alternative. Shows a probability-weighted severity score across Cosmetic, Workaround Available, and Fully Blocked levels. |
+| 1 | SystemOne API - Choice | Routes a customer's report of two charges for one purchase to Billing, Technical, or Shipping. Shows the recommended department and its probability distribution. |
+| 2 | SystemOne API - Yes/No (noul) | Evaluates whether a customer reports being charged twice for the same purchase. Shows the probability of Yes without applying a boolean threshold. |
+| 3 | SystemOne API - Score | Rates a CSV export failure in Safari when Chrome provides a working alternative. Shows a probability-weighted severity score across Cosmetic, Workaround Available, and Fully Blocked levels. |
+| 4 | Decisions API (Local AI only) - Choice | Routes a customer's report of two charges for one purchase to Billing, Technical, or Shipping. Shows the recommended department and its probability distribution. |
+| 5 | Decisions API (Local AI only) - Yes/No (predicate) | Evaluates whether a customer reports being charged twice for the same purchase. Shows the probability of Yes without applying a boolean threshold. |
+| 6 | Decisions API (Local AI only) - Score | Rates a CSV export failure in Safari when Chrome provides a working alternative. Shows a probability-weighted severity score across Cosmetic, Workaround Available, and Fully Blocked levels. |
+
+Every SystemOne menu item includes the selected provider, for example **SystemOne API (Microsoft Foundry AI) - Choice**. The same selection applies to every advanced SystemOne example.
 
 ## Advanced Decision Examples
 
 | Option | Example | What it demonstrates |
 | --- | --- | --- |
-| 1 | Local (SystemOne API) - Football Game Probability Foreacast | Forecasts an Atlanta Falcons at Green Bay Packers game from a halftime snapshot. One request estimates the winner, Green Bay's chance of covering the spread, and final total-points bands. |
-| 2 | Local (SystemOne API) - Football Total Points Cumulative Probability | Forecasts combined final points from the same football halftime snapshot. Adds probabilities across the relevant score bands to show the chance of strictly more than 40 points. |
-| 3 | Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating | Forecasts a fictional shipment's arrival using three successive evidence updates at a fixed forecast time. Compares live arrival-window distributions, entropy, and confidence as more information becomes available. |
-| 4 | Local (SystemOne API) - Customer Subscription Brier Score and Calibration | Predicts term-deposit subscriptions for 200 recorded customers from UCI Bank Marketing. Scores representative and previous-success groups separately with Brier score and ECE, and saves complete results. |
-| 5 | Local (Decisions API) - Courier Logistics Package Shipping Decision | Evaluates two package photographs in separate requests against a fictional Express Delivery policy. Shows six Pass/Fail/Unknown shipping checks and an overall Ship, Repack or Relabel, or Needs Inspection decision for each package. |
-| 6 | Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule | Compares visiting the park, taking a walk, or running from a 5,000-step starting point. Reports an independent Yes/No probability for each activity reaching the 10,000-step goal. |
-| 7 | Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing | Recommends a fictional solar-and-battery investment strategy through Creativity, Caution, and Benefits thinking hats. Three isolated requests compare recommendation distributions using the same project facts and strategy choices. |
-| 8 | Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix | Classifies eight operations-manager tasks by urgency and importance using separate requests. Shows the returned actions in a summary and an Eisenhower Matrix: Do Now, Schedule, Delegate, or Eliminate. |
-| 9 | Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation? | Chooses whether a regular restaurant customer should try an unfamiliar dish or order a familiar favorite. One request evaluates the strategy and both conditional dish choices, then displays the strategy and its matching recommendation. |
+| 1 | SystemOne API - Football Game Probability Forecast | Forecasts an Atlanta Falcons at Green Bay Packers game from a halftime snapshot. One request estimates the winner, Green Bay's chance of covering the spread, and final total-points bands. |
+| 2 | SystemOne API - Football Total Points Cumulative Probability | Forecasts combined final points from the same football halftime snapshot. Adds probabilities across the relevant score bands to show the chance of strictly more than 40 points. |
+| 3 | SystemOne API - Shipment Arrival Evidence with Bayesian updating | Forecasts a fictional shipment's arrival using three successive evidence updates at a fixed forecast time. Compares live arrival-window distributions, entropy, and confidence as more information becomes available. |
+| 4 | SystemOne API - Customer Subscription Brier Score and Calibration | Predicts term-deposit subscriptions for 200 recorded customers from UCI Bank Marketing. Scores representative and previous-success groups separately with Brier score and ECE, and saves complete results. |
+| 5 | Decisions API (Local AI only) - Courier Logistics Package Shipping Decision | Evaluates two package photographs in separate requests against a fictional Express Delivery policy. Shows six Pass/Fail/Unknown shipping checks and an overall Ship, Repack or Relabel, or Needs Inspection decision for each package. |
+| 6 | SystemOne API - Apple Watch Step Goal with 10,000 Step Decision Rule | Compares visiting the park, taking a walk, or running from a 5,000-step starting point. Reports an independent Yes/No probability for each activity reaching the 10,000-step goal. |
+| 7 | SystemOne API - Energy Plant Investment Strategy with Decision Framing | Recommends a fictional solar-and-battery investment strategy through Creativity, Caution, and Benefits thinking hats. Three isolated requests compare recommendation distributions using the same project facts and strategy choices. |
+| 8 | SystemOne API - Work Queue Prioritization with the Eisenhower Matrix | Classifies eight operations-manager tasks by urgency and importance using separate requests. Shows the returned actions in a summary and an Eisenhower Matrix: Do Now, Schedule, Delegate, or Eliminate. |
+| 9 | SystemOne API - Restaurant Choice: Decision Exploration or Exploitation? | Chooses whether a regular restaurant customer should try an unfamiliar dish or order a familiar favorite. One request evaluates the strategy and both conditional dish choices, then displays the strategy and its matching recommendation. |
 
 ## Run the Console Application
 
-Install the .NET 10 SDK. For Basic options 1–6 and Advanced options 1–5, start the local API server with a supported decision model loaded. The default local model name is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. For Basic options 7–9 and Advanced options 6–9, configure the Foundry settings below. Run from the repository root:
+Install the .NET 10 SDK. Configure the local API settings for Decisions examples and for SystemOne examples using Local AI. To use Microsoft Foundry AI for SystemOne, configure its endpoint, deployment name and API key below. The default local model is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. Run from the repository root:
 
 ```sh
 dotnet run --project SystemOneDecisionsConsole
@@ -126,19 +125,24 @@ Use a terminal that supports ANSI RGB colors to display the cyan banner and gold
 
 The top-level menu includes **3) Configure**. Select **1) Show / Hide Decision JSON** to toggle the raw `Response JSON:` blocks; the menu shows the current state. JSON starts **hidden**, and each toggle is saved immediately for subsequent responses and future runs.
 
+Select **2) SystemOne API provider** to choose **Local AI** (the default) or **Microsoft Foundry AI**. Selection validates the configured endpoint, model and authentication without making an API request, then displays the model name or Foundry model deployment. Missing or invalid settings leave the current provider unchanged. Every example also states its provider and model before running. Decisions examples always use Local AI, regardless of the SystemOne choice.
+
 Preferences are stored in `Configuration.json` in the current working folder (the repository root when using the command above). The application creates this file on first run with:
 
 ```json
 {
-  "ShowDecisionJson": false
+  "ShowDecisionJson": false,
+  "SystemOneProvider": "LocalAI"
 }
 ```
 
-Manual edits take effect the next time the application starts. When JSON is hidden, HTTP errors still show their status and reason, while raw response bodies are omitted. Summaries, charts, and saved evaluation reports remain available. Enabling JSON also displays each of the 200 customer calibration responses. If configuration cannot be loaded, the application warns and uses the hidden default without overwriting the file; failed saves retain the previous setting.
+`SystemOneProvider` can be `LocalAI` or `MicrosoftFoundryAI`; existing files without this property use Local AI. Provider changes and JSON toggles preserve each other's settings. Only preferences are stored here; endpoints, model names and credentials remain in User Secrets or environment variables. Environment variables override matching User Secrets for both selection and execution.
+
+Manual edits take effect the next time the application starts. When JSON is hidden, HTTP errors still show their status and reason, while raw response bodies are omitted. Summaries, charts, and saved evaluation reports remain available. Enabling JSON also displays each of the 200 customer calibration responses. If configuration cannot be loaded, the application warns and uses the defaults without overwriting the file; failed saves retain the previous settings. Execution reports configuration errors without switching providers automatically.
 
 ## Download LM Studio and a Decision Model
 
-For local examples (Basic options 1–6 and Advanced options 1–5), install LM Studio and load a decision model such as Clef or Clef-Flash:
+For all Decisions examples and SystemOne examples using Local AI, install LM Studio and load a decision model such as Clef or Clef-Flash:
 
 1. Download the installer for your operating system from the [LM Studio download page](https://lmstudio.ai/download) and install the application.
 2. Open **Discover** and search for `Clef` or `Clef-Flash`. For a concrete download, paste the [ggml-org/Clef-Flash-GGUF model URL](https://huggingface.co/ggml-org/Clef-Flash-GGUF) into the search bar. LM Studio supports searching by model name or Hugging Face URL; see its [model download guide](https://lmstudio.ai/docs/app/basics/download-model).
@@ -147,7 +151,7 @@ For local examples (Basic options 1–6 and Advanced options 1–5), install LM 
 
 **Important Note:** For multi-question and image examples, both **Eval Batch Size** and **Physical Batch Size** must accommodate the combined input and questions. The effective physical batch is capped by Eval Batch Size. Start with `4096` for both and reload the model after changing load settings; if a request exceeds that limit, increase both to accommodate it. Larger physical batches require more working memory. See the [llama.cpp batch limit implementation](https://github.com/ggml-org/llama.cpp/blob/master/src/llama-context.cpp).
 
-Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. The courier example (Advanced #5) also requires image-capable Clef/Clef-Flash support and its matching vision adapter (`mmproj`). Foundry examples (Basic options 7–9 and Advanced options 6–9) use the hosted deployment and do not require a local model.
+Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. The courier example (Advanced #5) also requires image-capable Clef/Clef-Flash support and its matching vision adapter (`mmproj`). When Microsoft Foundry AI is selected, SystemOne examples use the hosted deployment; Decisions examples still require the local server.
 
 ## User Secrets for local APIs and Microsoft Foundry
 
@@ -181,7 +185,7 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder contains **18 examples** and **65 scenario assets**, grouped into Basic and Advanced categories.
+The repository-root `Decisions` folder contains **18 scenario folders** and **65 scenario assets**, grouped into Basic and Advanced categories. The menus expose **15 distinct examples**; the three original basic Foundry folders are retained for compatibility, while both providers use the shared basic SystemOne assets.
 
 | File | Purpose |
 | --- | --- |

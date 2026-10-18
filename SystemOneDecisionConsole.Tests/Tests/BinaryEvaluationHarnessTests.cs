@@ -124,7 +124,7 @@ public sealed class BinaryEvaluationHarnessTests
         yield return ["overlapping outcomes file", valid with { Evaluation = metadata with { OutcomesFile = "cases.json" } }];
         yield return ["overlapping provenance file", valid with { Evaluation = metadata with { ProvenanceFile = "outcomes.json" } }];
         yield return ["wrong question type", valid with { QuestionType = "choice" }];
-        yield return ["Foundry backend", valid with { Backend = DecisionBackend.FoundrySystemOne }];
+        yield return ["Decisions API", valid with { Api = DecisionApi.Decisions }];
         yield return ["score aggregation", valid with { Aggregation = MetadataAssertions.Example("Aggregation").Aggregation }];
         yield return ["evidence stages", valid with { EvidenceStages = MetadataAssertions.Example("EvidenceStages").EvidenceStages }];
         yield return ["decision frames", valid with { Frames = MetadataAssertions.Example("Frames").Frames }];

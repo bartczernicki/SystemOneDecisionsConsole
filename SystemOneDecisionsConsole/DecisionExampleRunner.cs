@@ -2,10 +2,15 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Configuration;
 using SystemOneDecisionsConsole.Models;
 
 namespace SystemOneDecisionsConsole;
+
+internal enum DecisionApi
+{
+    SystemOne,
+    Decisions
+}
 
 internal enum DecisionBackend
 {
@@ -34,7 +39,7 @@ internal sealed record DecisionExplorationExploitation(
 
 internal sealed record DecisionImageCase(string Label, string ImageFile);
 
-internal sealed record DecisionExample(string Label, string Folder, DecisionBackend Backend, string QuestionType,
+internal sealed record DecisionExample(string Label, string Folder, DecisionApi Api, string QuestionType,
     ScoreProbabilityAggregation? Aggregation = null, IReadOnlyList<DecisionEvidenceStage>? EvidenceStages = null,
     IReadOnlyList<DecisionFrame>? Frames = null, DecisionBinaryEvaluation? Evaluation = null,
     DecisionTaskClassification? Tasks = null, DecisionExplorationExploitation? ExplorationExploitation = null,
@@ -44,69 +49,70 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
 {
     internal static IReadOnlyList<DecisionExample> Examples { get; } =
     [
-        new("Local (SystemOne API) - Choice", Path.Combine("Basic Decision Examples", "LocalSystemOne-Choice"), DecisionBackend.LocalSystemOne, "choice"),
-        new("Local (SystemOne API) - Yes/No (noul)", Path.Combine("Basic Decision Examples", "LocalSystemOne-YesNo"), DecisionBackend.LocalSystemOne, "noul"),
-        new("Local (SystemOne API) - Score", Path.Combine("Basic Decision Examples", "LocalSystemOne-Score"), DecisionBackend.LocalSystemOne, "score"),
-        new("Local (Decisions API) - Choice", Path.Combine("Basic Decision Examples", "LocalDecisions-Choice"), DecisionBackend.LocalDecisions, "choice"),
-        new("Local (Decisions API) - Yes/No (predicate)", Path.Combine("Basic Decision Examples", "LocalDecisions-YesNo"), DecisionBackend.LocalDecisions, "predicate"),
-        new("Local (Decisions API) - Score", Path.Combine("Basic Decision Examples", "LocalDecisions-Score"), DecisionBackend.LocalDecisions, "score"),
-        new("Foundry (SystemOne API) - Choice", Path.Combine("Basic Decision Examples", "FoundrySystemOne-Choice"), DecisionBackend.FoundrySystemOne, "choice"),
-        new("Foundry (SystemOne API) - Yes/No (noul)", Path.Combine("Basic Decision Examples", "FoundrySystemOne-YesNo"), DecisionBackend.FoundrySystemOne, "noul"),
-        new("Foundry (SystemOne API) - Score", Path.Combine("Basic Decision Examples", "FoundrySystemOne-Score"), DecisionBackend.FoundrySystemOne, "score")
+        new("Choice", Path.Combine("Basic Decision Examples", "LocalSystemOne-Choice"), DecisionApi.SystemOne, "choice"),
+        new("Yes/No (noul)", Path.Combine("Basic Decision Examples", "LocalSystemOne-YesNo"), DecisionApi.SystemOne, "noul"),
+        new("Score", Path.Combine("Basic Decision Examples", "LocalSystemOne-Score"), DecisionApi.SystemOne, "score"),
+        new("Choice", Path.Combine("Basic Decision Examples", "LocalDecisions-Choice"), DecisionApi.Decisions, "choice"),
+        new("Yes/No (predicate)", Path.Combine("Basic Decision Examples", "LocalDecisions-YesNo"), DecisionApi.Decisions, "predicate"),
+        new("Score", Path.Combine("Basic Decision Examples", "LocalDecisions-Score"), DecisionApi.Decisions, "score")
     ];
 
     internal static IReadOnlyList<DecisionExample> AdvancedExamples { get; } =
     [
-        new("Local (SystemOne API) - Football Game Probability Foreacast",
+        new("Football Game Probability Forecast",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-FootballGamePrediction"),
-            DecisionBackend.LocalSystemOne, "mixed"),
-        new("Local (SystemOne API) - Football Total Points Cumulative Probability",
+            DecisionApi.SystemOne, "mixed"),
+        new("Football Total Points Cumulative Probability",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-FootballTotalPointsProbability"),
-            DecisionBackend.LocalSystemOne, "score",
+            DecisionApi.SystemOne, "score",
             new("Final Total Points Band", ["Under 30", "30-40", "41-49", "50-59", "60 or More"],
                 [2, 3, 4], "Chance of more than 40 total points")),
-        new("Local (SystemOne API) - Shipment Arrival Evidence with Bayesian updating",
+        new("Shipment Arrival Evidence with Bayesian updating",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-ShipmentArrivalEvidenceUpdates"),
-            DecisionBackend.LocalSystemOne, "choice", EvidenceStages:
+            DecisionApi.SystemOne, "choice", EvidenceStages:
             [
                 new("Initial information", "input.txt"),
                 new("Carrier records", "evidence-2.txt"),
                 new("Verified delivery readiness", "evidence-3.txt")
             ]),
-        new("Local (SystemOne API) - Customer Subscription Brier Score and Calibration",
+        new("Customer Subscription Brier Score and Calibration",
             Path.Combine("Advanced Decision Examples", "LocalSystemOne-CustomerSubscriptionCalibration"),
-            DecisionBackend.LocalSystemOne, "noul", Evaluation:
+            DecisionApi.SystemOne, "noul", Evaluation:
                 new("Customer Subscription", "cases.json", "outcomes.json", "provenance.json", 200,
                 [
                     new("representative", "Representative holdout", 100),
                     new("prior-success", "Previous campaign success diagnostic", 100)
                 ])),
-        new("Local (Decisions API) - Courier Logistics Package Shipping Decision",
+        new("Courier Logistics Package Shipping Decision",
             Path.Combine("Advanced Decision Examples", "LocalDecisions-CourierLogisticsPackageShippingDecision"),
-            DecisionBackend.LocalDecisions, "choice", ImageCases:
+            DecisionApi.Decisions, "choice", ImageCases:
             [
                 new("Package A", "Express Delivery - Valid Courier Package.png"),
                 new("Package B", "Express Delivery - Invalid Courier Package.png")
             ]),
-        new("Foundry (SystemOne API) - Apple Watch Step Goal with 10,000 Step Decision Rule",
+        new("Apple Watch Step Goal with 10,000 Step Decision Rule",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-AppleWatchStepGoal"),
-            DecisionBackend.FoundrySystemOne, "noul"),
-        new("Foundry (SystemOne API) - Energy Plant Investment Strategy with Decision Framing",
+            DecisionApi.SystemOne, "noul"),
+        new("Energy Plant Investment Strategy with Decision Framing",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming"),
-            DecisionBackend.FoundrySystemOne, "choice", Frames:
+            DecisionApi.SystemOne, "choice", Frames:
             [
                 new("Creativity Hat (Green)", "Creativity", "frame-creativity.txt"),
                 new("Caution Hat (Black)", "Caution", "frame-caution.txt"),
                 new("Benefits Hat (Yellow)", "Benefits", "frame-benefits.txt")
             ]),
-        new("Foundry (SystemOne API) - Work Queue Prioritization with the Eisenhower Matrix",
+        new("Work Queue Prioritization with the Eisenhower Matrix",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-WorkQueueEisenhowerMatrix"),
-            DecisionBackend.FoundrySystemOne, "choice", Tasks: new("Work Queue Action", "tasks.json", 8)),
-        new("Foundry (SystemOne API) - Restaurant Choice: Decision Exploration or Exploitation?",
+            DecisionApi.SystemOne, "choice", Tasks: new("Work Queue Action", "tasks.json", 8)),
+        new("Restaurant Choice: Decision Exploration or Exploitation?",
             Path.Combine("Advanced Decision Examples", "FoundrySystemOne-RestaurantExploreExploit"),
-            DecisionBackend.FoundrySystemOne, "choice", ExplorationExploitation:
+            DecisionApi.SystemOne, "choice", ExplorationExploitation:
                 new("Dining Strategy", "Dish if Exploring", "Dish if Exploiting"))
     ];
+
+    internal string GetLabel(DecisionExample example) => example.Api == DecisionApi.Decisions
+        ? $"Decisions API (Local AI only) - {example.Label}"
+        : $"SystemOne API ({(configuration.SystemOneProvider == SystemOneProvider.MicrosoftFoundryAI ? "Microsoft Foundry AI" : "Local AI")}) - {example.Label}";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -142,68 +148,39 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
             {
                 ValidateFrameMetadata(example);
             }
+            DecisionConnection connection = DecisionConnectionResolver.Resolve(example.Api, configuration.SystemOneProvider);
+            connection.WriteDescription();
             string folder = Path.Combine(AppContext.BaseDirectory, "Decisions", example.Folder);
             DisplayTextSection("Scenario Description:", await ReadTextAsync(folder, "ScenarioDescription.txt"),
                 ConsoleColor.Magenta, "\u001b[38;2;255;128;224m");
-
-            var configuration = new ConfigurationBuilder().AddUserSecrets<Program>(optional: true).Build();
-            using var configurationLifetime = configuration as IDisposable;
-            string endpointKey = example.Backend switch
-            {
-                DecisionBackend.LocalSystemOne => "LocalSystemOneAPI",
-                DecisionBackend.LocalDecisions => "LocalDecisionsAPI",
-                DecisionBackend.FoundrySystemOne => "MicrosoftFoundrySystemOneAPI",
-                _ => throw new InvalidDataException("Unknown example backend.")
-            };
-            string endpoint = GetRequiredSetting(configuration, endpointKey);
-            if (!Uri.TryCreate(endpoint, UriKind.Absolute, out Uri? uri) || uri.Scheme is not ("http" or "https"))
-            {
-                throw new InvalidDataException($"{endpointKey} must be an absolute HTTP or HTTPS URL.");
-            }
-
-            string model;
-            string? apiKey = null;
-            if (example.Backend == DecisionBackend.FoundrySystemOne)
-            {
-                model = GetRequiredSetting(configuration, "MicrosoftFoundryDecisionModelDeploymentName");
-                apiKey = GetRequiredSetting(configuration, "MicrosoftFoundryAPIKey");
-            }
-            else
-            {
-                model = GetSetting(configuration, "LocalDecisionModel")?.Trim() ?? "clef-flash";
-                if (string.IsNullOrEmpty(model))
-                {
-                    model = "clef-flash";
-                }
-            }
             if (example.ImageCases is not null)
             {
-                await RunImageCasesAsync(example, folder, uri, model);
+                await RunImageCasesAsync(example, folder, connection);
                 return;
             }
             if (example.ExplorationExploitation is not null)
             {
-                await RunExplorationExploitationAsync(example, folder, uri, model, apiKey);
+                await RunExplorationExploitationAsync(example, folder, connection);
                 return;
             }
             if (example.Tasks is not null)
             {
-                await RunTaskClassificationAsync(example, folder, uri, model, apiKey);
+                await RunTaskClassificationAsync(example, folder, connection);
                 return;
             }
             if (example.Evaluation is not null)
             {
-                await RunBinaryEvaluationAsync(example, folder, uri, model);
+                await RunBinaryEvaluationAsync(example, folder, connection);
                 return;
             }
             if (example.EvidenceStages is not null)
             {
-                await RunEvidenceStagesAsync(example, folder, uri, model, apiKey);
+                await RunEvidenceStagesAsync(example, folder, connection);
                 return;
             }
             if (example.Frames is not null)
             {
-                await RunFramesAsync(example, folder, uri, model, apiKey);
+                await RunFramesAsync(example, folder, connection);
                 return;
             }
 
@@ -211,7 +188,7 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
             DisplayTextSection("Input:", input, ConsoleColor.Green, "\u001b[38;2;128;255;160m");
             string questionsJson = await ReadTextAsync(folder, "questions.json");
 
-            if (example.Backend is DecisionBackend.LocalSystemOne or DecisionBackend.FoundrySystemOne)
+            if (example.Api == DecisionApi.SystemOne)
             {
                 var questions = Deserialize<Dictionary<string, SystemOneQuestion>>(questionsJson);
                 ValidateQuestions(questions, example.QuestionType);
@@ -219,8 +196,8 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
                 {
                     ValidateAggregationRubric(aggregation, questions);
                 }
-                var request = new SystemOneRequest { Model = model, State = input, Questions = questions };
-                responseBody = await SendAsync(uri, request, example.Backend, apiKey);
+                var request = new SystemOneRequest { Model = connection.Model, State = input, Questions = questions };
+                responseBody = await SendAsync(connection.Endpoint, request, connection.Backend, connection.ApiKey);
                 var response = Deserialize<SystemOneResponse>(responseBody);
                 if (response.Answers is null || response.Answers.Count != questions.Count ||
                     questions.Keys.Any(name => !response.Answers.ContainsKey(name)))
@@ -262,8 +239,8 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
             {
                 var questions = Deserialize<List<DecisionQuestion>>(questionsJson);
                 ValidateQuestions(questions, example.QuestionType);
-                var request = new DecisionsRequest { Model = model, Input = input, Questions = questions };
-                responseBody = await SendAsync(uri, request, example.Backend, apiKey);
+                var request = new DecisionsRequest { Model = connection.Model, Input = input, Questions = questions };
+                responseBody = await SendAsync(connection.Endpoint, request, connection.Backend, connection.ApiKey);
                 var response = Deserialize<DecisionsResponse>(responseBody);
                 if (response.Answers is null || response.Answers.Count != questions.Count)
                 {
@@ -318,19 +295,6 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
         {
             Console.WriteLine(responseBody);
         }
-    }
-
-    private static string? GetSetting(IConfiguration configuration, string key) =>
-        Environment.GetEnvironmentVariable(key) ?? configuration[key];
-
-    private static string GetRequiredSetting(IConfiguration configuration, string key)
-    {
-        string? value = GetSetting(configuration, key)?.Trim();
-        if (string.IsNullOrEmpty(value))
-        {
-            throw new InvalidDataException($"Missing {key}. Set it with dotnet user-secrets set --project SystemOneDecisionsConsole.");
-        }
-        return value;
     }
 
     private static void DisplayColoredLine(string text, ConsoleColor color, string ansiCode)

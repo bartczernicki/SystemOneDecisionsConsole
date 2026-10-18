@@ -8,6 +8,8 @@ namespace SystemOneDecisionConsole.Tests;
 [TestClass]
 public class WorkQueueTests : ConsoleScenarioTestBase
 {
+    [TestInitialize] public void SelectFoundry() => SetProvider("MicrosoftFoundryAI");
+
     private const string FolderName = "FoundrySystemOne-WorkQueueEisenhowerMatrix";
     private const string Question = "Work Queue Action";
     private const string Input = "2\n8\n\n0\n0\n";
@@ -218,6 +220,6 @@ public class WorkQueueTests : ConsoleScenarioTestBase
     [DataRow("MicrosoftFoundrySystemOneAPI", "not-an-endpoint")]
     public void ConfigurationIsCheckedBeforeTasks(string setting, string value) { Preflight(new() { [setting] = value }); Has(LastRawOutput, setting); }
     [TestMethod]
-    public void InvalidHeaderFailsBeforeNetworkButRetainsFirstTaskContext()
-    { CheckFailure(Input, new() { ["MicrosoftFoundryAPIKey"] = FoundryKey + "\ninvalid-header" }, timed: false); Assert.AreEqual(0, Server.Requests.Count); Assert.AreEqual(0, Timing.Matches(LastRawOutput).Count); Assert.AreEqual(1, TaskSections(TestSupport.StripAnsi(LastRawOutput)).Length); Has(LastRawOutput, "Work queue incomplete; later tasks were not run."); Has(LastRawOutput, "MicrosoftFoundryAPIKey"); Lacks(LastRawOutput, "Response JSON:"); Lacks(LastRawOutput, "Work Queue Summary:"); }
+    public void InvalidHeaderFailsPreflightBeforeNetworkOrTaskOutput()
+    { CheckFailure(Input, new() { ["MicrosoftFoundryAPIKey"] = FoundryKey + "\ninvalid-header" }, timed: false); Assert.AreEqual(0, Server.Requests.Count); Assert.AreEqual(0, Timing.Matches(LastRawOutput).Count); Assert.AreEqual(0, TaskSections(TestSupport.StripAnsi(LastRawOutput)).Length); Lacks(LastRawOutput, "Work queue incomplete; later tasks were not run."); Has(LastRawOutput, "MicrosoftFoundryAPIKey"); Lacks(LastRawOutput, "Response JSON:"); Lacks(LastRawOutput, "Work Queue Summary:"); }
 }

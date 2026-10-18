@@ -10,6 +10,8 @@ public abstract class ConsoleScenarioTestBase
     protected FixtureServer Server { get; private set; } = null!;
     protected string LastRawOutput => App.LastRawOutput;
 
+    protected void SetProvider(string provider) => App.SetSystemOneProvider(provider);
+
     [TestInitialize]
     public void InitializeConsoleScenario()
     {
@@ -70,6 +72,14 @@ public sealed class ConsoleFixture : IDisposable
         ?? throw new InvalidDataException($"JSON must not be null: {path}");
     public void WriteJson(string path, JsonNode value) => WriteText(path, value.ToJsonString());
     public void WriteText(string path, string text) => File.WriteAllText(path, text, new UTF8Encoding(false));
+
+    public void SetSystemOneProvider(string provider)
+    {
+        string path = Path.Combine(WorkingDirectory, "Configuration.json");
+        JsonObject configuration = File.Exists(path) ? ReadJson(path).AsObject() : new JsonObject { ["ShowDecisionJson"] = false };
+        configuration["SystemOneProvider"] = provider;
+        WriteJson(path, configuration);
+    }
 
     public string Run(string input, Dictionary<string, string>? overrides = null, int timeout = 15) =>
         RunAsync(input, overrides, timeout).GetAwaiter().GetResult();

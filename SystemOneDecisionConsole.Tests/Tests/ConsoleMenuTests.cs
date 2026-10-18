@@ -11,15 +11,17 @@ public sealed class ConsoleMenuTests : BasicTestBase
     public void CategoryNavigationShowsRenumberedMenusWithoutCallingApis()
     {
         string text = Run(" 1 \n 0 \n 2 \n 0 \n 0 \n"); NotContains(text, "Error:"); Assert.AreEqual(0, Server.Requests.Count);
-        Assert.AreEqual(3, Count(text, "1) Basic Decision Examples")); Assert.AreEqual(1, Count(text, "1) Local (SystemOne API) - Choice"));
+        Assert.AreEqual(3, Count(text, "1) Basic Decision Examples")); Assert.AreEqual(1, Count(text, "1) SystemOne API (Local AI) - Choice"));
         Contains(text, $"\n{BasicCategory}\n"); Contains(text, $"\n{AdvancedCategory}\n"); Contains(text, "0) Back");
-        for (int i = 0; i < 9; i++) { Contains(text, $"{i + 1}) {BasicLabels[i]}"); Contains(text, $"{i + 1}) {AdvancedLabels[i]}"); }
+        for (int i = 0; i < BasicLabels.Length; i++) Contains(text, $"{i + 1}) {BasicLabels[i]}");
+        for (int i = 0; i < AdvancedLabels.Length; i++) Contains(text, $"{i + 1}) {AdvancedLabels[i]}");
         NotContains(text, "Calling local API..."); Assert.IsFalse(Times.IsMatch(text));
         if (!OperatingSystem.IsWindows())
         {
             string colored = string.Join('\n', Regex.Matches(LastRawOutput, "\u001b\\[38;2;255;215;0m(.*?)\u001b\\[39m", RegexOptions.Singleline).Select(m => m.Groups[1].Value));
             foreach (string label in new[] { "1) Basic Decision Examples", "2) Advanced Decision Examples", "3) Configure", "0) Exit", "0) Back" }) Contains(colored, label);
-            for (int i = 0; i < 9; i++) { Contains(colored, $"{i + 1}) {BasicLabels[i]}"); Contains(colored, $"{i + 1}) {AdvancedLabels[i]}"); }
+            for (int i = 0; i < BasicLabels.Length; i++) Contains(colored, $"{i + 1}) {BasicLabels[i]}");
+            for (int i = 0; i < AdvancedLabels.Length; i++) Contains(colored, $"{i + 1}) {AdvancedLabels[i]}");
         }
     }
 
@@ -62,7 +64,12 @@ public sealed class ConsoleMenuTests : BasicTestBase
     [DataRow(8, 8, "Work Queue Summary:\n")]
     public void RepeatedAdvancedSelectionsRemainIsolatedFromInterveningFootball(int option, int stageCount, string marker)
     {
-        string text = Run($"2\n {option} \n\n1\n\n{option}\n\n0\n0\n", timeout: 60); NotContains(text, "Error:");
+        bool foundry = option >= 6;
+        if (foundry) SetProvider("MicrosoftFoundryAI");
+        string input = foundry
+            ? $"2\n {option} \n\n0\n3\n2\n1\n0\n2\n1\n\n0\n3\n2\n2\n0\n2\n{option}\n\n0\n0\n"
+            : $"2\n {option} \n\n1\n\n{option}\n\n0\n0\n";
+        string text = Run(input, timeout: 60); NotContains(text, "Error:");
         Assert.AreEqual(stageCount * 2 + 1, Server.Requests.Count);
         var first = Server.Requests.Take(stageCount).ToArray(); var second = Server.Requests.Skip(stageCount + 1).ToArray();
         JsonObject[] expected = ExpectedAdvancedPayloads(option);
@@ -107,13 +114,14 @@ public sealed class ConsoleMenuTests : BasicTestBase
     [TestMethod]
     public void RestaurantRepeatCanChangeChosenBranchWithoutLeakingFoundryHeaders()
     {
+        SetProvider("MicrosoftFoundryAI");
         Server.Responder = (request, index) =>
         {
             JsonObject response = TestSupport.AnswersFor(request.Payload, request.Path);
             if (index == 2) response["answers"]!["Dining Strategy"]!["choice"] = "Exploit";
             return FixtureResponse.Json(response);
         };
-        string text = Run("2\n 9 \n\n1\n\n9\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
+        string text = Run("2\n 9 \n\n0\n3\n2\n1\n0\n2\n1\n\n0\n3\n2\n2\n0\n2\n9\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
         JsonObject expected = ExpectedAdvancedPayloads(9)[0];
         EqualJson(expected, Server.Requests[0].Payload);
         EqualJson(expected, Server.Requests[2].Payload);
@@ -125,7 +133,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
 
     [TestMethod]
     [DataRow("Startup", "bad\n\n4\n 0 \n", "Please enter 0, 1, 2, or 3", 3)]
-    [DataRow("Basic", "1\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4)]
+    [DataRow("Basic", "1\nbad\n\n7\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, or 6", 4)]
     [DataRow("Advanced", "2\nbad\n\n10\n-1\n 0 \n0\n", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, or 9", 4)]
     public void InvalidMenuSelectionsUseCurrentRanges(string menu, string input, string message, int expected)
     {
@@ -135,7 +143,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
     public static IEnumerable<object[]> EndOfInputCases()
     {
         foreach (string input in new[] { "0\n", "", "1\n", "2\n", "1\n0\n", "2\n0\n" }) yield return [input.Replace('\n', '|'), input, 0];
-        foreach (int option in new[] { 1, 7 }) yield return [$"Basic {option}", $"1\n{option}\n", 1];
+        foreach (int option in new[] { 1, 6 }) yield return [$"Basic {option}", $"1\n{option}\n", 1];
         for (int option = 1; option <= 9; option++) foreach (string pause in new[] { "", "\n" })
             yield return [$"Advanced {option} pause={pause.Length}", $"2\n{option}\n{pause}", option switch { 3 or 7 => 3, 4 => 200, 5 => 2, 8 => 8, _ => 1 }];
     }

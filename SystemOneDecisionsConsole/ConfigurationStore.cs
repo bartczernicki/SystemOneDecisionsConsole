@@ -1,10 +1,15 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SystemOneDecisionsConsole;
 
 internal sealed class ConfigurationStore(string path)
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter<SystemOneProvider>(allowIntegerValues: false) }
+    };
 
     internal ConsoleConfiguration Load()
     {

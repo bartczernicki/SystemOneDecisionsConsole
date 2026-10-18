@@ -6,11 +6,10 @@ namespace SystemOneDecisionsConsole;
 
 internal sealed partial class DecisionExampleRunner
 {
-    private async Task RunEvidenceStagesAsync(DecisionExample example, string folder, Uri endpoint,
-        string model, string? apiKey)
+    private async Task RunEvidenceStagesAsync(DecisionExample example, string folder, DecisionConnection connection)
     {
         IReadOnlyList<DecisionEvidenceStage> stages = example.EvidenceStages!;
-        if (example.Backend is not (DecisionBackend.LocalSystemOne or DecisionBackend.FoundrySystemOne) ||
+        if (example.Api != DecisionApi.SystemOne ||
             example.QuestionType != "choice" || example.Aggregation is not null || stages.Count < 2 ||
             stages.Any(stage => stage is null || string.IsNullOrWhiteSpace(stage.Label) ||
                 string.IsNullOrWhiteSpace(stage.InputFile)))
@@ -52,8 +51,8 @@ internal sealed partial class DecisionExampleRunner
             DisplayTextSection("Input:", states[index], ConsoleColor.Green, "\u001b[38;2;128;255;160m");
             try
             {
-                var request = new SystemOneRequest { Model = model, State = states[index], Questions = questions };
-                responseBody = await SendAsync(endpoint, request, example.Backend, apiKey);
+                var request = new SystemOneRequest { Model = connection.Model, State = states[index], Questions = questions };
+                responseBody = await SendAsync(connection.Endpoint, request, connection.Backend, connection.ApiKey);
                 var response = Deserialize<SystemOneResponse>(responseBody);
                 SystemOneChoiceAnswer answer = ValidateSingleChoiceAnswer(response, questionId, question);
                 DisplaySystemOneAnswer(questionId, answer, "choice", index + 1, question.Criteria.Keys, stages.Count);

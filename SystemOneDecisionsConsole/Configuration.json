@@ -1,3 +1,4 @@
 {
-  "ShowDecisionJson": false
+  "ShowDecisionJson": false,
+  "SystemOneProvider": "MicrosoftFoundryAI"
 }

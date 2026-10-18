@@ -27,18 +27,17 @@ internal sealed partial class DecisionExampleRunner
     private static void ValidateTaskClassificationMetadata(DecisionExample example)
     {
         DecisionTaskClassification metadata = example.Tasks!;
-        if (example.Backend != DecisionBackend.FoundrySystemOne || example.QuestionType != "choice" ||
+        if (example.Api != DecisionApi.SystemOne || example.QuestionType != "choice" ||
             example.Aggregation is not null || example.EvidenceStages is not null || example.Frames is not null ||
             example.Evaluation is not null || example.ExplorationExploitation is not null ||
             metadata.QuestionId != "Work Queue Action" || metadata.TaskCount != 8 ||
             string.IsNullOrWhiteSpace(metadata.TasksFile) || Path.GetFileName(metadata.TasksFile) != metadata.TasksFile)
         {
-            throw new InvalidDataException("Task classification requires eight Foundry SystemOne choice tasks without evidence stages, decision frames, evaluation, or score aggregation.");
+            throw new InvalidDataException("Task classification requires eight SystemOne choice tasks without evidence stages, decision frames, evaluation, or score aggregation.");
         }
     }
 
-    private async Task RunTaskClassificationAsync(DecisionExample example, string folder, Uri endpoint,
-        string model, string? apiKey)
+    private async Task RunTaskClassificationAsync(DecisionExample example, string folder, DecisionConnection connection)
     {
         DecisionTaskClassification metadata = example.Tasks!;
         string sharedInput = await ReadTextAsync(folder, "input.txt");
@@ -88,8 +87,9 @@ internal sealed partial class DecisionExampleRunner
             DisplayTextSection("Input:", state, ConsoleColor.Green, "\u001b[38;2;128;255;160m");
             try
             {
-                var request = new SystemOneRequest { Model = model, State = state, Questions = questions };
-                string responseBody = await SendAsync(endpoint, request, example.Backend, apiKey, capture);
+                var request = new SystemOneRequest { Model = connection.Model, State = state, Questions = questions };
+                string responseBody = await SendAsync(connection.Endpoint, request, connection.Backend,
+                    connection.ApiKey, capture);
                 RejectDuplicateJsonProperties(responseBody);
                 var response = Deserialize<SystemOneResponse>(responseBody);
                 SystemOneChoiceAnswer answer = ValidateSingleChoiceAnswer(response, metadata.QuestionId, question);

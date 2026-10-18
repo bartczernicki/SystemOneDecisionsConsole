@@ -20,7 +20,11 @@ public sealed class EnergyFramingTests : ConsoleScenarioTestBase
     private JsonNode Questions => App.ReadJson(Path.Combine(Folder, "questions.json"));
     private string[] FrameInputs => FrameFiles.Select(file => File.ReadAllText(Path.Combine(Folder, file)).Trim()).ToArray();
     private string[] States => FrameInputs.Select(frame => File.ReadAllText(Path.Combine(Folder, "input.txt")).Trim() + "\n\n" + frame).ToArray();
-    [TestInitialize] public void Responses() => Server.Responder = (r, _) => FixtureResponse.Json(Answers(r.Payload));
+    [TestInitialize] public void Responses()
+    {
+        SetProvider("MicrosoftFoundryAI");
+        Server.Responder = (r, _) => FixtureResponse.Json(Answers(r.Payload));
+    }
     internal static JsonNode Answers(JsonObject payload, double[][]? distributions = null, double[]? confidences = null, string[]? selected = null)
     {
         distributions ??= Probabilities; confidences ??= Confidences; var answers = new JsonObject(); foreach (string name in Keys(payload["questions"]!)) { int i = Array.IndexOf(Names, name); double[] p = distributions[i]; string choice = selected?[i] ?? Choices[Enumerable.Range(0, 4).MaxBy(j => p[j])]; answers[name] = Choice(choice, confidences[i], Choices, p); }

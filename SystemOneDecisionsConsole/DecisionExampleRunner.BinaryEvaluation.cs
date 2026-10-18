@@ -109,7 +109,7 @@ internal sealed partial class DecisionExampleRunner
     private static void ValidateEvaluationMetadata(DecisionExample example)
     {
         DecisionBinaryEvaluation metadata = example.Evaluation!;
-        if (example.Backend != DecisionBackend.LocalSystemOne || example.QuestionType != "noul" ||
+        if (example.Api != DecisionApi.SystemOne || example.QuestionType != "noul" ||
             example.Aggregation is not null || example.EvidenceStages is not null || example.Frames is not null ||
             example.Tasks is not null || example.ExplorationExploitation is not null ||
             metadata.CaseCount != 200 || string.IsNullOrWhiteSpace(metadata.QuestionId) ||
@@ -120,11 +120,11 @@ internal sealed partial class DecisionExampleRunner
                 string.IsNullOrWhiteSpace(file) || Path.GetFileName(file) != file) ||
             new[] { metadata.CasesFile, metadata.OutcomesFile, metadata.ProvenanceFile }.Distinct(StringComparer.Ordinal).Count() != 3)
         {
-            throw new InvalidDataException("Binary evaluation requires 200 Local SystemOne noul cases in two ordered 100-case cohorts without evidence stages, decision frames, or score aggregation.");
+            throw new InvalidDataException("Binary evaluation requires 200 SystemOne noul cases in two ordered 100-case cohorts without evidence stages, decision frames, or score aggregation.");
         }
     }
 
-    private async Task RunBinaryEvaluationAsync(DecisionExample example, string folder, Uri endpoint, string model)
+    private async Task RunBinaryEvaluationAsync(DecisionExample example, string folder, DecisionConnection connection)
     {
         DecisionBinaryEvaluation metadata = example.Evaluation!;
         string sharedInput = await ReadTextAsync(folder, "input.txt");
@@ -147,7 +147,7 @@ internal sealed partial class DecisionExampleRunner
         string[] states = cases.Select(customer => $"{sharedInput}\n\n{FormatCustomerProfile(customer.Features)}").ToArray();
         var report = new EvaluationReport
         {
-            Model = model,
+            Model = connection.Model,
             PlannedCases = metadata.CaseCount,
             ReferenceRate = provenance.ReferenceRate,
             Provenance = provenance,
@@ -160,7 +160,7 @@ internal sealed partial class DecisionExampleRunner
         await CheckpointEvaluationAsync(resultsDirectory, report);
 
         DisplayTextSection("Shared Input:", sharedInput, ConsoleColor.Green, "\u001b[38;2;128;255;160m");
-        Console.WriteLine($"Evaluating {metadata.CaseCount} independent customer profiles using Local SystemOne.");
+        Console.WriteLine($"Evaluating {metadata.CaseCount} independent customer profiles using SystemOne API ({connection.ProviderLabel}).");
         Console.WriteLine($"Results directory: {resultsDirectory}");
         Console.WriteLine("Case              | P(Yes)    | Outcome | Brier  | Response time");
         Console.WriteLine(new string('-', 66));
@@ -183,8 +183,9 @@ internal sealed partial class DecisionExampleRunner
             report.Records.Add(record);
             try
             {
-                var request = new SystemOneRequest { Model = model, State = states[index], Questions = questions };
-                string responseBody = await SendAsync(endpoint, request, example.Backend, apiKey: null, capture, quiet: true);
+                var request = new SystemOneRequest { Model = connection.Model, State = states[index], Questions = questions };
+                string responseBody = await SendAsync(connection.Endpoint, request, connection.Backend,
+                    connection.ApiKey, capture, quiet: true);
                 record.RawResponse = capture.Body;
                 record.ElapsedMilliseconds = capture.ElapsedMilliseconds;
                 RejectDuplicateJsonProperties(responseBody);

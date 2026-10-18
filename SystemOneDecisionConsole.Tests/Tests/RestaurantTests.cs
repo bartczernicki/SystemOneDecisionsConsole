@@ -8,6 +8,8 @@ namespace SystemOneDecisionConsole.Tests;
 [TestClass]
 public class RestaurantTests : ConsoleScenarioTestBase
 {
+    [TestInitialize] public void SelectFoundry() => SetProvider("MicrosoftFoundryAI");
+
     private const string FolderName = "FoundrySystemOne-RestaurantExploreExploit";
     private const string Input = "2\n9\n\n0\n0\n";
     private static readonly string[] Names = ["Dining Strategy", "Dish if Exploring", "Dish if Exploiting"];
@@ -188,6 +190,6 @@ public class RestaurantTests : ConsoleScenarioTestBase
     [DataRow("MicrosoftFoundrySystemOneAPI", "not-an-endpoint")]
     public void ConfigurationIsValidatedBeforeNetwork(string key, string value) { Preflight(new() { [key] = value }); Has(LastRawOutput, key); }
     [TestMethod]
-    public void InvalidHeaderRetainsRestaurantErrorWithoutNetwork()
-    { Preflight(new() { ["MicrosoftFoundryAPIKey"] = FoundryKey + "\ninvalid-header" }); Has(LastRawOutput, "Error: Restaurant choice:"); }
+    public void InvalidHeaderFailsPreflightWithoutNetwork()
+    { Preflight(new() { ["MicrosoftFoundryAPIKey"] = FoundryKey + "\ninvalid-header" }); Has(LastRawOutput, "MicrosoftFoundryAPIKey"); Lacks(LastRawOutput, "Scenario Description:"); }
 }
