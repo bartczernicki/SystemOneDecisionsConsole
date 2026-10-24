@@ -1,9 +1,9 @@
-Apple Watch Step Goal with 10,000 Step Decision Rule is a fictional daily-step forecast using the SystemOne API. At 17:00 today, the watch shows 5000 steps toward a 10000-step goal, leaving 5000 additional steps needed.
+Apple Watch Step Goal with 10,000 Step Decision Rule is a fictional daily-step forecast using the decision API. At 17:00 today, the watch shows 5000 steps toward a 10000-step goal, leaving 5000 additional steps needed.
 
 The example evaluates three separate alternatives: Park with Kids, Take a Walk, and Go for a Long Run. Each alternative has a planned duration and ten fictional historical additional-step counts from comparable completed sessions. The selected activity is assumed to be completed today and to be the only source of new steps.
 
-One SystemOne API request sends three Yes/No (noul) questions, one per alternative. Each answer estimates the probability of reaching the daily goal conditional on completing that activity. Exactly 5000 additional steps is enough because 5000 current steps plus 5000 activity steps equals the 10000-step goal.
+One decision API request sends three Yes/No questions, one per alternative. Each answer estimates the probability of reaching the daily goal conditional on completing that activity. Exactly 5000 additional steps is enough because 5000 current steps plus 5000 activity steps equals the 10000-step goal.
 
 The three answers are separate conditional forecasts. They are not probabilities of selecting the activities, a joint forecast, or a categorical choice distribution. They need not sum to one and are not multiplied or normalized together. Historical counts inform the live model's estimates without prescribing probabilities or guaranteeing a future outcome.
 
-Answers and separate Yes/No Bernoulli charts are displayed in question-file order: Park with Kids, Take a Walk, and Go for a Long Run. The example uses the selected SystemOne API provider and its configured model.
+Answers and separate Yes/No Bernoulli charts are displayed in question-file order: Park with Kids, Take a Walk, and Go for a Long Run. The example uses the selected API provider and its configured model.

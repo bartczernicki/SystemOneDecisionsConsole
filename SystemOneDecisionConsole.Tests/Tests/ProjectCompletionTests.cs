@@ -12,7 +12,7 @@ public sealed class ProjectCompletionTests : ConsoleScenarioTestBase
     internal static readonly string[] Names = ["Design Duration", "Implementation Duration", "Testing and Release Duration"];
     internal static readonly int[][] Durations = [[3, 5, 7], [5, 8, 11], [2, 4, 6]];
     private static readonly double[][] Probabilities = [[.2, .5, .3], [.3, .4, .3], [.4, .4, .2]];
-    private const string Input = "2\n12\n\n0\n0\n";
+    private string Input => $"2\n{App.MenuOption(2, 12)}\n\n0\n0\n";
     private const string TotalHeading = "Project Completion-Time Distribution:";
     private string Folder => App.Folder(AdvancedCategory, FolderName);
     private static string Label(int days) => $"{days} working days";
@@ -137,7 +137,7 @@ public sealed class ProjectCompletionTests : ConsoleScenarioTestBase
 
     [TestMethod]
     [DataRow("LocalAI")]
-    [DataRow("MicrosoftFoundryAI")]
+    [DataRow("SystemOneDecision1")]
     public void ThreeStageDistributionsProduceOneRequestAndFullProjectForecast(string provider)
     {
         SetProvider(provider);
@@ -148,7 +148,7 @@ public sealed class ProjectCompletionTests : ConsoleScenarioTestBase
         var request = Server.Requests[0];
         Assert.AreEqual(provider == "LocalAI" ? "/v1/systemone" : FoundryPath, request.Path);
         Assert.AreEqual(provider == "LocalAI" ? LocalModel : FoundryModel, request.Payload["model"]!.GetValue<string>());
-        Assert.AreEqual(provider == "MicrosoftFoundryAI" ? FoundryKey : null, request.Headers.GetValueOrDefault("api-key"));
+        Assert.AreEqual(provider == "SystemOneDecision1" ? FoundryKey : null, request.Headers.GetValueOrDefault("api-key"));
         Assert.AreEqual(3, request.Payload.Count);
         Assert.IsTrue(JsonNode.DeepEquals(App.ReadJson(Path.Combine(Folder, "questions.json")), request.Payload["questions"]));
         Assert.AreEqual(File.ReadAllText(Path.Combine(Folder, "input.txt")).Trim(), request.Payload["state"]!.GetValue<string>());

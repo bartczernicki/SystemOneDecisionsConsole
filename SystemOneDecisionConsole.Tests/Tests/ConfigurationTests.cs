@@ -247,10 +247,10 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
     public void DefaultHiddenSuppressesRawJsonForEveryWorkflowWhileRetainingResults(
         int category, int option, int requests, int probabilityCharts, int bernoulliCharts, string result, bool foundry)
     {
-        SetProvider(foundry ? "MicrosoftFoundryAI" : "LocalAI");
+        SetProvider(foundry ? "SystemOneDecision1" : "LocalAI");
         MarkResponses();
 
-        string text = Run($"{category}\n{option}\n\n0\n0\n", timeout: 60);
+        string text = Run($"{category}\n{App.MenuOption(category, option)}\n\n0\n0\n", timeout: 60);
 
         Assert.IsFalse(SavedSetting());
         AssertEx.DoesNotContain(text, "Error:");
@@ -298,10 +298,10 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
     public void HiddenFailedResponsesKeepErrorsAndReportsWithoutDumpingRawBodies(
         int category, int option, int requests, int status)
     {
-        if (category == 2 && option >= 6) SetProvider("MicrosoftFoundryAI");
+        if (category == 2 && option >= 6) SetProvider("SystemOneDecision1");
         Server.Responder = (_, _) => FixtureResponse.Raw(RawMarker, status);
 
-        string text = Run($"{category}\n{option}\n\n0\n0\n");
+        string text = Run($"{category}\n{App.MenuOption(category, option)}\n\n0\n0\n");
 
         AssertEx.Contains(text, "Error:");
         if (status == 503)

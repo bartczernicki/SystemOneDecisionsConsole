@@ -29,7 +29,7 @@ class Program
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
         {
-            Console.WriteLine($"Warning: Could not load Configuration.json: {error.Message} Using defaults (Decision JSON hidden, SystemOne API using Local AI).");
+            Console.WriteLine($"Warning: Could not load Configuration.json: {error.Message} Using defaults (Decision JSON hidden, Local AI).");
             configuration = new ConsoleConfiguration();
         }
 
@@ -47,10 +47,8 @@ class Program
 
             bool returnToMain = category switch
             {
-                1 => await ShowExamplesAsync(runner, DecisionExampleRunner.Examples, "Basic Decision Examples",
-                    "Please enter 0, 1, 2, 3, 4, 5, or 6"),
-                2 => await ShowExamplesAsync(runner, DecisionExampleRunner.AdvancedExamples, "Advanced Decision Examples",
-                    "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, or 12"),
+                1 => await ShowExamplesAsync(runner, DecisionExampleRunner.Examples, "Basic Decision Examples"),
+                2 => await ShowExamplesAsync(runner, DecisionExampleRunner.AdvancedExamples, "Advanced Decision Examples", advanced: true),
                 _ => ShowConfiguration(configurationStore, configuration)
             };
             if (!returnToMain)
@@ -65,9 +63,8 @@ class Program
         while (true)
         {
             string state = configuration.ShowDecisionJson ? "Shown" : "Hidden";
-            string provider = configuration.SystemOneProvider == SystemOneProvider.LocalAI ? "Local AI" : "Microsoft Foundry AI";
             WriteMenu("Configure", [$"Show / Hide Decision JSON (currently {state})",
-                $"SystemOne API provider (currently {provider})"], "Back");
+                $"Decision provider (currently {configuration.ProviderLabel})"], "Back");
             int? option = ReadMenuSelection(2, "Please enter 0, 1, or 2");
             if (option is null)
             {
@@ -89,7 +86,7 @@ class Program
             var updated = new ConsoleConfiguration
             {
                 ShowDecisionJson = !configuration.ShowDecisionJson,
-                SystemOneProvider = configuration.SystemOneProvider
+                DecisionProvider = configuration.DecisionProvider
             };
             try
             {
@@ -108,8 +105,8 @@ class Program
     {
         while (true)
         {
-            WriteMenu("SystemOne API provider", ["Local AI", "Microsoft Foundry AI"], "Back");
-            int? option = ReadMenuSelection(2, "Please enter 0, 1, or 2");
+            WriteMenu("Decision provider", ["SystemOne - Decision1", "Local AI", "Decisions - GPT-6-Luna"], "Back");
+            int? option = ReadMenuSelection(3, "Please enter 0, 1, 2, or 3");
             if (option is null)
             {
                 return false;
@@ -119,27 +116,37 @@ class Program
                 return true;
             }
 
-            SystemOneProvider provider = option == 1 ? SystemOneProvider.LocalAI : SystemOneProvider.MicrosoftFoundryAI;
+            DecisionProvider provider = option switch
+            {
+                1 => DecisionProvider.SystemOneDecision1,
+                2 => DecisionProvider.LocalAI,
+                _ => DecisionProvider.DecisionsGPT6Luna
+            };
             DecisionConnection connection;
             try
             {
-                connection = DecisionConnectionResolver.Resolve(DecisionApi.SystemOne, provider);
+                connection = DecisionConnectionResolver.Resolve(provider == DecisionProvider.DecisionsGPT6Luna
+                    ? DecisionApi.Decisions : DecisionApi.SystemOne, provider);
+                if (provider == DecisionProvider.LocalAI)
+                {
+                    _ = DecisionConnectionResolver.Resolve(DecisionApi.Decisions, provider);
+                }
             }
             catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or System.Text.Json.JsonException or FormatException)
             {
-                Console.WriteLine($"Error: Could not select SystemOne API provider: {error.Message}");
+                Console.WriteLine($"Error: Could not select decision provider: {error.Message}");
                 continue;
             }
 
             var updated = new ConsoleConfiguration
             {
                 ShowDecisionJson = configuration.ShowDecisionJson,
-                SystemOneProvider = provider
+                DecisionProvider = provider
             };
             try
             {
                 store.Save(updated);
-                configuration.SystemOneProvider = provider;
+                configuration.DecisionProvider = provider;
                 connection.WriteDescription();
                 return true;
             }
@@ -151,9 +158,12 @@ class Program
     }
 
     private static async Task<bool> ShowExamplesAsync(DecisionExampleRunner runner,
-        IReadOnlyList<DecisionExample> examples, string title, string invalidMessage)
+        IReadOnlyList<DecisionExample> examples, string title, bool advanced = false)
     {
+        examples = runner.GetExamples(examples, advanced);
         string[] labels = examples.Select(runner.GetLabel).ToArray();
+        string invalidMessage = labels.Length == 1 ? "Please enter 0 or 1" :
+            "Please enter " + string.Join(", ", Enumerable.Range(0, labels.Length)) + $", or {labels.Length}";
         while (true)
         {
             WriteMenu(title, labels, "Back");

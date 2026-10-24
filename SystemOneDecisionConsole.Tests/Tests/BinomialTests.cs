@@ -9,7 +9,7 @@ public sealed class BinomialTests : ConsoleScenarioTestBase
 {
     private const string FolderName = "LocalSystemOne-SalesConversionsBinomial";
     private const string Question = "Prospect Subscription";
-    private const string Input = "2\n10\n\n0\n0\n";
+    private string Input => $"2\n{App.MenuOption(2, 10)}\n\n0\n0\n";
 
     private static JsonObject Answer(JsonObject payload, double p) => new()
     {
@@ -55,7 +55,7 @@ public sealed class BinomialTests : ConsoleScenarioTestBase
 
     [TestMethod]
     [DataRow("LocalAI")]
-    [DataRow("MicrosoftFoundryAI")]
+    [DataRow("SystemOneDecision1")]
     public void OneModelCallProducesBernoulliAndBinomialForecast(string provider)
     {
         SetProvider(provider);

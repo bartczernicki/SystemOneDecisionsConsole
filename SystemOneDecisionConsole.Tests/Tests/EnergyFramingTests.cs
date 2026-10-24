@@ -9,7 +9,7 @@ namespace SystemOneDecisionConsole.Tests;
 public sealed class EnergyFramingTests : ConsoleScenarioTestBase
 {
     internal const string FolderName = "FoundrySystemOne-EnergyPlantInvestmentStrategyDecisionFraming";
-    private const string Input = "2\n7\n\n0\n0\n";
+    private string Input => $"2\n{App.MenuOption(2, 7)}\n\n0\n0\n";
     internal static readonly string[] Names = ["Creativity Hat (Green)", "Caution Hat (Black)", "Benefits Hat (Yellow)"];
     internal static readonly string[] Choices = ["Full Build Now", "Phased Investment", "Joint Venture", "Defer Investment"];
     private static readonly string[] FrameFiles = ["frame-creativity.txt", "frame-caution.txt", "frame-benefits.txt"];
@@ -22,7 +22,7 @@ public sealed class EnergyFramingTests : ConsoleScenarioTestBase
     private string[] States => FrameInputs.Select(frame => File.ReadAllText(Path.Combine(Folder, "input.txt")).Trim() + "\n\n" + frame).ToArray();
     [TestInitialize] public void Responses()
     {
-        SetProvider("MicrosoftFoundryAI");
+        SetProvider("SystemOneDecision1");
         Server.Responder = (r, _) => FixtureResponse.Json(Answers(r.Payload));
     }
     internal static JsonNode Answers(JsonObject payload, double[][]? distributions = null, double[]? confidences = null, string[]? selected = null)

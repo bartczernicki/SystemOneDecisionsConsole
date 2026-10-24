@@ -11,6 +11,8 @@ public static class TestSupport
     public const string LocalModel = "console-test-model";
     public const string FoundryPath = "/gateway/providers/microsoft/v1/systemone?api-version=fixture";
     public const string FoundryModel = "console-test-foundry-deployment";
+    public const string LunaPath = "/global-luna/openai/v1/decisions?api-version=luna-fixture";
+    public const string LunaModel = "console-test-luna-deployment";
     public const string FoundryKey = "console-test-foundry-key-do-not-print";
     public static readonly string[] BasicFolderNames = ["LocalSystemOne-Choice", "LocalSystemOne-YesNo", "LocalSystemOne-Score",
         "LocalDecisions-Choice", "LocalDecisions-YesNo", "LocalDecisions-Score"];
@@ -20,8 +22,14 @@ public static class TestSupport
     private static readonly Regex ChartRow = new(@"^  (?<label>.{0,25}) \|(?<bar>[ █▏▎▍▌▋▊▉]{40})\| (?<percent>\d+\.\d{2}) %$", RegexOptions.Multiline);
     private static readonly Regex SectionEnd = new(@"^(?:Scenario Description:|Input:|Stage \d+ of \d+:|Frame \d+ of \d+:|Task \d+ of \d+:|Image case \d+ of \d+:|Calling (?:local|Foundry) API\.\.\.).*$", RegexOptions.Multiline);
     public static string StripAnsi(string text) => Ansi.Replace(text, "");
-    public static string BasicInput(int option) => $"1\n{option}\n\n0\n0\n";
-    public static string AdvancedInput(int option) => $"2\n{option}\n\n0\n0\n";
+    public static int MenuOption(int category, int option, string provider) => (category, provider) switch
+    {
+        (1, "DecisionsGPT6Luna") => option - 3,
+        (2, "SystemOneDecision1" or "MicrosoftFoundryAI") when option > 5 => option - 1,
+        _ => option
+    };
+    public static string BasicInput(int option, string provider = "LocalAI") => $"1\n{MenuOption(1, option, provider)}\n\n0\n0\n";
+    public static string AdvancedInput(int option, string provider = "LocalAI") => $"2\n{MenuOption(2, option, provider)}\n\n0\n0\n";
     public static int Count(string text, string value) => Regex.Matches(text, Regex.Escape(value)).Count;
 
     public static (int Start, string Text) DisplayedSection(string text, string label, int cursor = 0)
@@ -67,6 +75,11 @@ public static class TestSupport
             questions.AsArray().Select(item => item!["name"]!.GetValue<string>()).ToArray();
         if (!systemOne && names.SequenceEqual(["Size and Weight", "Shipping Label", "Packaging Material", "Exterior Condition", "Sealing", "Internal Protection", "Shipping Decision"]))
             return CourierTests.Answers(payload).AsObject();
+        if (!systemOne)
+        {
+            JsonObject fixturePayload = SystemOneFixturePayload(payload);
+            return DecisionsFixtureResponse(AnswersFor(fixturePayload, "/v1/systemone"), payload["questions"]!.AsArray());
+        }
         if (systemOne && names.SequenceEqual(FootballTests.Names)) return FootballTests.Answers(payload).AsObject();
         if (systemOne && names.SequenceEqual(["Final Total Points Band"])) return TotalPointsTests.Answers(payload).AsObject();
         if (systemOne && names.SequenceEqual(["Shipment Arrival Window"])) return ShipmentTests.Answers(payload).AsObject();
@@ -128,6 +141,67 @@ public static class TestSupport
             else { answer["name"] = name; arrayAnswers!.Add(answer); }
         }
         return new JsonObject { ["model"] = payload["model"]!.DeepClone(), ["answers"] = (JsonNode?)objectAnswers ?? arrayAnswers };
+    }
+
+    private static JsonObject SystemOneFixturePayload(JsonObject payload)
+    {
+        var questions = new JsonObject();
+        foreach (JsonNode? item in payload["questions"]!.AsArray())
+        {
+            JsonObject question = item!.AsObject();
+            string type = question["type"]!.GetValue<string>();
+            var source = new JsonObject
+            {
+                ["type"] = type == "predicate" ? "noul" : type,
+                ["instructions"] = question["instructions"]!.DeepClone()
+            };
+            if (type == "choice")
+                source["criteria"] = new JsonObject(question["choices"]!.AsArray().Select(choice =>
+                    KeyValuePair.Create(choice!["value"]!.GetValue<string>(), choice["description"]?.DeepClone())));
+            else if (type == "score")
+                source["criteria"] = new JsonArray(question["levels"]!.AsArray().Select(level =>
+                    (JsonNode)JsonValue.Create(level!["label"]!.GetValue<string>() +
+                        (level["description"] is JsonNode description ? ": " + description.GetValue<string>() : ""))!).ToArray());
+            questions[question["name"]!.GetValue<string>()] = source;
+        }
+        return new JsonObject
+        {
+            ["model"] = payload["model"]!.DeepClone(),
+            ["state"] = payload["input"]!.DeepClone(),
+            ["questions"] = questions
+        };
+    }
+
+    private static JsonObject DecisionsFixtureResponse(JsonObject source, JsonArray questions)
+    {
+        var answers = new JsonArray();
+        foreach (JsonNode? question in questions)
+        {
+            string name = question!["name"]!.GetValue<string>();
+            JsonObject answer = source["answers"]![name]!.AsObject();
+            string type = answer["type"]!.GetValue<string>();
+            var native = new JsonObject { ["name"] = name, ["type"] = type == "noul" ? "predicate" : type };
+            if (type == "noul") native["probability"] = answer["noul"]!.DeepClone();
+            else
+            {
+                native[type == "choice" ? "choice" : "score"] = answer[type == "choice" ? "choice" : "score"]!.DeepClone();
+                native["confidence"] = answer["confidence"]!.DeepClone();
+                native["probabilities"] = new JsonArray(answer["probabilities"]!.AsObject().Select(pair =>
+                {
+                    JsonObject probability = new() { ["probability"] = pair.Value!.DeepClone() };
+                    if (type == "choice") probability["value"] = pair.Key;
+                    else
+                    {
+                        int index = int.Parse(pair.Key, CultureInfo.InvariantCulture);
+                        probability["value"] = index;
+                        probability["label"] = question["levels"]![index]!["label"]!.DeepClone();
+                    }
+                    return (JsonNode)probability;
+                }).ToArray());
+            }
+            answers.Add(native);
+        }
+        return new JsonObject { ["model"] = source["model"]!.DeepClone(), ["answers"] = answers };
     }
 }
 

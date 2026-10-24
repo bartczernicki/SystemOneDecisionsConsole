@@ -88,7 +88,7 @@ internal sealed partial class DecisionExampleRunner
                 new SystemOneRequest { Model = connection.Model, State = input, Questions = questions },
                 connection.Backend, connection.ApiKey, capture);
             RejectDuplicateJsonProperties(body);
-            var response = Deserialize<SystemOneResponse>(body);
+            var response = DeserializeWorkflowResponse(body, questions, connection);
             if (response.Answers is null || response.Answers.Count != questions.Count ||
                 questions.Keys.Any(id => !response.Answers.ContainsKey(id)))
                 throw new InvalidDataException("Malformed response: answers must match the requested question IDs.");

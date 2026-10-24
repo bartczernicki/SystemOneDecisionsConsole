@@ -5,9 +5,10 @@ namespace SystemOneDecisionsConsole;
 internal sealed record DecisionConnection(
     DecisionApi Api, DecisionBackend Backend, Uri Endpoint, string Model, string? ApiKey)
 {
-    internal string ProviderLabel => Backend == DecisionBackend.FoundrySystemOne ? "Microsoft Foundry AI" : "Local AI";
+    internal bool IsFoundry => Backend is DecisionBackend.FoundrySystemOne or DecisionBackend.FoundryDecisions;
+    internal string ProviderLabel => IsFoundry ? "Microsoft Foundry AI" : "Local AI";
     internal string ApiLabel => Api == DecisionApi.SystemOne ? "SystemOne API" : "Decisions API";
-    internal string ModelLabel => Backend == DecisionBackend.FoundrySystemOne ? "Model deployment" : "Model";
+    internal string ModelLabel => IsFoundry ? "Model deployment" : "Model";
 
     internal void WriteDescription()
     {
@@ -19,31 +20,30 @@ internal sealed record DecisionConnection(
 
 internal static class DecisionConnectionResolver
 {
-    internal static DecisionConnection Resolve(DecisionApi api, SystemOneProvider provider)
+    internal static DecisionConnection Resolve(DecisionApi api, DecisionProvider provider)
     {
         var settings = new ConfigurationBuilder().AddUserSecrets<Program>(optional: true).Build();
         using var settingsLifetime = settings as IDisposable;
         return Resolve(api, provider, settings);
     }
 
-    internal static DecisionConnection Resolve(DecisionApi api, SystemOneProvider provider, IConfiguration settings)
+    internal static DecisionConnection Resolve(DecisionApi api, DecisionProvider provider, IConfiguration settings)
     {
-        DecisionBackend backend = api switch
+        DecisionBackend backend = (api, provider) switch
         {
-            DecisionApi.Decisions => DecisionBackend.LocalDecisions,
-            DecisionApi.SystemOne => provider switch
-            {
-                SystemOneProvider.LocalAI => DecisionBackend.LocalSystemOne,
-                SystemOneProvider.MicrosoftFoundryAI => DecisionBackend.FoundrySystemOne,
-                _ => throw new InvalidDataException("Unknown SystemOne API provider.")
-            },
-            _ => throw new InvalidDataException("Unknown decision API.")
+            (DecisionApi.SystemOne, DecisionProvider.LocalAI) => DecisionBackend.LocalSystemOne,
+            (DecisionApi.Decisions, DecisionProvider.LocalAI) => DecisionBackend.LocalDecisions,
+            (DecisionApi.SystemOne, DecisionProvider.SystemOneDecision1) => DecisionBackend.FoundrySystemOne,
+            (DecisionApi.Decisions, DecisionProvider.DecisionsGPT6Luna) => DecisionBackend.FoundryDecisions,
+            _ => throw new InvalidDataException("The selected decision provider does not support this API.")
         };
         string endpointKey = backend switch
         {
             DecisionBackend.LocalSystemOne => "LocalSystemOneAPI",
             DecisionBackend.LocalDecisions => "LocalDecisionsAPI",
-            _ => "MicrosoftFoundrySystemOneAPI"
+            DecisionBackend.FoundrySystemOne => "MicrosoftFoundrySystemOneAPI",
+            DecisionBackend.FoundryDecisions => "MicrosoftFoundryDecisionsAPI",
+            _ => throw new InvalidDataException("Unknown decision backend.")
         };
         string endpoint = GetRequiredSetting(settings, endpointKey);
         if (!Uri.TryCreate(endpoint, UriKind.Absolute, out Uri? uri) || uri.Scheme is not ("http" or "https"))
@@ -53,10 +53,14 @@ internal static class DecisionConnectionResolver
 
         string model;
         string? apiKey = null;
-        if (backend == DecisionBackend.FoundrySystemOne)
+        if (backend is DecisionBackend.FoundrySystemOne or DecisionBackend.FoundryDecisions)
         {
-            model = GetRequiredSetting(settings, "MicrosoftFoundryDecisionModelDeploymentName");
-            apiKey = GetRequiredSetting(settings, "MicrosoftFoundryAPIKey");
+            model = GetRequiredSetting(settings, backend == DecisionBackend.FoundryDecisions
+                ? "AzureOpenAIGPT6LunaModelDeploymentName" : "MicrosoftFoundryDecisionModelDeploymentName");
+            string apiKeySetting = backend == DecisionBackend.FoundryDecisions &&
+                GetSetting(settings, "MicrosoftFoundryDecisionsAPIKey") is not null
+                ? "MicrosoftFoundryDecisionsAPIKey" : "MicrosoftFoundryAPIKey";
+            apiKey = GetRequiredSetting(settings, apiKeySetting);
             using var message = new HttpRequestMessage();
             try
             {
@@ -64,7 +68,7 @@ internal static class DecisionConnectionResolver
             }
             catch (FormatException)
             {
-                throw new InvalidDataException("MicrosoftFoundryAPIKey must be a valid HTTP header value.");
+                throw new InvalidDataException($"{apiKeySetting} must be a valid HTTP header value.");
             }
         }
         else

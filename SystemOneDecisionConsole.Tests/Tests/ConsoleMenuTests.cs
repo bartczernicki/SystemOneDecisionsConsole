@@ -68,9 +68,10 @@ public sealed class ConsoleMenuTests : BasicTestBase
     public void RepeatedAdvancedSelectionsRemainIsolatedFromInterveningFootball(int option, int stageCount, string marker)
     {
         bool foundry = option >= 6;
-        if (foundry) SetProvider("MicrosoftFoundryAI");
+        if (foundry) SetProvider("SystemOneDecision1");
+        int menuOption = App.MenuOption(2, option);
         string input = foundry
-            ? $"2\n {option} \n\n0\n3\n2\n1\n0\n2\n1\n\n0\n3\n2\n2\n0\n2\n{option}\n\n0\n0\n"
+            ? $"2\n {menuOption} \n\n0\n3\n2\n2\n0\n2\n1\n\n0\n3\n2\n1\n0\n2\n{menuOption}\n\n0\n0\n"
             : $"2\n {option} \n\n1\n\n{option}\n\n0\n0\n";
         string text = Run(input, timeout: 60); NotContains(text, "Error:");
         Assert.AreEqual(stageCount * 2 + 1, Server.Requests.Count);
@@ -117,14 +118,14 @@ public sealed class ConsoleMenuTests : BasicTestBase
     [TestMethod]
     public void RestaurantRepeatCanChangeChosenBranchWithoutLeakingFoundryHeaders()
     {
-        SetProvider("MicrosoftFoundryAI");
+        SetProvider("SystemOneDecision1");
         Server.Responder = (request, index) =>
         {
             JsonObject response = TestSupport.AnswersFor(request.Payload, request.Path);
             if (index == 2) response["answers"]!["Dining Strategy"]!["choice"] = "Exploit";
             return FixtureResponse.Json(response);
         };
-        string text = Run("2\n 9 \n\n0\n3\n2\n1\n0\n2\n1\n\n0\n3\n2\n2\n0\n2\n9\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
+        string text = Run("2\n 8 \n\n0\n3\n2\n2\n0\n2\n1\n\n0\n3\n2\n1\n0\n2\n8\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
         JsonObject expected = ExpectedAdvancedPayloads(9)[0];
         EqualJson(expected, Server.Requests[0].Payload);
         EqualJson(expected, Server.Requests[2].Payload);
@@ -141,6 +142,33 @@ public sealed class ConsoleMenuTests : BasicTestBase
     public void InvalidMenuSelectionsUseCurrentRanges(string menu, string input, string message, int expected)
     {
         string text = Run(input); Assert.AreEqual(expected, Count(text, message), menu); NotContains(text, "Error:"); Assert.AreEqual(0, Server.Requests.Count);
+    }
+
+    [TestMethod]
+    [DataRow("SystemOneDecision1", 4, 12, "Please enter 0, 1, 2, or 3", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, or 11")]
+    [DataRow("DecisionsGPT6Luna", 4, 13, "Please enter 0, 1, 2, or 3", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, or 12")]
+    public void FilteredMenusValidateTheirOwnRangesWithoutRequests(string provider, int invalidBasic,
+        int invalidAdvanced, string basicMessage, string advancedMessage)
+    {
+        SetProvider(provider);
+        string text = Run($"1\n{invalidBasic}\n0\n2\n{invalidAdvanced}\n0\n0\n");
+        Assert.AreEqual(1, Count(text, basicMessage));
+        Assert.AreEqual(1, Count(text, advancedMessage));
+        Assert.AreEqual(0, Server.Requests.Count);
+        NotContains(text, "Error:");
+    }
+
+    [TestMethod]
+    [DataRow("SystemOneDecision1", "1\n")]
+    [DataRow("SystemOneDecision1", "2\n")]
+    [DataRow("DecisionsGPT6Luna", "1\n")]
+    [DataRow("DecisionsGPT6Luna", "2\n")]
+    public void FilteredMenusEndOfInputTerminatesCleanly(string provider, string input)
+    {
+        SetProvider(provider);
+        string text = Run(input);
+        NotContains(text, "Error:");
+        Assert.AreEqual(0, Server.Requests.Count);
     }
 
     public static IEnumerable<object[]> EndOfInputCases()

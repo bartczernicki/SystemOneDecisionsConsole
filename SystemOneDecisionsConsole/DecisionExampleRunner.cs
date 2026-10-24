@@ -16,7 +16,8 @@ internal enum DecisionBackend
 {
     LocalSystemOne,
     LocalDecisions,
-    FoundrySystemOne
+    FoundrySystemOne,
+    FoundryDecisions
 }
 
 internal sealed record ScoreProbabilityAggregation(
@@ -136,9 +137,18 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
             ], 20))
     ];
 
-    internal string GetLabel(DecisionExample example) => example.Api == DecisionApi.Decisions
-        ? $"Decisions API (Local AI only) - {example.Label}"
-        : $"SystemOne API ({(configuration.SystemOneProvider == SystemOneProvider.MicrosoftFoundryAI ? "Microsoft Foundry AI" : "Local AI")}) - {example.Label}";
+    internal IReadOnlyList<DecisionExample> GetExamples(IReadOnlyList<DecisionExample> examples, bool advanced = false) =>
+        examples.Where(example => configuration.DecisionProvider switch
+        {
+            DecisionProvider.LocalAI => true,
+            DecisionProvider.SystemOneDecision1 => example.Api == DecisionApi.SystemOne,
+            DecisionProvider.DecisionsGPT6Luna => advanced || example.Api == DecisionApi.Decisions,
+            _ => throw new InvalidDataException("Unknown decision provider.")
+        }).ToArray();
+
+    internal string GetLabel(DecisionExample example) =>
+        $"{(example.Api == DecisionApi.Decisions || configuration.DecisionProvider == DecisionProvider.DecisionsGPT6Luna ? "Decisions API" : "SystemOne API")} " +
+        $"({(configuration.DecisionProvider == DecisionProvider.LocalAI ? "Local AI" : "Microsoft Foundry AI")}) - {example.Label}";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -186,7 +196,9 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
             {
                 ValidateFrameMetadata(example);
             }
-            DecisionConnection connection = DecisionConnectionResolver.Resolve(example.Api, configuration.SystemOneProvider);
+            DecisionApi api = configuration.DecisionProvider == DecisionProvider.DecisionsGPT6Luna
+                ? DecisionApi.Decisions : example.Api;
+            DecisionConnection connection = DecisionConnectionResolver.Resolve(api, configuration.DecisionProvider);
             connection.WriteDescription();
             string folder = Path.Combine(AppContext.BaseDirectory, "Decisions", example.Folder);
             DisplayTextSection("Scenario Description:", await ReadTextAsync(folder, "ScenarioDescription.txt"),
@@ -250,7 +262,7 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
                 }
                 var request = new SystemOneRequest { Model = connection.Model, State = input, Questions = questions };
                 responseBody = await SendAsync(connection.Endpoint, request, connection.Backend, connection.ApiKey);
-                var response = Deserialize<SystemOneResponse>(responseBody);
+                var response = DeserializeWorkflowResponse(responseBody, questions, connection);
                 if (response.Answers is null || response.Answers.Count != questions.Count ||
                     questions.Keys.Any(name => !response.Answers.ContainsKey(name)))
                 {
@@ -428,12 +440,17 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
         RequestCapture? capture = null, bool quiet = false, Func<string, string>? responseSanitizer = null)
     {
         // Serialize and prepare content before timing so elapsed time measures the HTTP round trip.
+        if (backend == DecisionBackend.FoundryDecisions && request is SystemOneRequest workflowRequest)
+        {
+            request = ConvertToDecisionsRequest(workflowRequest);
+        }
         string json = JsonSerializer.Serialize(request, JsonOptions);
         using var message = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
-        if (backend == DecisionBackend.FoundrySystemOne)
+        bool isFoundry = backend is DecisionBackend.FoundrySystemOne or DecisionBackend.FoundryDecisions;
+        if (isFoundry)
         {
             try
             {
@@ -444,7 +461,7 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
                 throw new InvalidDataException("MicrosoftFoundryAPIKey must be a valid HTTP header value.");
             }
         }
-        string callingMessage = backend == DecisionBackend.FoundrySystemOne ? "Calling Foundry API..." : "Calling local API...";
+        string callingMessage = isFoundry ? "Calling Foundry API..." : "Calling local API...";
         if (!quiet)
         {
             DisplayColoredLine(callingMessage, ConsoleColor.DarkYellow, "\u001b[38;2;255;180;84m");

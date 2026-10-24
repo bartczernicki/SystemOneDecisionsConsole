@@ -91,7 +91,7 @@ internal sealed partial class DecisionExampleRunner
                 string responseBody = await SendAsync(connection.Endpoint, request, connection.Backend,
                     connection.ApiKey, capture);
                 RejectDuplicateJsonProperties(responseBody);
-                var response = Deserialize<SystemOneResponse>(responseBody);
+                var response = DeserializeWorkflowResponse(responseBody, questions, connection);
                 SystemOneChoiceAnswer answer = ValidateSingleChoiceAnswer(response, metadata.QuestionId, question);
                 DisplaySystemOneAnswer(metadata.QuestionId, answer, "choice", index + 1,
                     question.Criteria.Keys, tasks.Count);

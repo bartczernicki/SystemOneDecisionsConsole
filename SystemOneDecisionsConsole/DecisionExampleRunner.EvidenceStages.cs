@@ -53,7 +53,7 @@ internal sealed partial class DecisionExampleRunner
             {
                 var request = new SystemOneRequest { Model = connection.Model, State = states[index], Questions = questions };
                 responseBody = await SendAsync(connection.Endpoint, request, connection.Backend, connection.ApiKey);
-                var response = Deserialize<SystemOneResponse>(responseBody);
+                var response = DeserializeWorkflowResponse(responseBody, questions, connection);
                 SystemOneChoiceAnswer answer = ValidateSingleChoiceAnswer(response, questionId, question);
                 DisplaySystemOneAnswer(questionId, answer, "choice", index + 1, question.Criteria.Keys, stages.Count);
                 answers.Add(answer);

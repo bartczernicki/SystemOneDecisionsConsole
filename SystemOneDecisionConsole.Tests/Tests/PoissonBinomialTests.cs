@@ -9,7 +9,7 @@ public sealed class PoissonBinomialTests : ConsoleScenarioTestBase
 {
     private const string FolderName = "LocalSystemOne-SalesConversionsPoissonBinomial";
     private const string Question = "Prospect Subscription";
-    private const string Input = "2\n11\n\n0\n0\n";
+    private string Input => $"2\n{App.MenuOption(2, 11)}\n\n0\n0\n";
     private string Folder => App.Folder(AdvancedCategory, FolderName);
     private static JsonObject Answer(JsonObject request, double p) => new()
     {
@@ -92,7 +92,7 @@ public sealed class PoissonBinomialTests : ConsoleScenarioTestBase
 
     [TestMethod]
     [DataRow("LocalAI")]
-    [DataRow("MicrosoftFoundryAI")]
+    [DataRow("SystemOneDecision1")]
     public void IsolatedRequestsProduceCompleteComparison(string provider)
     {
         SetProvider(provider);
@@ -112,7 +112,7 @@ public sealed class PoissonBinomialTests : ConsoleScenarioTestBase
             JsonNode p = prospects[i]!;
             Assert.AreEqual(provider == "LocalAI" ? "/v1/systemone" : FoundryPath, r.Path);
             Assert.AreEqual(provider == "LocalAI" ? LocalModel : FoundryModel, r.Payload["model"]!.GetValue<string>());
-            Assert.AreEqual(provider == "MicrosoftFoundryAI" ? FoundryKey : null, r.Headers.GetValueOrDefault("api-key"));
+            Assert.AreEqual(provider == "SystemOneDecision1" ? FoundryKey : null, r.Headers.GetValueOrDefault("api-key"));
             Assert.IsTrue(JsonNode.DeepEquals(questions, r.Payload["questions"]));
             Assert.AreEqual($"{shared}\n\nProspect: {p["id"]!.GetValue<string>()} ({p["name"]!.GetValue<string>()})\n{p["evidence"]!.GetValue<string>()}", r.Payload["state"]!.GetValue<string>());
             Assert.AreEqual(3, r.Payload.Count);

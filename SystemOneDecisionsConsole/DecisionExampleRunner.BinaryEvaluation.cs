@@ -151,7 +151,10 @@ internal sealed partial class DecisionExampleRunner
             PlannedCases = metadata.CaseCount,
             ReferenceRate = provenance.ReferenceRate,
             Provenance = provenance,
-            Questions = JsonSerializer.SerializeToElement(questions, JsonOptions)
+            Questions = connection.Api == DecisionApi.Decisions
+                ? JsonSerializer.SerializeToElement(questions.Select(question =>
+                    ConvertToDecisionsQuestion(question.Key, question.Value)).ToList(), JsonOptions)
+                : JsonSerializer.SerializeToElement(questions, JsonOptions)
         };
         string resultsDirectory = Path.Combine(Environment.CurrentDirectory, "Results", "CustomerSubscription",
             $"{report.StartedUtc:yyyyMMddTHHmmssfffZ}-{Guid.NewGuid():N}");
@@ -160,7 +163,7 @@ internal sealed partial class DecisionExampleRunner
         await CheckpointEvaluationAsync(resultsDirectory, report);
 
         DisplayTextSection("Shared Input:", sharedInput, ConsoleColor.Green, "\u001b[38;2;128;255;160m");
-        Console.WriteLine($"Evaluating {metadata.CaseCount} independent customer profiles using SystemOne API ({connection.ProviderLabel}).");
+        Console.WriteLine($"Evaluating {metadata.CaseCount} independent customer profiles using {connection.ApiLabel} ({connection.ProviderLabel}).");
         Console.WriteLine($"Results directory: {resultsDirectory}");
         Console.WriteLine("Case              | P(Yes)    | Outcome | Brier  | Response time");
         Console.WriteLine(new string('-', 66));
@@ -189,7 +192,7 @@ internal sealed partial class DecisionExampleRunner
                 record.RawResponse = capture.Body;
                 record.ElapsedMilliseconds = capture.ElapsedMilliseconds;
                 RejectDuplicateJsonProperties(responseBody);
-                var response = Deserialize<SystemOneResponse>(responseBody);
+                var response = DeserializeWorkflowResponse(responseBody, questions, connection);
                 double probability = ValidateBinaryAnswer(response, metadata.QuestionId);
                 record.ResponseModel = response.Model;
                 record.ProbabilityYes = probability;

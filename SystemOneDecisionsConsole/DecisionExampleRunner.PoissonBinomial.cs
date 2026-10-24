@@ -71,7 +71,7 @@ internal sealed partial class DecisionExampleRunner
                     new SystemOneRequest { Model = connection.Model, State = state, Questions = questions },
                     connection.Backend, connection.ApiKey, capture);
                 RejectDuplicateJsonProperties(body);
-                var response = Deserialize<SystemOneResponse>(body);
+                var response = DeserializeWorkflowResponse(body, questions, connection);
                 if (response.Answers is null || response.Answers.Count != 1 ||
                     !response.Answers.TryGetValue(metadata.QuestionId, out var answer) || answer is not SystemOneNoulAnswer noul)
                     throw new InvalidDataException("Malformed response: expected exactly the requested noul answer.");

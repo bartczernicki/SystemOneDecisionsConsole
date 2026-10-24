@@ -8,10 +8,10 @@ namespace SystemOneDecisionConsole.Tests;
 [TestClass]
 public class RestaurantTests : ConsoleScenarioTestBase
 {
-    [TestInitialize] public void SelectFoundry() => SetProvider("MicrosoftFoundryAI");
+    [TestInitialize] public void SelectFoundry() => SetProvider("SystemOneDecision1");
 
     private const string FolderName = "FoundrySystemOne-RestaurantExploreExploit";
-    private const string Input = "2\n9\n\n0\n0\n";
+    private string Input => $"2\n{App.MenuOption(2, 9)}\n\n0\n0\n";
     private static readonly string[] Names = ["Dining Strategy", "Dish if Exploring", "Dish if Exploiting"];
     private static readonly string[][] Choices = [["Explore", "Exploit"], ["Ginger Soy Salmon", "Smoky Chickpea Bowl", "Spinach and Ricotta Ravioli"], ["Lemon Herb Chicken", "Mushroom Risotto", "Roasted Vegetable Pasta"]];
     private static readonly double[][] Distributions = [[.68, .32], [.47, .31, .22], [.56, .28, .16]];

@@ -1,6 +1,6 @@
 Project Completion from Task Duration Distributions
 
-A software project has three sequential stages: design, implementation, and testing and release. One SystemOne request predicts a probability distribution over the possible working-day durations of each stage. The application convolves the three distributions locally to calculate the total completion-time distribution and the probability of finishing within 20 working days, including completion on day 20.
+A software project has three sequential stages: design, implementation, and testing and release. One decision API request predicts a probability distribution over the possible working-day durations of each stage. The application convolves the three distributions locally to calculate the total completion-time distribution and the probability of finishing within 20 working days, including completion on day 20.
 
 For this synthetic exercise, design takes exactly 3, 5, or 7 working days; implementation takes exactly 5, 8, or 11; and testing and release takes exactly 2, 4, or 6. These are exact durations, not bands or open-ended categories. The scope is fixed, separate teams execute the stages, and each handoff is immediate with no overlap or idle gap. Stage durations are assumed independent conditional on the supplied evidence, with no common disruptions.
 

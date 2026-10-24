@@ -1,6 +1,6 @@
 # SystemOne Decisions
 
-A .NET Console application demonstrating (Jev-like) AI decisions through the SystemOne API on Local AI or Microsoft Foundry AI, and the Decisions API on Local AI. The 18 basic and advanced menu examples focus on business decisions where these decision models are a potential great fit.
+A .NET Console application demonstrating (Jev-like) AI decisions through the SystemOne and Decisions APIs on Local AI or Microsoft Foundry AI. Select SystemOne - Decision1, Local AI, or Decisions - GPT-6-Luna to explore the matching examples. The 18 basic and advanced menu examples focus on business decisions where these decision models are a potential great fit.
 
 ## Contents
 
@@ -57,7 +57,7 @@ Run your first decision locally with LM Studio. This path uses Local AI and does
    dotnet run --project SystemOneDecisionsConsole
    ```
 
-5. **Try the first example.** Select **1) Basic Decision Examples**, then **1) SystemOne API (Local AI) - Choice**. Local AI is the default on first run. If a previous run selected Microsoft Foundry AI, use **3) Configure → 2) SystemOne API provider → 1) Local AI**, then return to the main menu.
+5. **Try the first example.** Select **1) Basic Decision Examples**, then **1) SystemOne API (Local AI) - Choice**. Local AI is the default on first run. To select it again, use **3) Configure → 2) Decision provider → 2) Local AI**, then return to the main menu.
 
    A successful response shows your provider and model, a department recommendation (normally **Billing** for the duplicate-charge complaint), confidence, and probability bars for Billing, Technical, and Shipping. The model's recommendation and probabilities can vary. Press **Enter** to return to the menu.
 
@@ -124,16 +124,24 @@ The concepts in this repository are based on Bart Czernicki's book, [Decision In
 
 ## Basic Decision Examples
 
+The tables below show the complete Local AI menus. Basic examples match the selected API and are numbered from 1. GPT-6-Luna also runs all 12 advanced examples through the Decisions API:
+
+| Decision provider | API and model | Basic examples | Advanced examples |
+| --- | --- | --- | --- |
+| SystemOne - Decision1 | SystemOne API on Microsoft Foundry AI, using the Decision1 deployment | 3 | 11 |
+| Local AI | SystemOne and Decisions APIs, using the local model | 6 | 12 |
+| Decisions - GPT-6-Luna | Decisions API on Microsoft Foundry AI, using the GPT-6-Luna deployment | 3 | 12 |
+
 | Option | Example | What it demonstrates |
 | --- | --- | --- |
 | 1 | SystemOne API - Choice | Routes a customer's report of two charges for one purchase to Billing, Technical, or Shipping. Shows the recommended department and its probability distribution. |
 | 2 | SystemOne API - Yes/No (noul) | Evaluates whether a customer reports being charged twice for the same purchase. Shows the probability of Yes without applying a boolean threshold. |
 | 3 | SystemOne API - Score | Rates a CSV export failure in Safari when Chrome provides a working alternative. Shows a probability-weighted severity score across Cosmetic, Workaround Available, and Fully Blocked levels. |
-| 4 | Decisions API (Local AI only) - Choice | Routes a customer's report of two charges for one purchase to Billing, Technical, or Shipping. Shows the recommended department and its probability distribution. |
-| 5 | Decisions API (Local AI only) - Yes/No (predicate) | Evaluates whether a customer reports being charged twice for the same purchase. Shows the probability of Yes without applying a boolean threshold. |
-| 6 | Decisions API (Local AI only) - Score | Rates a CSV export failure in Safari when Chrome provides a working alternative. Shows a probability-weighted severity score across Cosmetic, Workaround Available, and Fully Blocked levels. |
+| 4 | Decisions API - Choice | Routes a customer's report of two charges for one purchase to Billing, Technical, or Shipping. Shows the recommended department and its probability distribution. |
+| 5 | Decisions API - Yes/No (predicate) | Evaluates whether a customer reports being charged twice for the same purchase. Shows the probability of Yes without applying a boolean threshold. |
+| 6 | Decisions API - Score | Rates a CSV export failure in Safari when Chrome provides a working alternative. Shows a probability-weighted severity score across Cosmetic, Workaround Available, and Fully Blocked levels. |
 
-Every SystemOne menu item includes the selected provider, for example **SystemOne API (Microsoft Foundry AI) - Choice**. The same selection applies to every advanced SystemOne example.
+Every menu item includes its provider, for example **SystemOne API (Local AI) - Choice** or **Decisions API (Microsoft Foundry AI) - Choice**. SystemOne - Decision1 shows the first three basic examples. Decisions - GPT-6-Luna shows Choice, Yes/No (predicate), and Score as options 1–3.
 
 ## Advanced Decision Examples
 
@@ -143,7 +151,7 @@ Every SystemOne menu item includes the selected provider, for example **SystemOn
 | 2 | SystemOne API - Football Total Points Cumulative Probability | Forecasts combined final points from the same football halftime snapshot. Adds probabilities across the relevant score bands to show the chance of strictly more than 40 points. |
 | 3 | SystemOne API - Shipment Arrival Evidence with Bayesian updating | Forecasts a fictional shipment's arrival using three successive evidence updates at a fixed forecast time. Compares live arrival-window distributions, entropy, and confidence as more information becomes available. |
 | 4 | SystemOne API - Customer Subscription Brier Score and Calibration | Predicts term-deposit subscriptions for 200 recorded customers from UCI Bank Marketing. Scores representative and previous-success groups separately with Brier score and ECE, and saves complete results. |
-| 5 | Decisions API (Local AI only) - Courier Logistics Package Shipping Decision | Evaluates two package photographs in separate requests against a fictional Express Delivery policy. Shows six Pass/Fail/Unknown shipping checks and an overall Ship, Repack or Relabel, or Needs Inspection decision for each package. |
+| 5 | Decisions API - Courier Logistics Package Shipping Decision | Evaluates two package photographs in separate requests against a fictional Express Delivery policy. Shows six Pass/Fail/Unknown shipping checks and an overall Ship, Repack or Relabel, or Needs Inspection decision for each package. |
 | 6 | SystemOne API - Apple Watch Step Goal with 10,000 Step Decision Rule | Compares visiting the park, taking a walk, or running from a 5,000-step starting point. Reports an independent Yes/No probability for each activity reaching the 10,000-step goal. |
 | 7 | SystemOne API - Energy Plant Investment Strategy with Decision Framing | Recommends a fictional solar-and-battery investment strategy through Creativity, Caution, and Benefits thinking hats. Three isolated requests compare recommendation distributions using the same project facts and strategy choices. |
 | 8 | SystemOne API - Work Queue Prioritization with the Eisenhower Matrix | Classifies eight operations-manager tasks by urgency and importance using separate requests. Shows the returned actions in a summary and an Eisenhower Matrix: Do Now, Schedule, Delegate, or Eliminate. |
@@ -152,7 +160,11 @@ Every SystemOne menu item includes the selected provider, for example **SystemOn
 | 11 | SystemOne API - Sales Conversions Extension: Bernoulli to Poisson-Binomial | Extends option 10 to 100 distinct prospects, using 100 isolated requests. Combines their individual conversion probabilities and compares the resulting count distribution with a Binomial using their average probability. |
 | 12 | SystemOne API - Project Completion from Task Duration Distributions | Predicts three sequential stages' duration distributions in one request, then convolves them locally to show total completion time and the chance of finishing within 20 working days, including day 20. |
 
-The sales conversion example uses one `noul` response as the success probability `p` in `X ~ Binomial(100, p)`. It displays the Bernoulli chart, all 101 count probabilities, expected conversions `100p`, and `P(X > 30) = P(X >= 31)`. These are local calculations, with no sampling or extra model calls. The synthetic cohort assumes independent prospects sharing the same probability; uncertainty in the estimated `p` is not modeled separately.
+Local AI and Decisions - GPT-6-Luna share the 1–12 order above, including courier at option 5. With GPT-6-Luna selected, every advanced example uses the Decisions API and its configured Foundry deployment. SystemOne - Decision1 omits courier and renumbers the remaining examples 1–11. Option numbers referenced below use the Local AI and GPT-6-Luna menus.
+
+The advanced workflows reuse the same scenario definitions and calculations across providers. GPT-6-Luna translates the shared SystemOne question definitions into native Decisions requests; no duplicate scenario folders are required. Response JSON and saved calibration `rawResponse` values retain the original Decisions responses.
+
+The sales conversion example uses the returned Yes probability (`noul` for SystemOne or `probability` for Decisions) as the success probability `p` in `X ~ Binomial(100, p)`. It displays the Bernoulli chart, all 101 count probabilities, expected conversions `100p`, and `P(X > 30) = P(X >= 31)`. These are local calculations, with no sampling or extra model calls. The synthetic cohort assumes independent prospects sharing the same probability; uncertainty in the estimated `p` is not modeled separately.
 
 The Poisson-binomial extension stores 100 synthetic profiles in `prospects.json`, with 20 at each of five engagement stages. It validates all profiles before calling the model, then predicts each prospect in isolation. The console shows progress, a probability table, the count distribution, expected conversions, standard deviation, and `P(X > 30)`. The comparison `Binomial(100, average p)` uses the same predictions and therefore the same expected count, while its variance and tail probability can differ. Outcomes are assumed independent and each estimated probability is treated as fixed. If any request fails, processing stops without a completed-cohort forecast.
 
@@ -160,7 +172,7 @@ The project completion example requests three `choice` distributions for design 
 
 ## Run the Console Application
 
-Install the .NET 10 SDK. Configure the local API settings for Decisions examples and for SystemOne examples using Local AI. To use Microsoft Foundry AI for SystemOne, configure its endpoint, deployment name and API key below. The default local model is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. Run from the repository root:
+Install the .NET 10 SDK. Configure the local API settings for Local AI, or the Foundry gateway endpoint, deployment name and API key for your hosted selection below. The default local model is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. Run from the repository root:
 
 ```sh
 dotnet run --project SystemOneDecisionsConsole
@@ -170,24 +182,24 @@ Use a terminal that supports ANSI RGB colors to display the cyan banner and gold
 
 The top-level menu includes **3) Configure**. Select **1) Show / Hide Decision JSON** to toggle the raw `Response JSON:` blocks; the menu shows the current state. JSON starts **hidden**, and each toggle is saved immediately for subsequent responses and future runs.
 
-Select **2) SystemOne API provider** to choose **Local AI** (the default) or **Microsoft Foundry AI**. Selection validates the configured endpoint, model and authentication without making an API request, then displays the model name or Foundry model deployment. Missing or invalid settings leave the current provider unchanged. Every example also states its provider and model before running. Decisions examples always use Local AI, regardless of the SystemOne choice.
+Select **2) Decision provider** to choose **1) SystemOne - Decision1**, **2) Local AI** (the default), or **3) Decisions - GPT-6-Luna**. Selection validates the configured endpoint, model and authentication without making an API request, then displays the model name or Foundry model deployment. Missing or invalid settings and failed saves leave the current selection unchanged. Every example states its API, provider and model before running. Basic menus show matching native API examples; GPT-6-Luna includes all 12 advanced workflows.
 
 Preferences are stored in `Configuration.json` in the current working folder (the repository root when using the command above). The application creates this file on first run with:
 
 ```json
 {
   "ShowDecisionJson": false,
-  "SystemOneProvider": "LocalAI"
+  "DecisionProvider": "LocalAI"
 }
 ```
 
-`SystemOneProvider` can be `LocalAI` or `MicrosoftFoundryAI`; existing files without this property use Local AI. Provider changes and JSON toggles preserve each other's settings. Only preferences are stored here; endpoints, model names and credentials remain in User Secrets or environment variables. Environment variables override matching User Secrets for both selection and execution.
+`DecisionProvider` can be `SystemOneDecision1`, `LocalAI`, or `DecisionsGPT6Luna`. Legacy `SystemOneProvider` values are still read: `LocalAI` maps to Local AI and `MicrosoftFoundryAI` maps to SystemOne - Decision1. `DecisionProvider` takes precedence when both properties exist; files without either use Local AI. Loading an existing file does not rewrite it. The next successful preference save uses `DecisionProvider`. Provider changes and JSON toggles preserve each other's settings. Only preferences are stored here; endpoints, model names and credentials remain in User Secrets or environment variables. Environment variables override matching User Secrets for both selection and execution.
 
 Manual edits take effect the next time the application starts. When JSON is hidden, HTTP errors still show their status and reason, while raw response bodies are omitted. Summaries, charts, and saved evaluation reports remain available. Enabling JSON also displays each of the 200 customer calibration responses. If configuration cannot be loaded, the application warns and uses the defaults without overwriting the file; failed saves retain the previous settings. Execution reports configuration errors without switching providers automatically.
 
 ## Download LM Studio and a Decision Model
 
-For all Decisions examples and SystemOne examples using Local AI, install LM Studio and load a decision model such as Clef or Clef-Flash:
+For Local AI, install LM Studio and load a decision model such as Clef or Clef-Flash:
 
 1. Download the installer for your operating system from the [LM Studio download page](https://lmstudio.ai/download) and install the application.
 2. Open **Discover** and search for `Clef` or `Clef-Flash`. For a concrete download, paste the [ggml-org/Clef-Flash-GGUF model URL](https://huggingface.co/ggml-org/Clef-Flash-GGUF) into the search bar. LM Studio supports searching by model name or Hugging Face URL; see its [model download guide](https://lmstudio.ai/docs/app/basics/download-model).
@@ -196,33 +208,57 @@ For all Decisions examples and SystemOne examples using Local AI, install LM Stu
 
 **Important Note:** For multi-question and image examples, both **Eval Batch Size** and **Physical Batch Size** must accommodate the combined input and questions. The effective physical batch is capped by Eval Batch Size. Start with `4096` for both and reload the model after changing load settings; if a request exceeds that limit, increase both to accommodate it. Larger physical batches require more working memory. See the [llama.cpp batch limit implementation](https://github.com/ggml-org/llama.cpp/blob/master/src/llama-context.cpp).
 
-Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. The courier example (Advanced #5) also requires image-capable Clef/Clef-Flash support and its matching vision adapter (`mmproj`). When Microsoft Foundry AI is selected, SystemOne examples use the hosted deployment; Decisions examples still require the local server.
+Use an LM Studio version and inference runtime that support the selected decision model and the [SystemOne](https://lmstudio.ai/docs/developer/jev-compat/systemone) (`/v1/systemone`) and [Decisions](https://lmstudio.ai/docs/developer/openai-compat/decisions) (`/v1/decisions`) endpoints. The local courier example (Advanced #5) also requires image-capable Clef/Clef-Flash support and its matching vision adapter (`mmproj`). SystemOne - Decision1 and Decisions - GPT-6-Luna use hosted deployments and do not require a local server.
 
 ## User Secrets for local APIs and Microsoft Foundry
 
-The project has a `UserSecretsId` configured and loads these settings with `Microsoft.Extensions.Configuration.UserSecrets`. Store both local API and Microsoft Foundry settings in the same project's User Secrets, outside the repository. Each developer needs to configure the settings for their chosen backend on their own machine.
+The project has a `UserSecretsId` configured and loads these settings with `Microsoft.Extensions.Configuration.UserSecrets`. Store both local API and Microsoft Foundry settings in the same project's User Secrets, outside the repository. Each developer needs to configure the settings for their chosen backend on their own machine. The table lists all nine supported settings.
 
-| Backend | Secret key | Value |
-| --- | --- | --- |
-| Local | `LocalSystemOneAPI` | `http://localhost:1234/v1/systemone` |
-| Local | `LocalDecisionsAPI` | `http://localhost:1234/v1/decisions` |
-| Local | `LocalDecisionModel` | Optional; defaults to `clef-flash`. Must match the loaded model identifier. |
-| Foundry | `MicrosoftFoundrySystemOneAPI` | `https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone` |
-| Foundry | `MicrosoftFoundryDecisionModelDeploymentName` | Your deployment name, for example `Decision-1-Global` |
-| Foundry | `MicrosoftFoundryAPIKey` | Required for Foundry calls; set your key locally. |
+| Provider | Secret key | Requirement | Value |
+| --- | --- | --- | --- |
+| Local AI | `LocalSystemOneAPI` | Required | `http://localhost:1234/v1/systemone` |
+| Local AI | `LocalDecisionsAPI` | Required | `http://localhost:1234/v1/decisions` |
+| Local AI | `LocalDecisionModel` | Optional; defaults to `clef-flash` | The loaded model identifier. |
+| SystemOne - Decision1 | `MicrosoftFoundrySystemOneAPI` | Required | `https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone` |
+| SystemOne - Decision1 | `MicrosoftFoundryDecisionModelDeploymentName` | Required | Your Decision1 deployment name, for example `Decision-1-Global`. |
+| SystemOne - Decision1; Luna fallback | `MicrosoftFoundryAPIKey` | Required for Decision1; required for Luna only when its dedicated key is absent | The API key accepted by the selected endpoint. |
+| Decisions - GPT-6-Luna | `MicrosoftFoundryDecisionsAPI` | Required | The full Decisions operation URL for the Luna deployment, for example `https://<your-resource-name>.openai.azure.com/openai/v1/decisions`, or your gateway's full Decisions route. |
+| Decisions - GPT-6-Luna | `AzureOpenAIGPT6LunaModelDeploymentName` | Required | Your GPT-6-Luna deployment name. |
+| Decisions - GPT-6-Luna | `MicrosoftFoundryDecisionsAPIKey` | Required unless using the shared key fallback | The dedicated API key accepted by `MicrosoftFoundryDecisionsAPI`. |
 
-Run the following commands from the repository root for the backend you use to add the appropriate User Secrets.
+GPT-6-Luna sends requests directly to `MicrosoftFoundryDecisionsAPI`, preserving its configured path and query string. Set the full Decisions operation URL for your supported-region deployment or gateway route. This setting is required for GPT-6-Luna and is independent of `MicrosoftFoundrySystemOneAPI`. The request's `model` is the configured deployment name for the selected backend. SystemOne uses `MicrosoftFoundryAPIKey`; Decisions uses `MicrosoftFoundryDecisionsAPIKey` when present, otherwise `MicrosoftFoundryAPIKey`. A direct Azure resource endpoint requires that resource's key; a gateway key can return HTTP 401 there. Credentials remain in User Secrets or environment variables.
+
+Environment variables with these exact names override User Secrets. A configured but blank or invalid `MicrosoftFoundryDecisionsAPIKey` fails validation; the shared key fallback applies only when the dedicated setting is absent.
+
+The gateway and its Azure backend must support the Decisions operation. Microsoft's [Azure Decisions guide](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/decisions) describes a regional rollout and excludes East US 2. A GPT-6-Luna deployment alone does not establish that the operation is available; unsupported operations are reported as API errors.
+
+Run the commands for your selected provider from the repository root, replacing placeholders with your own values.
+
+For **Decisions - GPT-6-Luna**, set the three Luna secrets. Use the key for the resource or gateway named in the Decisions URL:
 
 ```sh
-dotnet user-secrets set "LocalSystemOneAPI" "http://localhost:1234/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
-dotnet user-secrets set "LocalDecisionsAPI" "http://localhost:1234/v1/decisions" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
-dotnet user-secrets set "LocalDecisionModel" "your-loaded-model-id" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+dotnet user-secrets set "MicrosoftFoundryDecisionsAPI" "https://<your-resource-name>.openai.azure.com/openai/v1/decisions" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+dotnet user-secrets set "AzureOpenAIGPT6LunaModelDeploymentName" "your-gpt-6-luna-deployment-name" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+dotnet user-secrets set "MicrosoftFoundryDecisionsAPIKey" "your-decisions-resource-api-key" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+```
+
+For **SystemOne - Decision1**, set its endpoint, deployment name, and API key:
+
+```sh
 dotnet user-secrets set "MicrosoftFoundrySystemOneAPI" "https://<your-gateway-name>.azure-api.net/<your-foundry-name>/providers/microsoft/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet user-secrets set "MicrosoftFoundryDecisionModelDeploymentName" "Decision-1-Global" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 dotnet user-secrets set "MicrosoftFoundryAPIKey" "your-api-key" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
 ```
 
-Verify the configured values for either backend:
+For **Local AI**, set both endpoints. The model setting is optional when using the default `clef-flash`:
+
+```sh
+dotnet user-secrets set "LocalSystemOneAPI" "http://localhost:1234/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+dotnet user-secrets set "LocalDecisionsAPI" "http://localhost:1234/v1/decisions" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+dotnet user-secrets set "LocalDecisionModel" "your-loaded-model-id" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+```
+
+Verify the configured values for your selected provider:
 
 ```sh
 dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
@@ -230,7 +266,7 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder contains **21 scenario folders** and **75 scenario assets**, grouped into Basic and Advanced categories. The menus expose **18 distinct examples**; the three original basic Foundry folders are retained for compatibility, while both providers use the shared basic SystemOne assets.
+The repository-root `Decisions` folder contains **21 scenario folders** and **75 scenario assets**, grouped into Basic and Advanced categories. The menus expose **18 distinct examples**, with availability determined by the selected provider. The three original basic Foundry folders are retained for compatibility. Local and hosted SystemOne use the shared basic SystemOne assets; Local AI and GPT-6-Luna share the native Decisions basic and courier assets. The remaining advanced scenario assets are shared across all providers.
 
 | File | Purpose |
 | --- | --- |
@@ -258,7 +294,7 @@ Both local and Foundry SystemOne examples follow the [Jev SystemOne schema](http
 }
 ```
 
-Decisions follows the [OpenAI Decisions API reference](https://developers.openai.com/api/reference/resources/decisions/methods/create). Its `questions.json` is an array of named questions. Text examples build `{ "model": "...", "input": "...", "questions": [ ... ] }`. Choice uses `choices` with `value`/`description`, Yes/No uses `type: "predicate"`, and Score uses ordered `levels` with `label`/`description`. For example:
+Local and hosted Decisions follow the [OpenAI Decisions API reference](https://developers.openai.com/api/reference/resources/decisions/methods/create) and use typed .NET models over REST. Native Decisions assets store `questions.json` as an array of named questions. Text requests build `{ "model": "...", "input": "...", "questions": [ ... ] }`. Choice uses `choices` with `value`/`description`, Yes/No uses `type: "predicate"`, and Score uses ordered `levels` with `label`/`description`. For example:
 
 ```json
 [
@@ -270,7 +306,9 @@ Decisions follows the [OpenAI Decisions API reference](https://developers.openai
 ]
 ```
 
-The courier example uses a typed multimodal request instead of a string `input`. Each request contains one user message with the shared policy and inspection text plus exactly one PNG. This excerpt shows the final shipping question; the scenario sends all seven questions:
+For GPT-6-Luna's shared advanced scenarios, SystemOne `noul` becomes Decisions `predicate`, with both true and false criterion descriptions preserved in the instructions. Choice criteria become named choices, and ordered score criteria become levels. Native Decisions answer arrays are mapped in memory to the existing workflow models for calculations; the displayed JSON and saved raw responses keep the native answer arrays. Hosted requests continue to use the configured `MicrosoftFoundryDecisionsAPI` endpoint and API-key authentication.
+
+The courier example uses a typed multimodal request instead of a string `input` on both Local AI and GPT-6-Luna. Each request contains one user message with the shared policy and inspection text plus exactly one PNG. This excerpt uses the local model name and shows the final shipping question; the scenario sends all seven questions:
 
 ```json
 {

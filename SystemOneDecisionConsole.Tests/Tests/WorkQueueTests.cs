@@ -8,11 +8,11 @@ namespace SystemOneDecisionConsole.Tests;
 [TestClass]
 public class WorkQueueTests : ConsoleScenarioTestBase
 {
-    [TestInitialize] public void SelectFoundry() => SetProvider("MicrosoftFoundryAI");
+    [TestInitialize] public void SelectFoundry() => SetProvider("SystemOneDecision1");
 
     private const string FolderName = "FoundrySystemOne-WorkQueueEisenhowerMatrix";
     private const string Question = "Work Queue Action";
-    private const string Input = "2\n8\n\n0\n0\n";
+    private string Input => $"2\n{App.MenuOption(2, 8)}\n\n0\n0\n";
     private static readonly string[] Choices = ["Do Now", "Schedule", "Delegate", "Eliminate"];
     private static readonly string[] Files = ["ScenarioDescription.txt", "input.txt", "questions.json", "tasks.json"];
     private static readonly double[][] Distributions = [[.61,.19,.12,.08],[.10,.62,.18,.10],[.09,.16,.63,.12],[.08,.13,.15,.64],

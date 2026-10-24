@@ -10,7 +10,7 @@ public abstract class ConsoleScenarioTestBase
     protected FixtureServer Server { get; private set; } = null!;
     protected string LastRawOutput => App.LastRawOutput;
 
-    protected void SetProvider(string provider) => App.SetSystemOneProvider(provider);
+    protected void SetProvider(string provider) => App.SetDecisionProvider(provider);
 
     [TestInitialize]
     public void InitializeConsoleScenario()
@@ -73,12 +73,22 @@ public sealed class ConsoleFixture : IDisposable
     public void WriteJson(string path, JsonNode value) => WriteText(path, value.ToJsonString());
     public void WriteText(string path, string text) => File.WriteAllText(path, text, new UTF8Encoding(false));
 
-    public void SetSystemOneProvider(string provider)
+    public void SetDecisionProvider(string provider)
     {
         string path = Path.Combine(WorkingDirectory, "Configuration.json");
         JsonObject configuration = File.Exists(path) ? ReadJson(path).AsObject() : new JsonObject { ["ShowDecisionJson"] = false };
-        configuration["SystemOneProvider"] = provider;
+        configuration["DecisionProvider"] = provider == "MicrosoftFoundryAI" ? "SystemOneDecision1" : provider;
+        configuration.Remove("SystemOneProvider");
         WriteJson(path, configuration);
+    }
+
+    public int MenuOption(int category, int option)
+    {
+        string path = Path.Combine(WorkingDirectory, "Configuration.json");
+        if (!File.Exists(path)) return option;
+        JsonObject configuration = ReadJson(path).AsObject();
+        string provider = configuration["DecisionProvider"]?.GetValue<string>() ?? "LocalAI";
+        return TestSupport.MenuOption(category, option, provider);
     }
 
     public string Run(string input, Dictionary<string, string>? overrides = null, int timeout = 15) =>
@@ -107,8 +117,11 @@ public sealed class ConsoleFixture : IDisposable
             ["LocalDecisionsAPI"] = server.BaseUrl + "/v1/decisions",
             ["LocalDecisionModel"] = TestSupport.LocalModel,
             ["MicrosoftFoundrySystemOneAPI"] = server.BaseUrl + TestSupport.FoundryPath,
+            ["MicrosoftFoundryDecisionsAPI"] = server.BaseUrl + TestSupport.LunaPath,
             ["MicrosoftFoundryDecisionModelDeploymentName"] = TestSupport.FoundryModel,
-            ["MicrosoftFoundryAPIKey"] = TestSupport.FoundryKey
+            ["AzureOpenAIGPT6LunaModelDeploymentName"] = TestSupport.LunaModel,
+            ["MicrosoftFoundryAPIKey"] = TestSupport.FoundryKey,
+            ["MicrosoftFoundryDecisionsAPIKey"] = TestSupport.FoundryKey
         }) start.Environment[entry.Key] = entry.Value;
         if (overrides is not null)
             foreach (var entry in overrides) start.Environment[entry.Key] = entry.Value;

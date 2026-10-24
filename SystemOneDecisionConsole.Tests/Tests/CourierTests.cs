@@ -11,7 +11,7 @@ public sealed class CourierTests : ConsoleScenarioTestBase
 {
     private const string FolderName = "LocalDecisions-CourierLogisticsPackageShippingDecision";
     private const string Input = "2\n5\n\n0\n0\n";
-    private const string Menu = "5) Decisions API (Local AI only) - Courier Logistics Package Shipping Decision";
+    private const string Menu = "5) Decisions API (Local AI) - Courier Logistics Package Shipping Decision";
     private static readonly string[] Images = ["Express Delivery - Valid Courier Package.png", "Express Delivery - Invalid Courier Package.png"];
     private static readonly string[] Files = ["ScenarioDescription.txt", "input.txt", "questions.json", .. Images];
     private static readonly string[] Names = ["Size and Weight", "Shipping Label", "Packaging Material", "Exterior Condition", "Sealing", "Internal Protection", "Shipping Decision"];
@@ -52,13 +52,13 @@ public sealed class CourierTests : ConsoleScenarioTestBase
         return new JsonObject { ["model"] = S(payload["model"]), ["answers"] = answers };
     }
 
-    private void Requests(string model = LocalModel)
+    private void Requests(string model = LocalModel, string provider = "LocalAI")
     {
         Assert.AreEqual(2, Server.Requests.Count);
         for (int index = 0; index < 2; index++)
         {
             RequestRecord request = Server.Requests[index];
-            Assert.AreEqual("/v1/decisions", request.Path);
+            Assert.AreEqual(provider == "DecisionsGPT6Luna" ? TestSupport.LunaPath : "/v1/decisions", request.Path);
             Sequence(new[] { "model", "input", "questions" }.Order(), Keys(request.Payload).Order());
             Assert.AreEqual(model, S(request.Payload["model"])); JsonEqual(Questions, request.Payload["questions"]);
             JsonNode message = request.Payload["input"]![0]!;
@@ -69,7 +69,9 @@ public sealed class CourierTests : ConsoleScenarioTestBase
             Sequence(new[] { "image_url", "type" }, Keys(content[1]!).Order()); Assert.AreEqual("input_image", S(content[1]!["type"]));
             string data = S(content[1]!["image_url"]); Must(data.StartsWith("data:image/png;base64,"));
             CollectionAssert.AreEqual(File.ReadAllBytes(Path.Combine(App.SourceRoot, "Decisions", Advanced, FolderName, Images[index])), Convert.FromBase64String(data[(data.IndexOf(',') + 1)..]));
-            Not(S(content[0]!["text"]), "Valid Courier"); Not(S(content[0]!["text"]), "Invalid Courier"); LocalHeaders(request);
+            Not(S(content[0]!["text"]), "Valid Courier"); Not(S(content[0]!["text"]), "Invalid Courier");
+            if (provider == "DecisionsGPT6Luna") FoundryHeaders(request);
+            else LocalHeaders(request);
         }
         Assert.AreEqual(1, Server.MaximumActiveRequests);
     }
@@ -95,19 +97,26 @@ public sealed class CourierTests : ConsoleScenarioTestBase
     }
 
     [TestMethod]
-    public void IndependentImagesUseSharedPolicyAndSevenQuestions()
+    [DataRow("LocalAI")]
+    [DataRow("DecisionsGPT6Luna")]
+    public void IndependentImagesUseSharedPolicyAndSevenQuestions(string provider)
     {
+        SetProvider(provider);
         foreach (string file in Files) CollectionAssert.AreEqual(File.ReadAllBytes(Path.Combine(App.SourceRoot, "Decisions", Advanced, FolderName, file)), File.ReadAllBytes(Path.Combine(Folder, file)));
         Sequence(Names, Questions.AsArray().Select(question => S(question!["name"])));
         for (int index = 0; index < 7; index++) { Assert.AreEqual("choice", S(Questions[index]!["type"])); Sequence(index < 6 ? ["Pass", "Fail", "Unknown"] : new[] { "Ship", "Repack or Relabel", "Needs Inspection" }, Questions[index]!["choices"]!.AsArray().Select(choice => S(choice!["value"]))); }
         Has(Policy.ToLowerInvariant(), "fictional"); foreach (string fact in new[] { "30 cm", "1.09 kg", "60 cm", "20 kg", "adequate internal cushioning" }) Has(Policy, fact);
         Server.Responder = (request, _) => FixtureResponse.Json(Answers(request.Payload)) with { DelaySeconds = .03 };
-        string text = Run(Input); Requests(); Not(text, "Error:"); Assert.AreEqual(1, Count(text, "Input:\n")); Assert.AreEqual(1, Count(text, "Scenario Description:\n"));
-        Assert.AreEqual(2, Count(text, "Calling local API...\n")); Assert.AreEqual(1, Count(text, "Press Enter to return to the menu:"));
+        string text = Run(TestSupport.AdvancedInput(5, provider)); Requests(provider == "DecisionsGPT6Luna" ? TestSupport.LunaModel : LocalModel, provider); Not(text, "Error:"); Assert.AreEqual(1, Count(text, "Input:\n")); Assert.AreEqual(1, Count(text, "Scenario Description:\n"));
+        string callingMessage = provider == "DecisionsGPT6Luna" ? "Calling Foundry API...\n" : "Calling local API...\n";
+        Assert.AreEqual(2, Count(text, callingMessage)); Assert.AreEqual(1, Count(text, "Press Enter to return to the menu:"));
         for (int index = 0; index < 2; index++) { Has(Cases(text)[index], $"Image: {Images[index]}"); CaseOutput(Cases(text)[index], Answers(Server.Requests[index].Payload)); }
         Not(LastRawOutput, "data:image/png;base64,"); Not(LastRawOutput, "iVBORw0KGgo");
         int pause = text.IndexOf("Press Enter", StringComparison.Ordinal);
-        int returnedMenu = text.IndexOf(Menu, pause, StringComparison.Ordinal);
+        string menu = provider == "DecisionsGPT6Luna"
+            ? "5) Decisions API (Microsoft Foundry AI) - Courier Logistics Package Shipping Decision"
+            : Menu;
+        int returnedMenu = text.IndexOf(menu, pause, StringComparison.Ordinal);
         int mainMenu = text.IndexOf("1) Basic Decision Examples", pause, StringComparison.Ordinal);
         Must(returnedMenu > pause && returnedMenu < mainMenu);
     }

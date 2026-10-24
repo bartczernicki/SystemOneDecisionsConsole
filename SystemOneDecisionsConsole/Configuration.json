@@ -1,4 +1,4 @@
 {
   "ShowDecisionJson": false,
-  "SystemOneProvider": "MicrosoftFoundryAI"
+  "DecisionProvider": "DecisionsGPT6Luna"
 }
