@@ -5,8 +5,8 @@ A .NET Console application demonstrating (Jev-like) AI decisions through the Sys
 ## Contents
 
 - [Intro](#intro)
-- [Quick start](#quick-start)
 - [How do these (Jev-like) Decision Models work?](#how-do-these-jev-like-decision-models-work)
+- [Quick start](#quick-start)
 - [Basic Decision Examples](#basic-decision-examples)
 - [Advanced Decision Examples](#advanced-decision-examples)
 - [Run the Console Application](#run-the-console-application)
@@ -25,41 +25,6 @@ Jev-like Decision APIs, such as the [Jev (TypeSafe AI)-compatible SystemOne API]
 Decision APIs are important because applications need actionable judgments for tasks such as routing customer requests, prioritizing work, and evaluating alternatives. Contrast this with Generative AI models that you have used (GPT-6, Opus etc.), where these models can provide structured output, but they are really targeting unstructured output (lots of text, new images). 
 
 Quantitative structured outputs make those judgments easier to integrate. Why? Because they output probabilities, confidence scores based on math! I can add, subtract, compare, sort numbers...can't really do that easily with a Generative AI output that is many paragraphs. They also make decision quality measurable: predictions can be compared with observed outcomes using Brier scores and macro calibration checks. This repository demonstrates these ideas through local and hosted APIs, combining decision outputs with decision rules, framing, and updates as new evidence arrives.
-
-## Quick start
-
-Run your first decision locally with LM Studio. This path uses Local AI and does not require Microsoft Foundry credentials.
-
-1. **Install .NET and get the code.** Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0), then clone the repository and open its root folder in a terminal:
-
-   ```sh
-   git clone https://github.com/bartczernicki/SystemOneDecisionsConsole.git
-   cd SystemOneDecisionsConsole
-   ```
-
-   If you already have the code, open a terminal in the existing repository root instead. Run all commands below from that folder.
-
-2. **Load a decision model and start LM Studio's server.** Install [LM Studio](https://lmstudio.ai/download) with an inference runtime that supports the [SystemOne endpoint](https://lmstudio.ai/docs/developer/jev-compat/systemone). In **Discover**, paste the [Clef-Flash model URL](https://huggingface.co/ggml-org/Clef-Flash-GGUF), download a model that fits your machine, and load it. Note the loaded model's exact identifier. In the [Developer tab](https://lmstudio.ai/docs/developer/core/server), turn on **Start server** and leave it running. The commands below assume the server address is `http://localhost:1234`.
-
-3. **Configure the local endpoints and model.** Replace `your-loaded-model-id` with the identifier from LM Studio. If your server uses a different address or port, update both endpoint URLs while keeping their `/v1/...` paths:
-
-   ```sh
-   dotnet user-secrets set "LocalSystemOneAPI" "http://localhost:1234/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
-   dotnet user-secrets set "LocalDecisionsAPI" "http://localhost:1234/v1/decisions" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
-   dotnet user-secrets set "LocalDecisionModel" "your-loaded-model-id" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
-   ```
-
-   These settings are stored outside the repository. Existing environment variables with the same names override User Secrets.
-
-4. **Run the console application:**
-
-   ```sh
-   dotnet run --project SystemOneDecisionsConsole
-   ```
-
-5. **Try the first example.** Select **1) Basic Decision Examples**, then **1) SystemOne API (Local AI) - Choice**. Local AI is the default on first run. To select it again, use **3) Configure → 2) Decision provider → 2) Local AI**, then return to the main menu.
-
-   A successful response shows your provider and model, a department recommendation (normally **Billing** for the duplicate-charge complaint), confidence, and probability bars for Billing, Technical, and Shipping. The model's recommendation and probabilities can vary. Press **Enter** to return to the menu.
 
 ## How do these (Jev-like) Decision Models work?
 
@@ -121,6 +86,41 @@ The score is the probability-weighted average of the level indices: `0 * 0.10 + 
 **API fields:** SystemOne supplies an ordered `criteria` array; Decisions supplies an ordered `levels` array with `label` and `description`. Both return `score`, `probabilities`, and a separate `confidence` value.
 
 The concepts in this repository are based on Bart Czernicki's book, [Decision Intelligence with AI](https://github.com/bartczernicki/decision-intelligence-with-ai). The [interactive version](https://www.decisionintelligencebook.ai) provides further context and examples for applying Decision Intelligence with AI.
+
+## Quick start
+
+Run your first decision locally with LM Studio. This path uses Local AI and does not require Microsoft Foundry credentials.
+
+1. **Install .NET and get the code.** Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0), then clone the repository and open its root folder in a terminal:
+
+   ```sh
+   git clone https://github.com/bartczernicki/SystemOneDecisionsConsole.git
+   cd SystemOneDecisionsConsole
+   ```
+
+   If you already have the code, open a terminal in the existing repository root instead. Run all commands below from that folder.
+
+2. **Load a decision model and start LM Studio's server.** Install [LM Studio](https://lmstudio.ai/download) with an inference runtime that supports the [SystemOne endpoint](https://lmstudio.ai/docs/developer/jev-compat/systemone). In **Discover**, paste the [Clef-Flash model URL](https://huggingface.co/ggml-org/Clef-Flash-GGUF), download a model that fits your machine, and load it. Note the loaded model's exact identifier. In the [Developer tab](https://lmstudio.ai/docs/developer/core/server), turn on **Start server** and leave it running. The commands below assume the server address is `http://localhost:1234`.
+
+3. **Configure the local endpoints and model.** Replace `your-loaded-model-id` with the identifier from LM Studio. If your server uses a different address or port, update both endpoint URLs while keeping their `/v1/...` paths:
+
+   ```sh
+   dotnet user-secrets set "LocalSystemOneAPI" "http://localhost:1234/v1/systemone" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+   dotnet user-secrets set "LocalDecisionsAPI" "http://localhost:1234/v1/decisions" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+   dotnet user-secrets set "LocalDecisionModel" "your-loaded-model-id" --project SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj
+   ```
+
+   These settings are stored outside the repository. Existing environment variables with the same names override User Secrets.
+
+4. **Run the console application:**
+
+   ```sh
+   dotnet run --project SystemOneDecisionsConsole
+   ```
+
+5. **Try the first example.** Select **1) Basic Decision Examples**, then **1) SystemOne API (Local AI) - Choice**. Local AI is the default on first run. To select it again, use **3) Configure → 2) Decision provider → 2) Local AI**, then return to the main menu.
+
+   A successful response shows your provider and model, a department recommendation (normally **Billing** for the duplicate-charge complaint), confidence, and probability bars for Billing, Technical, and Shipping. The model's recommendation and probabilities can vary. Press **Enter** to return to the menu.
 
 ## Basic Decision Examples
 
