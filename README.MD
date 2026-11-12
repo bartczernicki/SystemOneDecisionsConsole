@@ -30,7 +30,7 @@ Quantitative structured outputs make those judgments easier to integrate. Why? B
 
 Run your first decision locally with LM Studio. This path uses Local AI and does not require Microsoft Foundry credentials.
 
-1. **Install .NET and get the code.** Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0), then clone the repository and open its root folder in a terminal:
+1. **Install .NET and get the code.** Install the [.NET 11 SDK](https://dotnet.microsoft.com/download/dotnet/11.0), then clone the repository and open its root folder in a terminal:
 
    ```sh
    git clone https://github.com/bartczernicki/SystemOneDecisionsConsole.git
@@ -172,7 +172,7 @@ The project completion example requests three `choice` distributions for design 
 
 ## Run the Console Application
 
-Install the .NET 10 SDK. Configure the local API settings for Local AI, or the Foundry gateway endpoint, deployment name and API key for your hosted selection below. The default local model is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. Run from the repository root:
+Install the .NET 11 SDK. Configure the local API settings for Local AI, or the Foundry gateway endpoint, deployment name and API key for your hosted selection below. The default local model is `clef-flash`; set `LocalDecisionModel` if your server uses a different identifier. Run from the repository root:
 
 ```sh
 dotnet run --project SystemOneDecisionsConsole
@@ -346,7 +346,7 @@ dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Rel
 
 ## Validation
 
-The solution includes the application and the native MSTest 4.0.2 project, `SystemOneDecisionConsole.Tests`, targeting .NET 10 with the standard VSTest runner. Run the functionality tests in either configuration:
+The solution includes the application and the native MSTest 4.0.2 project, `SystemOneDecisionConsole.Tests`, targeting .NET 11 with the standard VSTest runner. Run the functionality tests in either configuration:
 
 ```sh
 dotnet test SystemOneDecisionsConsole.sln

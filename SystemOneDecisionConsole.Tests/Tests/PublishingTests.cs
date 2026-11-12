@@ -17,7 +17,7 @@ public sealed class PublishingTests : BasicTestBase
     public async Task SourceBuildIsolatedRuntimeAndPublishRetainAllScenariosAndAssetBytes()
     {
         string source = Path.Combine(RepositoryRoot, "Decisions");
-        string build = Path.Combine(RepositoryRoot, "SystemOneDecisionsConsole", "bin", Configuration, "net10.0");
+        string build = Path.Combine(RepositoryRoot, "SystemOneDecisionsConsole", "bin", Configuration, "net11.0");
         string copied = Path.Combine(AppContext.BaseDirectory, "TestApp");
         foreach (string file in Directory.EnumerateFiles(build, "*", SearchOption.AllDirectories))
         {

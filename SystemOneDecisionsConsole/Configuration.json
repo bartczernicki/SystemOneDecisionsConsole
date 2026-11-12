@@ -1,4 +1,4 @@
 {
   "ShowDecisionJson": false,
-  "DecisionProvider": "DecisionsGPT6Luna"
+  "DecisionProvider": "LocalAI"
 }
