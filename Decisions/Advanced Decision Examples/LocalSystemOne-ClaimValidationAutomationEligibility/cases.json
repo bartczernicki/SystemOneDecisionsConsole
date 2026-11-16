@@ -1,0 +1,34 @@
+[
+  {
+    "id": "CLAIM-01",
+    "title": "Completed kitchen restoration record",
+    "sourceText": "Property-claim intake record CL-270101 for Avery Lane, policy MP-20001. A kitchen hose leak on 2026-11-10 damaged cabinets and flooring. Contact avery.lane@example.com is verified for this fictional record. The incident description, dates, claimant, and contractor estimate agree. The documented amount is USD 5,000. The supplied review flags identify no duplicate or exceptional circumstance.",
+    "attachments": [{ "fileName": "restoration-estimate.txt", "text": "Synthetic attachment transcript: contractor estimate EST-910, claim CL-270101, Avery Lane, incident 2026-11-10. Cabinet and flooring restoration: USD 5,000. Intake review confirms consistency with the report." }],
+    "extracted": { "claimantName": "Avery Lane", "contactEmail": "avery.lane@example.com", "policyNumber": "MP-20001", "lossDate": "2026-11-10", "lossDescription": "Kitchen hose leak damaged cabinets and flooring.", "claimReference": "CL-270101", "amount": 5000, "currency": "USD" },
+    "flags": { "mandatoryReview": false, "sensitive": false, "highRisk": false, "extractionUncertain": false, "internallyConsistent": true, "possibleDuplicate": false }
+  },
+  {
+    "id": "CLAIM-02",
+    "title": "Garage roof record awaiting incident date",
+    "sourceText": "Property-claim intake record CL-270102 for Jordan Ellis, policy MP-20002. Contact jordan.ellis@example.com. A fallen branch damaged the garage roof. The initial report and repair estimate describe the same damage, but neither states the date of loss. The claimant has been asked to locate that date. Estimated repair amount is USD 2,100.",
+    "attachments": [{ "fileName": "roof-estimate.txt", "text": "Synthetic attachment transcript: garage roof panel repair, USD 2,100, reference CL-270102. Incident date: not provided." }],
+    "extracted": { "claimantName": "Jordan Ellis", "contactEmail": "jordan.ellis@example.com", "policyNumber": "MP-20002", "lossDate": null, "lossDescription": "A fallen branch damaged the garage roof.", "claimReference": "CL-270102", "amount": 2100, "currency": "USD" },
+    "flags": { "mandatoryReview": false, "sensitive": false, "highRisk": false, "extractionUncertain": false, "internallyConsistent": true, "possibleDuplicate": false }
+  },
+  {
+    "id": "CLAIM-03",
+    "title": "Window record with conflicting dates",
+    "sourceText": "Property-claim intake record CL-270103 for Morgan Reed, policy MP-20003, contact morgan.reed@example.com. The claimant reports storm damage to a window on November 11, 2026, while the supplied contractor document assigns the same repair to an incident on October 22, 2026. Both documents are legible; the inconsistency has not been resolved. The extracted loss date retains the claimant's stated date. Repair amount is USD 1,600.",
+    "attachments": [{ "fileName": "window-repair-note.txt", "text": "Synthetic attachment transcript: window storm-damage repair for Morgan Reed, CL-270103, incident date 2026-10-22, USD 1,600. This date conflicts with the intake report." }],
+    "extracted": { "claimantName": "Morgan Reed", "contactEmail": "morgan.reed@example.com", "policyNumber": "MP-20003", "lossDate": "2026-11-11", "lossDescription": "Storm damage to a window; incident dates disagree across documents.", "claimReference": "CL-270103", "amount": 1600, "currency": "USD" },
+    "flags": { "mandatoryReview": false, "sensitive": false, "highRisk": false, "extractionUncertain": false, "internallyConsistent": false, "possibleDuplicate": false }
+  },
+  {
+    "id": "CLAIM-04",
+    "title": "Fence loss with an overlapping intake record",
+    "sourceText": "Property-claim intake record CL-270104 for Riley Chen, policy MP-20004, contact riley.chen@example.com. Wind damaged fence panels on 2026-11-09, with a USD 1,750 estimate. A supplied matching-service snapshot identifies another open report, CL-270090, for the same policy, incident date, and fence damage. A human has not confirmed whether the reports concern the same loss.",
+    "attachments": [{ "fileName": "match-snapshot.txt", "text": "Synthetic attachment transcript: candidate record CL-270090 matches policy MP-20004, date 2026-11-09, and fence location. Candidate only; no confirmed duplicate determination." }],
+    "extracted": { "claimantName": "Riley Chen", "contactEmail": "riley.chen@example.com", "policyNumber": "MP-20004", "lossDate": "2026-11-09", "lossDescription": "Wind damaged fence panels; a supplied match identifies an overlapping report.", "claimReference": "CL-270104", "amount": 1750, "currency": "USD" },
+    "flags": { "mandatoryReview": false, "sensitive": false, "highRisk": false, "extractionUncertain": false, "internallyConsistent": true, "possibleDuplicate": true }
+  }
+]

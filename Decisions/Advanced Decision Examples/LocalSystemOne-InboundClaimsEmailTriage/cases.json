@@ -1,0 +1,34 @@
+[
+  {
+    "id": "EMAIL-01",
+    "title": "Kitchen water-loss notification",
+    "sourceText": "From: Avery Lane <avery.lane@example.com>\nSubject: Report a new kitchen water loss\nOn November 12, 2026, a supply hose leaked in my kitchen and damaged the cabinet base. My Meridian Property policy is MP-10021. Please open a claim. I have not reported this incident before. You may contact me at avery.lane@example.com.",
+    "attachments": [{ "fileName": "plumber-note.txt", "text": "Synthetic attachment transcript: supply hose isolated and replaced on 2026-11-12; cabinet base has water damage. Customer: Avery Lane. No personal injury reported." }],
+    "extracted": { "claimantName": "Avery Lane", "contactEmail": "avery.lane@example.com", "policyNumber": "MP-10021", "lossDate": "2026-11-12", "lossDescription": "Kitchen supply-hose leak damaged the cabinet base.", "claimReference": null, "amount": 2400, "currency": "USD" },
+    "flags": { "mandatoryReview": false, "sensitive": false, "highRisk": false, "extractionUncertain": false, "internallyConsistent": true, "possibleDuplicate": false }
+  },
+  {
+    "id": "EMAIL-02",
+    "title": "Garage damage notification",
+    "sourceText": "From: Jordan Ellis <jordan.ellis@example.com>\nSubject: Starting a garage damage claim\nA fallen branch damaged the garage roof at my property. My policy is MP-10022. I need to start a new claim. I do not have the incident date or contractor's estimate with me and will send those later.",
+    "attachments": [],
+    "extracted": { "claimantName": "Jordan Ellis", "contactEmail": "jordan.ellis@example.com", "policyNumber": "MP-10022", "lossDate": null, "lossDescription": "A fallen branch damaged the garage roof.", "claimReference": null, "amount": null, "currency": null },
+    "flags": { "mandatoryReview": false, "sensitive": false, "highRisk": false, "extractionUncertain": false, "internallyConsistent": true, "possibleDuplicate": false }
+  },
+  {
+    "id": "EMAIL-03",
+    "title": "Repair estimate for an existing file",
+    "sourceText": "From: Morgan Reed <morgan.reed@example.com>\nSubject: Repair estimate for claim CL-260031\nAttached is the requested contractor estimate for my existing claim CL-260031, policy MP-10023. Please add it to the file. I am supplying the document you requested rather than reporting another loss.",
+    "attachments": [{ "fileName": "repair-estimate.txt", "text": "Synthetic attachment transcript: estimate RE-781 for Morgan Reed, claim CL-260031, dated 2026-11-14. Fence panel repair after the 2026-11-10 wind incident: USD 1,800." }],
+    "extracted": { "claimantName": "Morgan Reed", "contactEmail": "morgan.reed@example.com", "policyNumber": "MP-10023", "lossDate": "2026-11-10", "lossDescription": "Wind damaged fence panels.", "claimReference": "CL-260031", "amount": 1800, "currency": "USD" },
+    "flags": { "mandatoryReview": false, "sensitive": false, "highRisk": false, "extractionUncertain": false, "internallyConsistent": true, "possibleDuplicate": false }
+  },
+  {
+    "id": "EMAIL-04",
+    "title": "Progress request on a property claim",
+    "sourceText": "From: Riley Chen <riley.chen@example.com>\nSubject: Progress on CL-260032\nCould you let me know the current status of claim CL-260032 under policy MP-10024? I submitted the window-repair estimate last week. I am checking whether anything further is needed and when I should expect the next update.",
+    "attachments": [],
+    "extracted": { "claimantName": "Riley Chen", "contactEmail": "riley.chen@example.com", "policyNumber": "MP-10024", "lossDate": "2026-11-08", "lossDescription": "A storm damaged a window.", "claimReference": "CL-260032", "amount": 950, "currency": "USD" },
+    "flags": { "mandatoryReview": false, "sensitive": false, "highRisk": false, "extractionUncertain": false, "internallyConsistent": true, "possibleDuplicate": false }
+  }
+]

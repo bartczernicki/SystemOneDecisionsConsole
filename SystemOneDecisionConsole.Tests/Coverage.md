@@ -21,3 +21,11 @@ Build/publish tests verify the active configuration's complete application outpu
 Both Debug and Release configurations verify complete application-output copying, configuration-specific execution, publication, 18 scenarios, 65 assets, and unchanged original PNG bytes. Discovery exposes all 881 named functionality tests without category filtering. The original runner, standalone harness source files, generated Python cache, and root `tests` directory were removed after parity and native validation passed. No native test invokes Python or compiles a temporary harness project.
 
 Latest functionality validation: **881 passed, 0 failed, 0 skipped** in Debug. Debug and Release solution builds complete with zero warnings and errors. Discovery contains no timeout tests.
+
+## Claims scenario extensions
+
+The historical migration figures above describe the retired suite and its parity baseline. Current menu and publishing coverage additionally includes the two four-case claims workflows: Inbound Claims Email Triage and Automated Intake, and Claim Validation and Automation Eligibility. These append as options 12–13 for Decision1 and 13–14 for Local AI and GPT-6-Luna.
+
+`ConsoleMenuTests` covers the expanded menu ranges, completion, and end-of-input behavior. `SystemOneProviderTests` runs all four requests per scenario through both local and hosted SystemOne connections; `LunaAdvancedTests` checks native Decisions conversion, authentication, and current-case input isolation. The email cases cover complete and incomplete notifications, document submission, and status inquiry; the validation cases cover eligible continuation, missing information, inconsistent facts, and a possible duplicate. The shared fixture supplies deterministic claims distributions without adding expected outcomes to scenario assets. `PublishingTests` verifies all **23 scenario folders and 85 assets** across source, build, isolated runtime, and published output, retaining byte identity for every asset.
+
+Four-case revision validation: **414 affected tests passed, 0 failed, 0 skipped** in both Debug and Release, covering claims policies and workflows, provider connections, menus, native Decisions conversion, and publishing.

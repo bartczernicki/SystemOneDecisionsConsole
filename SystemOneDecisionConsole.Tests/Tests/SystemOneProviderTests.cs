@@ -409,9 +409,9 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     }
 
     [TestMethod]
-    [DataRow(Local, 6, 12, 3, 3, 11, 1)]
-    [DataRow(Foundry, 3, 11, 3, 0, 11, 0)]
-    [DataRow(Luna, 3, 12, 0, 3, 0, 12)]
+    [DataRow(Local, 6, 14, 3, 3, 13, 1)]
+    [DataRow(Foundry, 3, 13, 3, 0, 13, 0)]
+    [DataRow(Luna, 3, 14, 0, 3, 0, 14)]
     public void MenusFilterSupportedApiFamiliesAndNumberEntriesContiguously(string provider, int basicCount,
         int advancedCount, int basicSystemOne, int basicDecisions, int advancedSystemOne, int advancedDecisions)
     {
@@ -459,6 +459,8 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
             yield return [provider, 2, 10, 1, "Chance of more than 30 conversions:"];
             yield return [provider, 2, 11, 100, "Comparison with Shared-Probability Binomial:"];
             yield return [provider, 2, 12, 1, "Chance of finishing within 20 working days:"];
+            yield return [provider, 2, 13, 4, "Claims Workflow Summary:"];
+            yield return [provider, 2, 14, 4, "Claims Workflow Summary:"];
         }
     }
 

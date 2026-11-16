@@ -1,0 +1,7 @@
+Claim Validation and Automation Eligibility
+
+Four fictional property claims demonstrate how a decision model evaluates completeness, consistency, possible duplication, and eligibility for automated continuation.
+It assigns probabilities to continuing the workflow, requesting information, duplicate review, or specialist review.
+A deterministic policy requires at least 90% for both confidence and selected-treatment probability, complete and consistent records, and a USD claim amount at or below $5,000 before permitting continuation.
+Missing information, duplicate concerns, uncertainty, and mandatory-review conditions lead to information requests or human review.
+The console shows probabilities and policy reasons for each simulated action without approving, denying, or settling a claim.

@@ -90,6 +90,8 @@ public static class TestSupport
         if (systemOne && names.SequenceEqual(["Work Queue Action"])) return WorkQueueTests.Answers(payload).AsObject();
         if (systemOne && names.SequenceEqual(["Dining Strategy", "Dish if Exploring", "Dish if Exploiting"])) return RestaurantTests.Answers(payload).AsObject();
         if (systemOne && names.SequenceEqual(ProjectCompletionTests.Names)) return ProjectCompletionTests.Answers(payload);
+        if (systemOne && names.Length == 1 && names[0] is "Claims Email Intent" or "Claim Treatment")
+            return ClaimsAnswers(payload, names[0]);
         JsonObject? objectAnswers = systemOne ? new() : null;
         JsonArray? arrayAnswers = systemOne ? null : new();
         var items = systemOne ? questions.AsObject().Select(item => (Name: item.Key, Question: item.Value!.AsObject())) :
@@ -141,6 +143,38 @@ public static class TestSupport
             else { answer["name"] = name; arrayAnswers!.Add(answer); }
         }
         return new JsonObject { ["model"] = payload["model"]!.DeepClone(), ["answers"] = (JsonNode?)objectAnswers ?? arrayAnswers };
+    }
+
+    private static JsonObject ClaimsAnswers(JsonObject payload, string questionId)
+    {
+        bool intake = questionId == "Claims Email Intent";
+        string[] choices = intake
+            ? ["New Claim Notification", "Document Submission", "Status Inquiry", "Complaint", "Unrelated Correspondence"]
+            : ["Continue Workflow", "Request Additional Information", "Duplicate Review", "Specialist Review"];
+        string[] selections = intake
+            ? [choices[0], choices[0], choices[1], choices[2]]
+            : [choices[0], choices[1], choices[0], choices[0]];
+        string state = payload["state"]!.GetValue<string>();
+        Match caseId = Regex.Match(state, @"^Case ID: (?:EMAIL|CLAIM)-(\d{2})$", RegexOptions.Multiline);
+        if (!caseId.Success || !int.TryParse(caseId.Groups[1].Value, out int number) || number is < 1 or > 4)
+            throw new InvalidDataException("The claims fixture requires the current case ID in its isolated input.");
+        string selected = selections[number - 1];
+        const double probability = .94;
+        var distribution = new JsonObject();
+        foreach (string choice in choices)
+            distribution[choice] = choice == selected ? probability : (1 - probability) / (choices.Length - 1);
+        return new JsonObject
+        {
+            ["model"] = payload["model"]!.DeepClone(),
+            ["answers"] = new JsonObject
+            {
+                [questionId] = new JsonObject
+                {
+                    ["type"] = "choice", ["choice"] = selected, ["confidence"] = probability,
+                    ["probabilities"] = distribution
+                }
+            }
+        };
     }
 
     private static JsonObject SystemOneFixturePayload(JsonObject payload)

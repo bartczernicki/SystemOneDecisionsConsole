@@ -1,0 +1,5 @@
+{
+  "minimumConfidence": 0.90,
+  "minimumSelectedProbability": 0.90,
+  "maximumContinuationAmountUsd": null
+}

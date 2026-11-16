@@ -1,6 +1,6 @@
 # SystemOne Decisions
 
-A .NET Console application demonstrating (Jev-like) AI decisions through the SystemOne and Decisions APIs on Local AI or Microsoft Foundry AI. Select SystemOne - Decision1, Local AI, or Decisions - GPT-6-Luna to explore the matching examples. The 18 basic and advanced menu examples focus on business decisions where these decision models are a potential great fit.
+A .NET Console application demonstrating (Jev-like) AI decisions through the SystemOne and Decisions APIs on Local AI or Microsoft Foundry AI. Select SystemOne - Decision1, Local AI, or Decisions - GPT-6-Luna to explore the matching examples. The 20 basic and advanced menu examples focus on business decisions where these decision models are a potential great fit.
 
 ## Contents
 
@@ -123,13 +123,13 @@ Run your first decision locally with LM Studio. This path uses Local AI and does
 
 ## Basic Decision Examples
 
-The tables below show the complete Local AI menus. Basic examples match the selected API and are numbered from 1. GPT-6-Luna also runs all 12 advanced examples through the Decisions API:
+The tables below show the complete Local AI menus. Basic examples match the selected API and are numbered from 1. GPT-6-Luna also runs all 14 advanced examples through the Decisions API:
 
 | Decision provider | API and model | Basic examples | Advanced examples |
 | --- | --- | --- | --- |
-| SystemOne - Decision1 | SystemOne API on Microsoft Foundry AI, using the Decision1 deployment | 3 | 11 |
-| Local AI | SystemOne and Decisions APIs, using the local model | 6 | 12 |
-| Decisions - GPT-6-Luna | Decisions API on Microsoft Foundry AI, using the GPT-6-Luna deployment | 3 | 12 |
+| SystemOne - Decision1 | SystemOne API on Microsoft Foundry AI, using the Decision1 deployment | 3 | 13 |
+| Local AI | SystemOne and Decisions APIs, using the local model | 6 | 14 |
+| Decisions - GPT-6-Luna | Decisions API on Microsoft Foundry AI, using the GPT-6-Luna deployment | 3 | 14 |
 
 | Option | Example | What it demonstrates |
 | --- | --- | --- |
@@ -158,6 +158,14 @@ Every menu item includes its provider, for example **SystemOne API (Local AI) - 
 | 10 | SystemOne API - Sales Conversions: Bernoulli to Binomial | Predicts one prospect’s subscription probability, then calculates the count distribution for 100 independent comparable prospects and the chance of more than 30 conversions (31 or more). |
 | 11 | SystemOne API - Sales Conversions Extension: Bernoulli to Poisson-Binomial | Extends option 10 to 100 distinct prospects, using 100 isolated requests. Combines their individual conversion probabilities and compares the resulting count distribution with a Binomial using their average probability. |
 | 12 | SystemOne API - Project Completion from Task Duration Distributions | Predicts three sequential stages' duration distributions in one request, then convolves them locally to show total completion time and the chance of finishing within 20 working days, including day 20. |
+| 13 | SystemOne API - Inbound Claims Email Triage and Automated Intake | Classifies four fictional emails covering complete and incomplete notifications, document submission, and status inquiry, then applies policy to simulate provisional intake, missing-information requests, or queue routing. |
+| 14 | SystemOne API - Claim Validation and Automation Eligibility | Evaluates four fictional property claims covering eligible continuation, missing information, inconsistent facts, and a possible duplicate, then applies policy to simulate the next permitted treatment. |
+
+Local AI and GPT-6-Luna use the option numbers above. Decision1 omits the courier example and numbers the remaining examples 1–13, placing email triage at **12** and claim validation at **13**. Existing examples retain their numbers.
+
+The claims examples each contain four independent cases and an editable `policy.json`. Both require raw model confidence and selected-outcome probability of at least **90%**, including the boundary, plus a unique highest-probability selected outcome before automatic treatment is allowed. Sensitive, high-risk, uncertain-extraction, and mandatory-review flags require a human specialist. Validation also blocks automatic continuation for inconsistent facts, suspected duplicates, missing required information, unknown or non-USD amounts, and amounts above **USD 5,000**. The amount limit permits workflow continuation only; it never authorizes claim approval, denial, payment, or settlement.
+
+These examples use synthetic emails, attachment transcripts, and supplied understanding-layer snapshots. They do not connect to an inbox, perform extraction or OCR, or update a claims system. The console displays each case's model probabilities, permitted simulated action, queue, and policy reasons, then action counts after a successful run. No reports or outgoing messages are created. The thresholds and authority limit are fictional business rules, with no jurisdiction-specific regulatory assumptions.
 
 ## Run the Console Application
 
@@ -171,7 +179,7 @@ Use a terminal that supports ANSI RGB colors to display the cyan banner and gold
 
 The top-level menu includes **3) Configure**. Select **1) Show / Hide Decision JSON** to toggle the raw `Response JSON:` blocks; the menu shows the current state. JSON starts **hidden**, and each toggle is saved immediately for subsequent responses and future runs.
 
-Select **2) Decision provider** to choose the cloud options **1) (Microsoft Foundry AI) - SystemOne - Decision1** or **2) (Microsoft Foundry AI) - Decisions - GPT-6-Luna**, or **3) Local AI** (the default). Selection validates the configured endpoint, model and authentication without making an API request, then displays the model name or Foundry model deployment. Missing or invalid settings and failed saves leave the current selection unchanged. Every example states its API, provider and model before running. Basic menus show matching native API examples; GPT-6-Luna includes all 12 advanced workflows.
+Select **2) Decision provider** to choose the cloud options **1) (Microsoft Foundry AI) - SystemOne - Decision1** or **2) (Microsoft Foundry AI) - Decisions - GPT-6-Luna**, or **3) Local AI** (the default). Selection validates the configured endpoint, model and authentication without making an API request, then displays the model name or Foundry model deployment. Missing or invalid settings and failed saves leave the current selection unchanged. Every example states its API, provider and model before running. Basic menus show matching native API examples; GPT-6-Luna includes all 14 advanced workflows.
 
 Preferences are stored in `Configuration.json` in the current working folder (the repository root when using the command above). The application creates this file on first run with:
 
@@ -249,7 +257,7 @@ dotnet user-secrets list --project SystemOneDecisionsConsole/SystemOneDecisionsC
 
 ## Example files
 
-The repository-root `Decisions` folder contains **21 scenario folders** and **75 scenario assets**, grouped into Basic and Advanced categories. The menus expose **18 distinct examples**, with availability determined by the selected provider. The three original basic Foundry folders are retained for compatibility. Local and hosted SystemOne use the shared basic SystemOne assets; Local AI and GPT-6-Luna share the native Decisions basic and courier assets. The remaining advanced scenario assets are shared across all providers.
+The repository-root `Decisions` folder contains **23 scenario folders** and **85 scenario assets**, grouped into Basic and Advanced categories. The menus expose **20 distinct examples**, with availability determined by the selected provider. The three original basic Foundry folders are retained for compatibility. Local and hosted SystemOne use the shared basic SystemOne assets; Local AI and GPT-6-Luna share the native Decisions basic and courier assets. The remaining advanced scenario assets are shared across all providers. Each claims folder includes `ScenarioDescription.txt`, `input.txt`, `questions.json`, `cases.json`, and `policy.json`; all five artifacts are copied into build and publish output.
 
 | File | Purpose |
 | --- | --- |
@@ -329,7 +337,7 @@ dotnet test SystemOneDecisionsConsole.sln
 dotnet test SystemOneDecisionsConsole.sln -c Release
 ```
 
-The tests use isolated copies of the application's complete output for the active configuration and a concurrent loopback HTTP fixture. They require no configured model or API credentials. The suite runs serially, verifies console workflows and private validators, checks generated reports, and compares all 21 scenarios and 75 assets across source, build, and publish outputs, including the original PNG bytes. The migration coverage inventory is in [SystemOneDecisionConsole.Tests/Coverage.md](SystemOneDecisionConsole.Tests/Coverage.md).
+The tests use isolated copies of the application's complete output for the active configuration and a concurrent loopback HTTP fixture. They require no configured model or API credentials. The suite runs serially, verifies console workflows and private validators, checks generated reports, and compares all 23 scenarios and 85 assets across source, build, and publish outputs, including the original PNG bytes. Claims coverage includes isolated four-case workflows across providers, probability and authority boundaries, mandatory-review overrides, missing information, invalid assets and responses, and failure continuation behavior. The migration coverage inventory is in [SystemOneDecisionConsole.Tests/Coverage.md](SystemOneDecisionConsole.Tests/Coverage.md).
 
 ## Sources
 

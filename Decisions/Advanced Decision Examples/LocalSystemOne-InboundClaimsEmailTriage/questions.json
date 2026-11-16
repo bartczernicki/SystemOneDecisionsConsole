@@ -1,0 +1,13 @@
+{
+  "Claims Email Intent": {
+    "type": "choice",
+    "instructions": "Identify the primary claims-service intent of the current email using only its supplied correspondence, attachment transcripts, extracted fields, and review flags. Return the recommendation distribution over exactly these five intents. Preserve uncertainty when intent is mixed or unclear. Do not execute an intake action or make a coverage, approval, denial, or settlement decision.",
+    "criteria": {
+      "New Claim Notification": "Reports a new property-loss incident and asks to begin a claim, without an existing claim reference for that loss.",
+      "Document Submission": "Primarily supplies an invoice, estimate, form, or other supporting material for an existing claim.",
+      "Status Inquiry": "Primarily asks about an existing claim's progress, outstanding steps, or expected response.",
+      "Complaint": "Primarily expresses dissatisfaction with claims service and seeks complaint handling, investigation, or a formal response.",
+      "Unrelated Correspondence": "Concerns matters outside a property claim or claims-service interaction, such as a general sales offer."
+    }
+  }
+}

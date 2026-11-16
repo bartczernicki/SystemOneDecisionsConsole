@@ -25,6 +25,8 @@ public sealed class LunaAdvancedTests : ConsoleScenarioTestBase
     [DataRow(10, 1, "Chance of more than 30 conversions:")]
     [DataRow(11, 100, "Comparison with Shared-Probability Binomial:")]
     [DataRow(12, 1, "Chance of finishing within 20 working days:")]
+    [DataRow(13, 4, "Claims Workflow Summary:")]
+    [DataRow(14, 4, "Claims Workflow Summary:")]
     public void EveryAdvancedWorkflowUsesNativeDecisionsAndPreservesResults(int option, int requestCount, string summary)
     {
         var bodies = new List<string>();
@@ -79,6 +81,21 @@ public sealed class LunaAdvancedTests : ConsoleScenarioTestBase
             {
                 JsonNode prospect = App.ReadJson(Path.Combine(folder, prospects.ProspectsFile))[index]!;
                 Assert.AreEqual($"{sharedInput}\n\nProspect: {prospect["id"]!.GetValue<string>()} ({prospect["name"]!.GetValue<string>()})\n{prospect["evidence"]!.GetValue<string>()}", input);
+            }
+            else if (example.Claims is { } claims)
+            {
+                JsonArray cases = App.ReadJson(Path.Combine(folder, claims.CasesFile)).AsArray();
+                JsonNode current = cases[index]!;
+                AssertEx.Contains(input, $"Case ID: {current["id"]!.GetValue<string>()}\n");
+                AssertEx.Contains(input, current["sourceText"]!.GetValue<string>());
+                foreach (JsonNode? attachment in current["attachments"]!.AsArray())
+                {
+                    AssertEx.Contains(input, attachment!["fileName"]!.GetValue<string>());
+                    AssertEx.Contains(input, attachment["text"]!.GetValue<string>());
+                }
+                for (int other = 0; other < cases.Count; other++)
+                    if (other != index)
+                        AssertEx.DoesNotContain(input, $"Case ID: {cases[other]!["id"]!.GetValue<string>()}\n");
             }
             else if (example.Evaluation is null) Assert.AreEqual(sharedInput, input);
         }

@@ -1,0 +1,12 @@
+{
+  "Claim Treatment": {
+    "type": "choice",
+    "instructions": "Evaluate only the current supplied property-claim record and recommend one of the four bounded treatments with its probability distribution. Consider completeness, internal consistency, possible duplication, review flags, and uncertainty. This is a processing recommendation subject to a separate deterministic policy. Do not decide coverage or approve, deny, pay, or settle the claim.",
+    "criteria": {
+      "Continue Workflow": "The supplied record is complete and internally consistent, without a possible duplicate or specialist-review concern, and is suitable for the next routine processing stage subject to deterministic policy checks.",
+      "Request Additional Information": "Specific claim details or supporting information are missing and should be obtained before routine continuation, without assuming the missing facts.",
+      "Duplicate Review": "The supplied facts indicate a possible duplicate or overlapping report that requires human comparison before continuation; do not treat it as confirmed duplication or reject it automatically.",
+      "Specialist Review": "Inconsistent, sensitive, high-risk, mandatory-review, or otherwise exceptional circumstances require an authorized human rather than routine continuation."
+    }
+  }
+}

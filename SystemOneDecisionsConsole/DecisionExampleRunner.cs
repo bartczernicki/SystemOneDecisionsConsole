@@ -53,7 +53,8 @@ internal sealed record DecisionExample(string Label, string Folder, DecisionApi 
     IReadOnlyList<DecisionFrame>? Frames = null, DecisionBinaryEvaluation? Evaluation = null,
     DecisionTaskClassification? Tasks = null, DecisionExplorationExploitation? ExplorationExploitation = null,
     IReadOnlyList<DecisionImageCase>? ImageCases = null, DecisionBinomial? Binomial = null,
-    DecisionPoissonBinomial? PoissonBinomial = null, DecisionProjectCompletion? ProjectCompletion = null);
+    DecisionPoissonBinomial? PoissonBinomial = null, DecisionProjectCompletion? ProjectCompletion = null,
+    DecisionClaimsWorkflow? Claims = null);
 
 internal sealed partial class DecisionExampleRunner(HttpClient httpClient, ConsoleConfiguration configuration)
 {
@@ -134,7 +135,15 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
                     { ["5 working days"] = 5, ["8 working days"] = 8, ["11 working days"] = 11 }),
                 new("Testing and Release Duration", new Dictionary<string, int>
                     { ["2 working days"] = 2, ["4 working days"] = 4, ["6 working days"] = 6 })
-            ], 20))
+            ], 20)),
+        new("Inbound Claims Email Triage and Automated Intake",
+            Path.Combine("Advanced Decision Examples", "LocalSystemOne-InboundClaimsEmailTriage"),
+            DecisionApi.SystemOne, "choice", Claims: new(ClaimsWorkflow.EmailIntake,
+                "Claims Email Intent", "cases.json", "policy.json", 4)),
+        new("Claim Validation and Automation Eligibility",
+            Path.Combine("Advanced Decision Examples", "LocalSystemOne-ClaimValidationAutomationEligibility"),
+            DecisionApi.SystemOne, "choice", Claims: new(ClaimsWorkflow.Validation,
+                "Claim Treatment", "cases.json", "policy.json", 4))
     ];
 
     internal IReadOnlyList<DecisionExample> GetExamples(IReadOnlyList<DecisionExample> examples, bool advanced = false) =>
@@ -164,6 +173,10 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
         string? responseBody = null;
         try
         {
+            if (example.Claims is not null)
+            {
+                ValidateClaimsMetadata(example);
+            }
             if (example.ProjectCompletion is not null)
             {
                 ValidateProjectCompletionMetadata(example);
@@ -203,6 +216,11 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
             string folder = Path.Combine(AppContext.BaseDirectory, "Decisions", example.Folder);
             DisplayTextSection("Scenario Description:", await ReadTextAsync(folder, "ScenarioDescription.txt"),
                 ConsoleColor.Magenta, "\u001b[38;2;255;128;224m");
+            if (example.Claims is not null)
+            {
+                await RunClaimsAsync(example, folder, connection);
+                return;
+            }
             if (example.ProjectCompletion is not null)
             {
                 await RunProjectCompletionAsync(example, folder, connection);

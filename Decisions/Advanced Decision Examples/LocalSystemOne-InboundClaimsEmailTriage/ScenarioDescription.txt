@@ -1,0 +1,7 @@
+Inbound Claims Email Triage and Automated Intake
+
+Four fictional emails demonstrate claims intake using supplied email text, attachment transcripts, and extracted facts.
+A decision model assigns probabilities to five intents: new claim notification, document submission, status inquiry, complaint, or unrelated correspondence.
+A policy requires at least 90% for both confidence and selected-intent probability to simulate provisional claim creation, requests for missing information, or queue routing.
+Ambiguous messages and sensitive, high-risk, or mandatory-review cases go to human review.
+The console shows the model's probabilities, permitted action, and policy reasons; all actions are simulated.
