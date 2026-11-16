@@ -14,7 +14,6 @@ A .NET Console application demonstrating (Jev-like) AI decisions through the Sys
 - [User Secrets](#user-secrets-for-local-apis-and-microsoft-foundry)
 - [Example files](#example-files)
 - [JSON formats](#json-formats)
-- [Build and publish](#build-and-publish)
 - [Validation](#validation)
 - [Sources](#sources)
 
@@ -337,13 +336,6 @@ The courier example uses a typed multimodal request instead of a string `input` 
 }
 ```
 
-## Build and publish
-
-```sh
-dotnet build SystemOneDecisionsConsole.sln
-dotnet publish SystemOneDecisionsConsole/SystemOneDecisionsConsole.csproj -c Release -o ./publish
-```
-
 ## Validation
 
 The solution includes the application and the native MSTest 4.0.2 project, `SystemOneDecisionConsole.Tests`, targeting .NET 11 with the standard VSTest runner. Run the functionality tests in either configuration:
@@ -357,7 +349,7 @@ The tests use isolated copies of the application's complete output for the activ
 
 ## Sources
 
+- Work queue: Bart Czernicki's [Decision Intelligence with AI, Chapter 1A](https://www.decisionintelligencebook.ai/chapters/1a-introducing-the-decision-intelligence-framework.html).
 - Customer data: [UCI Bank Marketing](https://archive.ics.uci.edu/dataset/222/bank+marketing) by S. Moro, P. Rita, and P. Cortez, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Decision framing: [De Bono Group's Six Thinking Hats](https://www.debonogroup.com/services/core-programs/six-thinking-hats/).
-- Work queue: Bart Czernicki's [Decision Intelligence with AI, Chapter 1A](https://www.decisionintelligencebook.ai/chapters/1a-introducing-the-decision-intelligence-framework.html).
 - Restaurant exploration/exploitation: Bart Czernicki's [Decision Intelligence with AI, Chapter 1F](https://www.decisionintelligencebook.ai/chapters/1f-decision-execution-with-decision-rules.html).
