@@ -225,12 +225,6 @@ The project has a `UserSecretsId` configured and loads these settings with `Micr
 | Decisions - GPT-6-Luna | `AzureOpenAIGPT6LunaModelDeploymentName` | Required | Your GPT-6-Luna deployment name. |
 | Decisions - GPT-6-Luna | `MicrosoftFoundryDecisionsAPIKey` | Required unless using the shared key fallback | The dedicated API key accepted by `MicrosoftFoundryDecisionsAPI`. |
 
-GPT-6-Luna sends requests directly to `MicrosoftFoundryDecisionsAPI`, preserving its configured path and query string. Set the full Decisions operation URL for your supported-region deployment or gateway route. This setting is required for GPT-6-Luna and is independent of `MicrosoftFoundrySystemOneAPI`. The request's `model` is the configured deployment name for the selected backend. SystemOne uses `MicrosoftFoundryAPIKey`; Decisions uses `MicrosoftFoundryDecisionsAPIKey` when present, otherwise `MicrosoftFoundryAPIKey`. A direct Azure resource endpoint requires that resource's key; a gateway key can return HTTP 401 there. Credentials remain in User Secrets or environment variables.
-
-Environment variables with these exact names override User Secrets. A configured but blank or invalid `MicrosoftFoundryDecisionsAPIKey` fails validation; the shared key fallback applies only when the dedicated setting is absent.
-
-The gateway and its Azure backend must support the Decisions operation. Microsoft's [Azure Decisions guide](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/decisions) describes a regional rollout and excludes East US 2. A GPT-6-Luna deployment alone does not establish that the operation is available; unsupported operations are reported as API errors.
-
 Run the commands for your selected provider from the repository root, replacing placeholders with your own values.
 
 For **Decisions - GPT-6-Luna**, set the three Luna secrets. Use the key for the resource or gateway named in the Decisions URL:
