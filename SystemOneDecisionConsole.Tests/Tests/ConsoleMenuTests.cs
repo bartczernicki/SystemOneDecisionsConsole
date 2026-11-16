@@ -71,7 +71,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
         if (foundry) SetProvider("SystemOneDecision1");
         int menuOption = App.MenuOption(2, option);
         string input = foundry
-            ? $"2\n {menuOption} \n\n0\n3\n2\n2\n0\n2\n1\n\n0\n3\n2\n1\n0\n2\n{menuOption}\n\n0\n0\n"
+            ? $"2\n {menuOption} \n\n0\n3\n2\n3\n0\n2\n1\n\n0\n3\n2\n1\n0\n2\n{menuOption}\n\n0\n0\n"
             : $"2\n {option} \n\n1\n\n{option}\n\n0\n0\n";
         string text = Run(input, timeout: 60); NotContains(text, "Error:");
         Assert.AreEqual(stageCount * 2 + 1, Server.Requests.Count);
@@ -125,7 +125,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
             if (index == 2) response["answers"]!["Dining Strategy"]!["choice"] = "Exploit";
             return FixtureResponse.Json(response);
         };
-        string text = Run("2\n 8 \n\n0\n3\n2\n2\n0\n2\n1\n\n0\n3\n2\n1\n0\n2\n8\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
+        string text = Run("2\n 8 \n\n0\n3\n2\n3\n0\n2\n1\n\n0\n3\n2\n1\n0\n2\n8\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
         JsonObject expected = ExpectedAdvancedPayloads(9)[0];
         EqualJson(expected, Server.Requests[0].Payload);
         EqualJson(expected, Server.Requests[2].Payload);

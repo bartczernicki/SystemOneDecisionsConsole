@@ -31,7 +31,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     private static string ModelDescription(string provider, string? model = null) => provider == Local
         ? $"Model: {model ?? TestSupport.LocalModel}"
         : $"Model deployment: {model ?? (provider == Luna ? TestSupport.LunaModel : TestSupport.FoundryModel)}";
-    private static string ProviderInput(string provider) => $"3\n2\n{(provider == Foundry ? 1 : provider == Local ? 2 : 3)}\n";
+    private static string ProviderInput(string provider) => $"3\n2\n{(provider == Foundry ? 1 : provider == Luna ? 2 : 3)}\n";
     private static string BasicStep(int originalOption, string provider) =>
         $"{TestSupport.MenuOption(1, originalOption, provider)}\n\n";
 
@@ -176,9 +176,9 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
 
         string text = Run(ProviderInput(provider) + "0\n0\n");
 
-        AssertEx.Contains(text, "1) SystemOne - Decision1");
-        AssertEx.Contains(text, "2) Local AI");
-        AssertEx.Contains(text, "3) Decisions - GPT-6-Luna");
+        AssertEx.Contains(text, "1) (Microsoft Foundry AI) - SystemOne - Decision1");
+        AssertEx.Contains(text, "2) (Microsoft Foundry AI) - Decisions - GPT-6-Luna");
+        AssertEx.Contains(text, "3) Local AI");
         AssertEx.Contains(text, $"{(provider == Luna ? "Decisions" : "SystemOne")} API provider: {ConnectionProviderLabel(provider)}");
         AssertEx.Contains(text, ModelDescription(provider));
         AssertEx.Contains(text, $"2) Decision provider (currently {ProviderLabel(provider)})");
@@ -257,9 +257,9 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
         AssertEx.Count(text, "Please enter", 4);
         AssertEx.Count(text, "1) Basic Decision Examples", 2);
         AssertEx.Count(text, "2) Decision provider (currently Local AI)", 2);
-        AssertEx.Contains(text, "1) SystemOne - Decision1");
-        AssertEx.Contains(text, "2) Local AI");
-        AssertEx.Contains(text, "3) Decisions - GPT-6-Luna");
+        AssertEx.Contains(text, "1) (Microsoft Foundry AI) - SystemOne - Decision1");
+        AssertEx.Contains(text, "2) (Microsoft Foundry AI) - Decisions - GPT-6-Luna");
+        AssertEx.Contains(text, "3) Local AI");
         AssertEx.DoesNotContain(text, "Error:");
         Assert.AreEqual(Local, SavedProvider());
         Assert.AreEqual(0, Server.Requests.Count);

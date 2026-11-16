@@ -118,7 +118,7 @@ Run your first decision locally with LM Studio. This path uses Local AI and does
    dotnet run --project SystemOneDecisionsConsole
    ```
 
-5. **Try the first example.** Select **1) Basic Decision Examples**, then **1) SystemOne API (Local AI) - Choice**. Local AI is the default on first run. To select it again, use **3) Configure → 2) Decision provider → 2) Local AI**, then return to the main menu.
+5. **Try the first example.** Select **1) Basic Decision Examples**, then **1) SystemOne API (Local AI) - Choice**. Local AI is the default on first run. To select it again, use **3) Configure → 2) Decision provider → 3) Local AI**, then return to the main menu.
 
    A successful response shows your provider and model, a department recommendation (normally **Billing** for the duplicate-charge complaint), confidence, and probability bars for Billing, Technical, and Shipping. The model's recommendation and probabilities can vary. Press **Enter** to return to the menu.
 
@@ -182,7 +182,7 @@ Use a terminal that supports ANSI RGB colors to display the cyan banner and gold
 
 The top-level menu includes **3) Configure**. Select **1) Show / Hide Decision JSON** to toggle the raw `Response JSON:` blocks; the menu shows the current state. JSON starts **hidden**, and each toggle is saved immediately for subsequent responses and future runs.
 
-Select **2) Decision provider** to choose **1) SystemOne - Decision1**, **2) Local AI** (the default), or **3) Decisions - GPT-6-Luna**. Selection validates the configured endpoint, model and authentication without making an API request, then displays the model name or Foundry model deployment. Missing or invalid settings and failed saves leave the current selection unchanged. Every example states its API, provider and model before running. Basic menus show matching native API examples; GPT-6-Luna includes all 12 advanced workflows.
+Select **2) Decision provider** to choose the cloud options **1) (Microsoft Foundry AI) - SystemOne - Decision1** or **2) (Microsoft Foundry AI) - Decisions - GPT-6-Luna**, or **3) Local AI** (the default). Selection validates the configured endpoint, model and authentication without making an API request, then displays the model name or Foundry model deployment. Missing or invalid settings and failed saves leave the current selection unchanged. Every example states its API, provider and model before running. Basic menus show matching native API examples; GPT-6-Luna includes all 12 advanced workflows.
 
 Preferences are stored in `Configuration.json` in the current working folder (the repository root when using the command above). The application creates this file on first run with:
 
