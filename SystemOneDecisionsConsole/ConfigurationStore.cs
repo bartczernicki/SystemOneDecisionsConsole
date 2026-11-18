@@ -27,9 +27,19 @@ internal sealed class ConfigurationStore(string path)
             throw new JsonException("Configuration.json must contain a JSON object.");
         }
         var loaded = root.Deserialize<ConsoleConfiguration>(JsonOptions)!;
+        if (root.TryGetProperty("DecisionProvider", out JsonElement providerElement) &&
+            (providerElement.ValueKind != JsonValueKind.String ||
+             !Enum.GetNames<DecisionProvider>().Contains(providerElement.GetString(), StringComparer.OrdinalIgnoreCase)))
+        {
+            throw new JsonException("Unknown DecisionProvider value.");
+        }
         if (!Enum.IsDefined(loaded.DecisionProvider))
         {
             throw new JsonException("Unknown DecisionProvider value.");
+        }
+        if (loaded.DecisionProvider == DecisionProvider.SystemOneDecision1)
+        {
+            loaded.DecisionProvider = DecisionProvider.DecisionsDecision11;
         }
         if (!root.TryGetProperty("DecisionProvider", out _) &&
             root.TryGetProperty("SystemOneProvider", out JsonElement legacyProvider))
@@ -38,7 +48,7 @@ internal sealed class ConfigurationStore(string path)
             loaded.DecisionProvider = legacy switch
             {
                 string value when value.Equals("LocalAI", StringComparison.OrdinalIgnoreCase) => DecisionProvider.LocalAI,
-                string value when value.Equals("MicrosoftFoundryAI", StringComparison.OrdinalIgnoreCase) => DecisionProvider.SystemOneDecision1,
+                string value when value.Equals("MicrosoftFoundryAI", StringComparison.OrdinalIgnoreCase) => DecisionProvider.DecisionsDecision11,
                 _ => throw new JsonException("Unknown legacy SystemOneProvider value.")
             };
         }

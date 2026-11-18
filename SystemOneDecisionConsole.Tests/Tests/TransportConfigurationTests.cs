@@ -8,6 +8,7 @@ public sealed class TransportConfigurationTests : BasicTestBase
 {
     [TestMethod]
     [DataRow("SystemOneDecision1")]
+    [DataRow("DecisionsDecision11")]
     [DataRow("DecisionsGPT6Luna")]
     public void FoundryAuthenticationDoesNotLeakIntoSubsequentLocalCalls(string provider)
     {
@@ -22,11 +23,11 @@ public sealed class TransportConfigurationTests : BasicTestBase
     [DataRow("MicrosoftFoundryDecisionsAPI", "   ")]
     [DataRow("MicrosoftFoundryDecisionsAPI", "not-an-endpoint")]
     [DataRow("MicrosoftFoundryDecisionsAPI", "ftp://fixture.invalid/decisions")]
-    [DataRow("AzureOpenAIGPT6LunaModelDeploymentName", "")]
-    [DataRow("AzureOpenAIGPT6LunaModelDeploymentName", "   ")]
-    [DataRow("MicrosoftFoundryDecisionsAPIKey", "")]
-    [DataRow("MicrosoftFoundryDecisionsAPIKey", "   ")]
-    [DataRow("MicrosoftFoundryDecisionsAPIKey", "private-invalid-header\ninvalid")]
+    [DataRow("MicrosoftFoundryOpenAIModelDeploymentName", "")]
+    [DataRow("MicrosoftFoundryOpenAIModelDeploymentName", "   ")]
+    [DataRow("MicrosoftFoundryAPIKey", "")]
+    [DataRow("MicrosoftFoundryAPIKey", "   ")]
+    [DataRow("MicrosoftFoundryAPIKey", "private-invalid-header\ninvalid")]
     public void InvalidLunaConfigurationFailsBeforeAnyRequest(string setting, string value)
     {
         SetProvider("DecisionsGPT6Luna");

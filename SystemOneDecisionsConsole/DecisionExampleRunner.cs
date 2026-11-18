@@ -150,13 +150,20 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
         examples.Where(example => configuration.DecisionProvider switch
         {
             DecisionProvider.LocalAI => true,
-            DecisionProvider.SystemOneDecision1 => example.Api == DecisionApi.SystemOne,
+            DecisionProvider.DecisionsDecision11 => example.Api == DecisionApi.SystemOne || example.ImageCases is not null,
             DecisionProvider.DecisionsGPT6Luna => advanced || example.Api == DecisionApi.Decisions,
             _ => throw new InvalidDataException("Unknown decision provider.")
         }).ToArray();
 
+    private DecisionApi GetApi(DecisionExample example) => configuration.DecisionProvider switch
+    {
+        DecisionProvider.DecisionsGPT6Luna => DecisionApi.Decisions,
+        DecisionProvider.DecisionsDecision11 when example.ImageCases is not null => DecisionApi.SystemOne,
+        _ => example.Api
+    };
+
     internal string GetLabel(DecisionExample example) =>
-        $"{(example.Api == DecisionApi.Decisions || configuration.DecisionProvider == DecisionProvider.DecisionsGPT6Luna ? "Decisions API" : "SystemOne API")} " +
+        $"{(GetApi(example) == DecisionApi.Decisions ? "Decisions API" : "SystemOne API")} " +
         $"({(configuration.DecisionProvider == DecisionProvider.LocalAI ? "Local AI" : "Microsoft Foundry AI")}) - {example.Label}";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -209,8 +216,7 @@ internal sealed partial class DecisionExampleRunner(HttpClient httpClient, Conso
             {
                 ValidateFrameMetadata(example);
             }
-            DecisionApi api = configuration.DecisionProvider == DecisionProvider.DecisionsGPT6Luna
-                ? DecisionApi.Decisions : example.Api;
+            DecisionApi api = GetApi(example);
             DecisionConnection connection = DecisionConnectionResolver.Resolve(api, configuration.DecisionProvider);
             connection.WriteDescription();
             string folder = Path.Combine(AppContext.BaseDirectory, "Decisions", example.Folder);

@@ -13,6 +13,7 @@ public static class TestSupport
     public const string FoundryModel = "console-test-foundry-deployment";
     public const string LunaPath = "/global-luna/openai/v1/decisions?api-version=luna-fixture";
     public const string LunaModel = "console-test-luna-deployment";
+    public const string Decision11Model = FoundryModel;
     public const string FoundryKey = "console-test-foundry-key-do-not-print";
     public static readonly string[] BasicFolderNames = ["LocalSystemOne-Choice", "LocalSystemOne-YesNo", "LocalSystemOne-Score",
         "LocalDecisions-Choice", "LocalDecisions-YesNo", "LocalDecisions-Score"];
@@ -25,7 +26,6 @@ public static class TestSupport
     public static int MenuOption(int category, int option, string provider) => (category, provider) switch
     {
         (1, "DecisionsGPT6Luna") => option - 3,
-        (2, "SystemOneDecision1" or "MicrosoftFoundryAI") when option > 5 => option - 1,
         _ => option
     };
     public static string BasicInput(int option, string provider = "LocalAI") => $"1\n{MenuOption(1, option, provider)}\n\n0\n0\n";

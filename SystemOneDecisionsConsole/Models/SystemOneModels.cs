@@ -10,6 +10,9 @@ internal sealed class SystemOneRequest
     [JsonPropertyName("state")]
     public required string State { get; init; }
 
+    [JsonPropertyName("images")]
+    public IReadOnlyList<string>? Images { get; init; }
+
     [JsonPropertyName("questions")]
     public required Dictionary<string, SystemOneQuestion> Questions { get; init; }
 }

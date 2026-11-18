@@ -119,9 +119,8 @@ public sealed class ConsoleFixture : IDisposable
             ["MicrosoftFoundrySystemOneAPI"] = server.BaseUrl + TestSupport.FoundryPath,
             ["MicrosoftFoundryDecisionsAPI"] = server.BaseUrl + TestSupport.LunaPath,
             ["MicrosoftFoundryDecisionModelDeploymentName"] = TestSupport.FoundryModel,
-            ["AzureOpenAIGPT6LunaModelDeploymentName"] = TestSupport.LunaModel,
+            ["MicrosoftFoundryOpenAIModelDeploymentName"] = TestSupport.LunaModel,
             ["MicrosoftFoundryAPIKey"] = TestSupport.FoundryKey,
-            ["MicrosoftFoundryDecisionsAPIKey"] = TestSupport.FoundryKey
         }) start.Environment[entry.Key] = entry.Value;
         if (overrides is not null)
             foreach (var entry in overrides) start.Environment[entry.Key] = entry.Value;

@@ -127,7 +127,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
             if (index == 2) response["answers"]!["Dining Strategy"]!["choice"] = "Exploit";
             return FixtureResponse.Json(response);
         };
-        string text = Run("2\n 8 \n\n0\n3\n2\n3\n0\n2\n1\n\n0\n3\n2\n1\n0\n2\n8\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
+        string text = Run("2\n 9 \n\n0\n3\n2\n3\n0\n2\n1\n\n0\n3\n2\n1\n0\n2\n9\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
         JsonObject expected = ExpectedAdvancedPayloads(9)[0];
         EqualJson(expected, Server.Requests[0].Payload);
         EqualJson(expected, Server.Requests[2].Payload);
@@ -147,8 +147,9 @@ public sealed class ConsoleMenuTests : BasicTestBase
     }
 
     [TestMethod]
-    [DataRow("SystemOneDecision1", 4, 14, "Please enter 0, 1, 2, or 3", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, or 13")]
+    [DataRow("SystemOneDecision1", 4, 15, "Please enter 0, 1, 2, or 3", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, or 14")]
     [DataRow("DecisionsGPT6Luna", 4, 15, "Please enter 0, 1, 2, or 3", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, or 14")]
+    [DataRow("DecisionsDecision11", 4, 15, "Please enter 0, 1, 2, or 3", "Please enter 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, or 14")]
     public void FilteredMenusValidateTheirOwnRangesWithoutRequests(string provider, int invalidBasic,
         int invalidAdvanced, string basicMessage, string advancedMessage)
     {
@@ -165,6 +166,8 @@ public sealed class ConsoleMenuTests : BasicTestBase
     [DataRow("SystemOneDecision1", "2\n")]
     [DataRow("DecisionsGPT6Luna", "1\n")]
     [DataRow("DecisionsGPT6Luna", "2\n")]
+    [DataRow("DecisionsDecision11", "1\n")]
+    [DataRow("DecisionsDecision11", "2\n")]
     public void FilteredMenusEndOfInputTerminatesCleanly(string provider, string input)
     {
         SetProvider(provider);

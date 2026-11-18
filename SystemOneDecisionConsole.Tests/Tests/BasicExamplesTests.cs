@@ -12,13 +12,14 @@ public sealed class BasicExamplesTests : BasicTestBase
     [DataRow("LocalAI")]
     [DataRow("SystemOneDecision1")]
     [DataRow("DecisionsGPT6Luna")]
+    [DataRow("DecisionsDecision11")]
     public void SelectedExamplesPreserveWireContractsRenderingAndMenuContinuation(string provider)
     {
         SetProvider(provider);
         bool useFoundry = provider != "LocalAI";
         int[] options = provider switch
         {
-            "SystemOneDecision1" => [1, 2, 3],
+            "SystemOneDecision1" or "DecisionsDecision11" => [1, 2, 3],
             "DecisionsGPT6Luna" => [4, 5, 6],
             _ => [1, 2, 3, 4, 5, 6]
         };

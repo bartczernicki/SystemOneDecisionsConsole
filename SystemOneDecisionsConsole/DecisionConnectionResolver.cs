@@ -33,7 +33,7 @@ internal static class DecisionConnectionResolver
         {
             (DecisionApi.SystemOne, DecisionProvider.LocalAI) => DecisionBackend.LocalSystemOne,
             (DecisionApi.Decisions, DecisionProvider.LocalAI) => DecisionBackend.LocalDecisions,
-            (DecisionApi.SystemOne, DecisionProvider.SystemOneDecision1) => DecisionBackend.FoundrySystemOne,
+            (DecisionApi.SystemOne, DecisionProvider.DecisionsDecision11) => DecisionBackend.FoundrySystemOne,
             (DecisionApi.Decisions, DecisionProvider.DecisionsGPT6Luna) => DecisionBackend.FoundryDecisions,
             _ => throw new InvalidDataException("The selected decision provider does not support this API.")
         };
@@ -55,11 +55,12 @@ internal static class DecisionConnectionResolver
         string? apiKey = null;
         if (backend is DecisionBackend.FoundrySystemOne or DecisionBackend.FoundryDecisions)
         {
-            model = GetRequiredSetting(settings, backend == DecisionBackend.FoundryDecisions
-                ? "AzureOpenAIGPT6LunaModelDeploymentName" : "MicrosoftFoundryDecisionModelDeploymentName");
-            string apiKeySetting = backend == DecisionBackend.FoundryDecisions &&
-                GetSetting(settings, "MicrosoftFoundryDecisionsAPIKey") is not null
-                ? "MicrosoftFoundryDecisionsAPIKey" : "MicrosoftFoundryAPIKey";
+            model = backend switch
+            {
+                DecisionBackend.FoundryDecisions => GetRequiredSetting(settings, "MicrosoftFoundryOpenAIModelDeploymentName"),
+                _ => GetRequiredSetting(settings, "MicrosoftFoundryDecisionModelDeploymentName")
+            };
+            const string apiKeySetting = "MicrosoftFoundryAPIKey";
             apiKey = GetRequiredSetting(settings, apiKeySetting);
             using var message = new HttpRequestMessage();
             try

@@ -24,7 +24,7 @@ Latest functionality validation: **881 passed, 0 failed, 0 skipped** in Debug. D
 
 ## Claims scenario extensions
 
-The historical migration figures above describe the retired suite and its parity baseline. Current menu and publishing coverage additionally includes the two four-case claims workflows: Inbound Claims Email Triage and Automated Intake, and Claim Validation and Automation Eligibility. These append as options 12–13 for Decision1 and 13–14 for Local AI and GPT-6-Luna.
+The historical migration figures above describe the retired suite and its parity baseline. Current menu and publishing coverage additionally includes the two four-case claims workflows: Inbound Claims Email Triage and Automated Intake, and Claim Validation and Automation Eligibility. These are options 13–14 for Decision-1.1, Local AI, and GPT-6-Luna.
 
 `ConsoleMenuTests` covers the expanded menu ranges, completion, and end-of-input behavior. `SystemOneProviderTests` runs all four requests per scenario through both local and hosted SystemOne connections; `LunaAdvancedTests` checks native Decisions conversion, authentication, and current-case input isolation. The email cases cover complete and incomplete notifications, document submission, and status inquiry; the validation cases cover eligible continuation, missing information, inconsistent facts, and a possible duplicate. The shared fixture supplies deterministic claims distributions without adding expected outcomes to scenario assets. `PublishingTests` verifies all **23 scenario folders and 85 assets** across source, build, isolated runtime, and published output, retaining byte identity for every asset.
 

@@ -19,10 +19,28 @@ public sealed class CourierTests : ConsoleScenarioTestBase
     private string Folder => App.Folder(Advanced, FolderName);
     private JsonNode Questions => App.ReadJson(Path.Combine(Folder, "questions.json"));
     private string Policy => File.ReadAllText(Path.Combine(Folder, "input.txt")).Trim();
+    private JsonObject SystemOneQuestions()
+    {
+        var result = new JsonObject();
+        foreach (JsonNode? question in Questions.AsArray())
+        {
+            var criteria = new JsonObject();
+            foreach (JsonNode? choice in question!["choices"]!.AsArray())
+                criteria[S(choice!["value"])] = choice["description"]?.DeepClone();
+            result[S(question["name"])] = new JsonObject
+            {
+                ["type"] = "choice",
+                ["instructions"] = S(question["instructions"]),
+                ["criteria"] = criteria
+            };
+        }
+        return result;
+    }
 
     [TestInitialize]
     public void Responses() => Server.Responder = (request, _) => FixtureResponse.Json(
-        request.Path == "/v1/systemone" ? FootballTests.Answers(request.Payload) : Answers(request.Payload));
+        request.Payload["images"] is JsonArray ? SystemOneAnswers(request.Payload) :
+            request.Path == "/v1/systemone" ? FootballTests.Answers(request.Payload) : Answers(request.Payload));
 
     internal static JsonNode Answers(JsonObject payload, int? caseIndex = null)
     {
@@ -52,25 +70,67 @@ public sealed class CourierTests : ConsoleScenarioTestBase
         return new JsonObject { ["model"] = S(payload["model"]), ["answers"] = answers };
     }
 
+    internal static JsonNode SystemOneAnswers(JsonObject payload, int? caseIndex = null)
+    {
+        int package = caseIndex ?? (S(payload["state"]).Contains("Package: Package B", StringComparison.Ordinal) ? 1 : 0);
+        var answers = new JsonObject();
+        int index = 0;
+        foreach ((string name, JsonNode? question) in payload["questions"]!.AsObject())
+        {
+            string selected = Selected[package][index];
+            double probability = .72 + index * .02 + package * .01;
+            var probabilities = new JsonObject();
+            foreach (string value in question!["criteria"]!.AsObject().Select(pair => pair.Key))
+                probabilities[value] = value == selected ? probability : (1 - probability) / 2;
+            answers[name] = new JsonObject
+            {
+                ["type"] = "choice",
+                ["choice"] = selected,
+                ["confidence"] = .61 + index * .03 + package * .01,
+                ["probabilities"] = probabilities
+            };
+            index++;
+        }
+        return new JsonObject { ["model"] = S(payload["model"]), ["answers"] = answers };
+    }
+
     private void Requests(string model = LocalModel, string provider = "LocalAI")
     {
         Assert.AreEqual(2, Server.Requests.Count);
         for (int index = 0; index < 2; index++)
         {
             RequestRecord request = Server.Requests[index];
-            Assert.AreEqual(provider == "DecisionsGPT6Luna" ? TestSupport.LunaPath : "/v1/decisions", request.Path);
-            Sequence(new[] { "model", "input", "questions" }.Order(), Keys(request.Payload).Order());
-            Assert.AreEqual(model, S(request.Payload["model"])); JsonEqual(Questions, request.Payload["questions"]);
-            JsonNode message = request.Payload["input"]![0]!;
-            Assert.AreEqual(1, request.Payload["input"]!.AsArray().Count);
-            Sequence(new[] { "content", "role" }, Keys(message).Order()); Assert.AreEqual("user", S(message["role"]));
-            JsonArray content = message["content"]!.AsArray(); Assert.AreEqual(2, content.Count);
-            JsonEqual(new JsonObject { ["type"] = "input_text", ["text"] = $"Package: Package {"AB"[index]}\n\n{Policy}" }, content[0]);
-            Sequence(new[] { "image_url", "type" }, Keys(content[1]!).Order()); Assert.AreEqual("input_image", S(content[1]!["type"]));
-            string data = S(content[1]!["image_url"]); Must(data.StartsWith("data:image/png;base64,"));
+            string data;
+            string packageText;
+            if (provider == "DecisionsDecision11")
+            {
+                Assert.AreEqual(TestSupport.FoundryPath, request.Path);
+                Sequence(new[] { "images", "model", "questions", "state" }.Order(), Keys(request.Payload).Order());
+                packageText = S(request.Payload["state"]);
+                Assert.AreEqual($"Package: Package {"AB"[index]}\n\n{Policy}", packageText);
+                JsonEqual(SystemOneQuestions(), request.Payload["questions"]);
+                Assert.AreEqual(1, request.Payload["images"]!.AsArray().Count);
+                data = S(request.Payload["images"]![0]);
+            }
+            else
+            {
+                Assert.AreEqual(provider == "LocalAI" ? "/v1/decisions" : TestSupport.LunaPath, request.Path);
+                Sequence(new[] { "model", "input", "questions" }.Order(), Keys(request.Payload).Order());
+                JsonEqual(Questions, request.Payload["questions"]);
+                JsonNode message = request.Payload["input"]![0]!;
+                Assert.AreEqual(1, request.Payload["input"]!.AsArray().Count);
+                Sequence(new[] { "content", "role" }, Keys(message).Order()); Assert.AreEqual("user", S(message["role"]));
+                JsonArray content = message["content"]!.AsArray(); Assert.AreEqual(2, content.Count);
+                JsonEqual(new JsonObject { ["type"] = "input_text", ["text"] = $"Package: Package {"AB"[index]}\n\n{Policy}" }, content[0]);
+                Sequence(new[] { "image_url", "type" }, Keys(content[1]!).Order()); Assert.AreEqual("input_image", S(content[1]!["type"]));
+                packageText = S(content[0]!["text"]);
+                data = S(content[1]!["image_url"]);
+            }
+            Assert.AreEqual(model, S(request.Payload["model"]));
+            Must(data.StartsWith("data:image/png;base64,"));
             CollectionAssert.AreEqual(File.ReadAllBytes(Path.Combine(App.SourceRoot, "Decisions", Advanced, FolderName, Images[index])), Convert.FromBase64String(data[(data.IndexOf(',') + 1)..]));
-            Not(S(content[0]!["text"]), "Valid Courier"); Not(S(content[0]!["text"]), "Invalid Courier");
-            if (provider == "DecisionsGPT6Luna") FoundryHeaders(request);
+            Not(packageText, "Valid Courier"); Not(packageText, "Invalid Courier");
+            if (provider != "LocalAI") FoundryHeaders(request);
             else LocalHeaders(request);
         }
         Assert.AreEqual(1, Server.MaximumActiveRequests);
@@ -80,14 +140,29 @@ public sealed class CourierTests : ConsoleScenarioTestBase
         string[] sections = Sections(text, @"^Image case \d+ of 2: Package [AB]$", "Press Enter to return to the menu:");
         Assert.AreEqual(2, sections.Length); Has(sections[0], "Image case 1 of 2: Package A"); Has(sections[1], "Image case 2 of 2: Package B"); return sections;
     }
-    private static void CaseOutput(string section, JsonNode response)
+    private static void CaseOutput(string section, JsonNode response, bool systemOne = false)
     {
         Not(section, "Error:"); Assert.AreEqual(1, Timing.Matches(section).Count); Assert.AreEqual(1, Count(section, "Response JSON:\n"));
-        JsonArray answers = response["answers"]!.AsArray();
-        Sequence(answers.Select((answer, index) => $"{index + 1}) {S(answer!["name"])}: {S(answer["choice"])}"), Regex.Matches(section, @"^\d+\) [^\n]+$", RegexOptions.Multiline).Select(match => match.Value));
-        Sequence(answers.Select(answer => $"Confidence: {F(100 * N(answer!["confidence"]))} %"), Regex.Matches(section, @"^Confidence: [^\n]+$", RegexOptions.Multiline).Select(match => match.Value));
+        (string Name, JsonNode Answer)[] answers = systemOne
+            ? response["answers"]!.AsObject().Select(pair => (pair.Key, pair.Value!)).ToArray()
+            : response["answers"]!.AsArray().Select(answer => (S(answer!["name"]), answer!)).ToArray();
+        Sequence(answers.Select((answer, index) => $"{index + 1}) {answer.Name}: {S(answer.Answer["choice"])}"), Regex.Matches(section, @"^\d+\) [^\n]+$", RegexOptions.Multiline).Select(match => match.Value));
+        Sequence(answers.Select(answer => $"Confidence: {F(100 * N(answer.Answer["confidence"]))} %"), Regex.Matches(section, @"^Confidence: [^\n]+$", RegexOptions.Multiline).Select(match => match.Value));
         var actual = section.Split("Probability Distribution:\n").Skip(1).SelectMany(ChartRows).Select(row => (row.Label, row.Percent));
-        var expected = answers.SelectMany(answer => answer!["probabilities"]!.AsArray()).Select(option => (S(option!["value"]), F(100 * N(option["probability"]))));
+        var expected = new List<(string Label, string Percent)>();
+        foreach (var answer in answers)
+        {
+            if (systemOne)
+            {
+                foreach (var option in answer.Answer["probabilities"]!.AsObject())
+                    expected.Add((option.Key, F(100 * N(option.Value))));
+            }
+            else
+            {
+                foreach (JsonNode? option in answer.Answer["probabilities"]!.AsArray())
+                    expected.Add((S(option!["value"]), F(100 * N(option["probability"]))));
+            }
+        }
         Sequence(expected, actual); Assert.AreEqual(7, Count(section, "Probability Distribution:\n")); JsonEqual(response, Response(section));
     }
     private void Preflight(Dictionary<string, string>? overrides = null)
@@ -98,6 +173,7 @@ public sealed class CourierTests : ConsoleScenarioTestBase
 
     [TestMethod]
     [DataRow("LocalAI")]
+    [DataRow("DecisionsDecision11")]
     [DataRow("DecisionsGPT6Luna")]
     public void IndependentImagesUseSharedPolicyAndSevenQuestions(string provider)
     {
@@ -106,16 +182,28 @@ public sealed class CourierTests : ConsoleScenarioTestBase
         Sequence(Names, Questions.AsArray().Select(question => S(question!["name"])));
         for (int index = 0; index < 7; index++) { Assert.AreEqual("choice", S(Questions[index]!["type"])); Sequence(index < 6 ? ["Pass", "Fail", "Unknown"] : new[] { "Ship", "Repack or Relabel", "Needs Inspection" }, Questions[index]!["choices"]!.AsArray().Select(choice => S(choice!["value"]))); }
         Has(Policy.ToLowerInvariant(), "fictional"); foreach (string fact in new[] { "30 cm", "1.09 kg", "60 cm", "20 kg", "adequate internal cushioning" }) Has(Policy, fact);
-        Server.Responder = (request, _) => FixtureResponse.Json(Answers(request.Payload)) with { DelaySeconds = .03 };
-        string text = Run(TestSupport.AdvancedInput(5, provider)); Requests(provider == "DecisionsGPT6Luna" ? TestSupport.LunaModel : LocalModel, provider); Not(text, "Error:"); Assert.AreEqual(1, Count(text, "Input:\n")); Assert.AreEqual(1, Count(text, "Scenario Description:\n"));
-        string callingMessage = provider == "DecisionsGPT6Luna" ? "Calling Foundry API...\n" : "Calling local API...\n";
+        Server.Responder = (request, _) => FixtureResponse.Json(provider == "DecisionsDecision11"
+            ? SystemOneAnswers(request.Payload) : Answers(request.Payload)) with { DelaySeconds = .03 };
+        string text = Run(TestSupport.AdvancedInput(5, provider));
+        string model = provider switch { "DecisionsDecision11" => TestSupport.FoundryModel, "DecisionsGPT6Luna" => TestSupport.LunaModel, _ => LocalModel };
+        Requests(model, provider); Not(text, "Error:"); Assert.AreEqual(1, Count(text, "Input:\n")); Assert.AreEqual(1, Count(text, "Scenario Description:\n"));
+        string callingMessage = provider == "LocalAI" ? "Calling local API...\n" : "Calling Foundry API...\n";
         Assert.AreEqual(2, Count(text, callingMessage)); Assert.AreEqual(1, Count(text, "Press Enter to return to the menu:"));
-        for (int index = 0; index < 2; index++) { Has(Cases(text)[index], $"Image: {Images[index]}"); CaseOutput(Cases(text)[index], Answers(Server.Requests[index].Payload)); }
+        for (int index = 0; index < 2; index++)
+        {
+            Has(Cases(text)[index], $"Image: {Images[index]}");
+            CaseOutput(Cases(text)[index], provider == "DecisionsDecision11"
+                ? SystemOneAnswers(Server.Requests[index].Payload, index) : Answers(Server.Requests[index].Payload, index),
+                systemOne: provider == "DecisionsDecision11");
+        }
         Not(LastRawOutput, "data:image/png;base64,"); Not(LastRawOutput, "iVBORw0KGgo");
         int pause = text.IndexOf("Press Enter", StringComparison.Ordinal);
-        string menu = provider == "DecisionsGPT6Luna"
-            ? "5) Decisions API (Microsoft Foundry AI) - Courier Logistics Package Shipping Decision"
-            : Menu;
+        string menu = provider switch
+        {
+            "DecisionsDecision11" => "5) SystemOne API (Microsoft Foundry AI) - Courier Logistics Package Shipping Decision",
+            "DecisionsGPT6Luna" => "5) Decisions API (Microsoft Foundry AI) - Courier Logistics Package Shipping Decision",
+            _ => Menu
+        };
         int returnedMenu = text.IndexOf(menu, pause, StringComparison.Ordinal);
         int mainMenu = text.IndexOf("1) Basic Decision Examples", pause, StringComparison.Ordinal);
         Must(returnedMenu > pause && returnedMenu < mainMenu);

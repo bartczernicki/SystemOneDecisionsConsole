@@ -23,6 +23,8 @@ public sealed class ClaimsTests : ConsoleScenarioTestBase
     [DataRow(14, "LocalAI")]
     [DataRow(13, "SystemOneDecision1")]
     [DataRow(14, "SystemOneDecision1")]
+    [DataRow(13, "DecisionsDecision11")]
+    [DataRow(14, "DecisionsDecision11")]
     [DataRow(13, "DecisionsGPT6Luna")]
     [DataRow(14, "DecisionsGPT6Luna")]
     public void FourCasesShowModelDistributionsAndSimulatedPolicyActionsAcrossProviders(int option, string provider)
@@ -52,12 +54,13 @@ public sealed class ClaimsTests : ConsoleScenarioTestBase
         for (int index = 0; index < 4; index++)
         {
             RequestRecord request = Server.Requests[index];
-            Assert.AreEqual(provider switch { "LocalAI" => "/v1/systemone", "SystemOneDecision1" => FoundryPath, _ => LunaPath }, request.Path);
-            Assert.AreEqual(provider switch { "LocalAI" => LocalModel, "SystemOneDecision1" => FoundryModel, _ => LunaModel },
+            Assert.AreEqual(provider switch { "LocalAI" => "/v1/systemone", "DecisionsGPT6Luna" => LunaPath, _ => FoundryPath }, request.Path);
+            Assert.AreEqual(provider switch { "LocalAI" => LocalModel, "DecisionsGPT6Luna" => LunaModel, _ => FoundryModel },
                 request.Payload["model"]!.GetValue<string>());
             Assert.AreEqual(provider == "LocalAI" ? null : FoundryKey, request.Headers.GetValueOrDefault("api-key"));
             Assert.IsFalse(request.Headers.ContainsKey("authorization"));
-            string state = request.Payload[provider == "DecisionsGPT6Luna" ? "input" : "state"]!.GetValue<string>();
+            bool decisions = provider == "DecisionsGPT6Luna";
+            string state = request.Payload[decisions ? "input" : "state"]!.GetValue<string>();
             Assert.IsTrue(state.StartsWith(shared, StringComparison.Ordinal));
             AssertEx.Contains(state, $"Case ID: {CaseId(option, index)}");
             AssertEx.Contains(state, cases[index]!["sourceText"]!.GetValue<string>());
@@ -69,7 +72,7 @@ public sealed class ClaimsTests : ConsoleScenarioTestBase
             foreach (int other in Enumerable.Range(0, 4).Where(other => other != index))
                 AssertEx.DoesNotContain(state, $"Case ID: {CaseId(option, other)}");
             AssertEx.DoesNotContain(state, "Permitted action (simulated):");
-            if (provider == "DecisionsGPT6Luna")
+            if (decisions)
             {
                 var questions = request.Payload["questions"]!.AsArray();
                 Assert.AreEqual(1, questions.Count);

@@ -21,7 +21,7 @@ internal sealed partial class DecisionExampleRunner
             cases.Select(item => item.Label).Distinct(StringComparer.Ordinal).Count() != cases.Count ||
             cases.Select(item => item.ImageFile).Distinct(StringComparer.OrdinalIgnoreCase).Count() != cases.Count)
         {
-            throw new InvalidDataException("Image cases require two distinct named PNG images in a Local Decisions choice example without other specialized metadata.");
+            throw new InvalidDataException("Image cases require two distinct named PNG images in an image-enabled Decisions choice example without other specialized metadata.");
         }
     }
 
@@ -62,28 +62,61 @@ internal sealed partial class DecisionExampleRunner
             var capture = new RequestCapture();
             try
             {
-                var request = new DecisionsMultimodalRequest
+                string body;
+                if (connection.Api == DecisionApi.SystemOne)
                 {
-                    Model = connection.Model,
-                    Input = [new DecisionInputMessage
+                    Dictionary<string, SystemOneQuestion> systemOneQuestions = ToSystemOneImageQuestions(questions);
+                    var request = new SystemOneRequest
                     {
-                        Content = [new DecisionInputText { Text = $"Package: {imageCase.Label}\n\n{input}" },
-                            new DecisionInputImage { ImageUrl = imageUrls[index] }]
-                    }],
-                    Questions = questions
-                };
-                string body = await SendAsync(connection.Endpoint, request, connection.Backend, connection.ApiKey, capture,
-                    responseSanitizer: body => RedactImageData(body, imageUrls));
-                RejectDuplicateJsonProperties(body);
-                var response = Deserialize<DecisionsResponse>(body);
-                ValidateImageCaseAnswers(response, questions);
-                for (int questionIndex = 0; questionIndex < questions.Count; questionIndex++)
-                {
-                    if (questionIndex > 0)
+                        Model = connection.Model,
+                        State = $"Package: {imageCase.Label}\n\n{input}",
+                        Images = [imageUrls[index]],
+                        Questions = systemOneQuestions
+                    };
+                    body = await SendAsync(connection.Endpoint, request, connection.Backend, connection.ApiKey, capture,
+                        responseSanitizer: raw => RedactImageData(raw, imageUrls));
+                    RejectDuplicateJsonProperties(body);
+                    var response = Deserialize<SystemOneResponse>(body);
+                    ValidateImageCaseAnswers(response, systemOneQuestions);
+                    int questionNumber = 1;
+                    foreach ((string questionId, SystemOneQuestion question) in systemOneQuestions)
                     {
-                        Console.WriteLine();
+                        if (question is not SystemOneChoiceQuestion choice)
+                        {
+                            throw new InvalidDataException($"Malformed image question: expected a choice question for {questionId}.");
+                        }
+                        if (questionNumber > 1)
+                        {
+                            Console.WriteLine();
+                        }
+                        DisplaySystemOneAnswer(questionId, response.Answers[questionId], "choice", questionNumber++, choice.Criteria.Keys);
                     }
-                    DisplayDecisionAnswer(response.Answers[questionIndex], "choice", questionIndex + 1);
+                }
+                else
+                {
+                    var request = new DecisionsMultimodalRequest
+                    {
+                        Model = connection.Model,
+                        Input = [new DecisionInputMessage
+                        {
+                            Content = [new DecisionInputText { Text = $"Package: {imageCase.Label}\n\n{input}" },
+                                new DecisionInputImage { ImageUrl = imageUrls[index] }]
+                        }],
+                        Questions = questions
+                    };
+                    body = await SendAsync(connection.Endpoint, request, connection.Backend, connection.ApiKey, capture,
+                        responseSanitizer: raw => RedactImageData(raw, imageUrls));
+                    RejectDuplicateJsonProperties(body);
+                    var response = Deserialize<DecisionsResponse>(body);
+                    ValidateImageCaseAnswers(response, questions);
+                    for (int questionIndex = 0; questionIndex < questions.Count; questionIndex++)
+                    {
+                        if (questionIndex > 0)
+                        {
+                            Console.WriteLine();
+                        }
+                        DisplayDecisionAnswer(response.Answers[questionIndex], "choice", questionIndex + 1);
+                    }
                 }
             }
             catch (OperationCanceledException)
@@ -99,6 +132,39 @@ internal sealed partial class DecisionExampleRunner
             {
                 DisplayResponseJson(capture.Body);
             }
+        }
+    }
+
+    private static Dictionary<string, SystemOneQuestion> ToSystemOneImageQuestions(List<DecisionQuestion> questions) =>
+        questions.ToDictionary(question => question.Name!, question =>
+        {
+            if (question is not DecisionChoiceQuestion choice)
+            {
+                throw new InvalidDataException("Image questions must be choice questions.");
+            }
+            return (SystemOneQuestion)new SystemOneChoiceQuestion
+            {
+                Instructions = choice.Instructions,
+                Criteria = choice.Choices.ToDictionary(option => option.Value.GetString()!, option => option.Description,
+                    StringComparer.Ordinal)
+            };
+        }, StringComparer.Ordinal);
+
+    private static void ValidateImageCaseAnswers(SystemOneResponse response,
+        Dictionary<string, SystemOneQuestion> questions)
+    {
+        if (string.IsNullOrWhiteSpace(response.Model) || response.Answers is null || response.Answers.Count != questions.Count ||
+            questions.Keys.Any(questionId => !response.Answers.ContainsKey(questionId)))
+        {
+            throw new InvalidDataException("Malformed response: answers must match the requested question IDs.");
+        }
+        foreach ((string questionId, SystemOneQuestion question) in questions)
+        {
+            if (question is not SystemOneChoiceQuestion choice || response.Answers[questionId] is not SystemOneChoiceAnswer answer)
+            {
+                throw new InvalidDataException($"Malformed response: expected a choice answer for {questionId}.");
+            }
+            ValidateChoiceAnswer(answer, choice);
         }
     }
 

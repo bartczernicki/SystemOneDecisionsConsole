@@ -10,6 +10,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
 {
     private const string Local = "LocalAI";
     private const string Foundry = "SystemOneDecision1";
+    private const string Decision11 = "DecisionsDecision11";
     private const string Luna = "DecisionsGPT6Luna";
     private string ConfigurationPath => Path.Combine(App.WorkingDirectory, "Configuration.json");
 
@@ -23,15 +24,16 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     private bool SavedJsonVisibility() => App.ReadJson(ConfigurationPath)["ShowDecisionJson"]!.GetValue<bool>();
     private static string ProviderLabel(string provider) => provider switch
     {
-        Foundry => "SystemOne - Decision1",
-        Luna => "Decisions - GPT-6-Luna",
+        Foundry or Decision11 => "SystemOne API (Microsoft Foundry AI) - Decision-1.1",
+        Luna => "Decisions API (Microsoft Foundry AI) - GPT-6-Luna",
         _ => "Local AI"
     };
     private static string ConnectionProviderLabel(string provider) => provider == Local ? "Local AI" : "Microsoft Foundry AI";
     private static string ModelDescription(string provider, string? model = null) => provider == Local
         ? $"Model: {model ?? TestSupport.LocalModel}"
         : $"Model deployment: {model ?? (provider == Luna ? TestSupport.LunaModel : TestSupport.FoundryModel)}";
-    private static string ProviderInput(string provider) => $"3\n2\n{(provider == Foundry ? 1 : provider == Luna ? 2 : 3)}\n";
+    private static string ProviderInput(string provider) => $"3\n2\n{(provider is Foundry or Decision11 ? 1 : provider == Luna ? 2 : 3)}\n";
+    private static string CanonicalProvider(string provider) => provider is Foundry or "MicrosoftFoundryAI" ? Decision11 : provider;
     private static string BasicStep(int originalOption, string provider) =>
         $"{TestSupport.MenuOption(1, originalOption, provider)}\n\n";
 
@@ -39,9 +41,10 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
         string? model = null)
     {
         bool foundry = provider != Local;
-        Assert.AreEqual(provider == Luna ? TestSupport.LunaPath : provider == Foundry ? TestSupport.FoundryPath :
+        Assert.AreEqual(provider == Luna ? TestSupport.LunaPath :
+            provider is Foundry or Decision11 ? TestSupport.FoundryPath :
             decisions ? "/v1/decisions" : "/v1/systemone", request.Path);
-        Assert.AreEqual(model ?? (provider == Luna ? TestSupport.LunaModel : provider == Foundry ? TestSupport.FoundryModel : TestSupport.LocalModel),
+        Assert.AreEqual(model ?? (provider == Luna ? TestSupport.LunaModel : provider is Foundry or Decision11 ? TestSupport.FoundryModel : TestSupport.LocalModel),
             request.Payload["model"]!.GetValue<string>());
         Assert.AreEqual(foundry ? TestSupport.FoundryKey : null, request.Headers.GetValueOrDefault("api-key"));
         Assert.IsFalse(request.Headers.ContainsKey("authorization"));
@@ -157,9 +160,27 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
         string text = Run("3\n1\n0\n0\n");
 
         AssertEx.DoesNotContain(text, "Error:");
-        Assert.AreEqual(Foundry, SavedProvider());
+        Assert.AreEqual(Decision11, SavedProvider());
         Assert.IsTrue(SavedJsonVisibility());
         Assert.IsNull(App.ReadJson(ConfigurationPath)["SystemOneProvider"]);
+        Assert.AreEqual(0, Server.Requests.Count);
+    }
+
+    [TestMethod]
+    public void SavingConfigurationMigratesFormerSystemOneDecision1ProviderToDecision11()
+    {
+        App.WriteJson(ConfigurationPath, new JsonObject
+        {
+            ["ShowDecisionJson"] = false,
+            ["DecisionProvider"] = "SystemOneDecision1"
+        });
+
+        string text = Run("3\n1\n0\n0\n");
+
+        AssertEx.DoesNotContain(text, "Warning:");
+        AssertEx.DoesNotContain(text, "Error:");
+        Assert.AreEqual(Decision11, SavedProvider());
+        Assert.IsTrue(SavedJsonVisibility());
         Assert.AreEqual(0, Server.Requests.Count);
     }
 
@@ -168,6 +189,8 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     [DataRow(Local, true)]
     [DataRow(Foundry, false)]
     [DataRow(Foundry, true)]
+    [DataRow(Decision11, false)]
+    [DataRow(Decision11, true)]
     [DataRow(Luna, false)]
     [DataRow(Luna, true)]
     public void ProviderSelectionPreviewsModelWithoutRequestAndPreservesJsonVisibility(string provider, bool shown)
@@ -176,13 +199,14 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
 
         string text = Run(ProviderInput(provider) + "0\n0\n");
 
-        AssertEx.Contains(text, "1) (Microsoft Foundry AI) - SystemOne - Decision1");
-        AssertEx.Contains(text, "2) (Microsoft Foundry AI) - Decisions - GPT-6-Luna");
+        AssertEx.Contains(text, "1) SystemOne API (Microsoft Foundry AI) - Decision-1.1");
+        AssertEx.Contains(text, "2) Decisions API (Microsoft Foundry AI) - GPT-6-Luna");
         AssertEx.Contains(text, "3) Local AI");
+        AssertEx.DoesNotContain(text, "SystemOne - Decision1");
         AssertEx.Contains(text, $"{(provider == Luna ? "Decisions" : "SystemOne")} API provider: {ConnectionProviderLabel(provider)}");
         AssertEx.Contains(text, ModelDescription(provider));
         AssertEx.Contains(text, $"2) Decision provider (currently {ProviderLabel(provider)})");
-        Assert.AreEqual(provider, SavedProvider());
+        Assert.AreEqual(CanonicalProvider(provider), SavedProvider());
         Assert.AreEqual(shown, SavedJsonVisibility());
         Assert.AreEqual(0, Server.Requests.Count);
         AssertEx.DoesNotContain(text, "Error:");
@@ -192,7 +216,8 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     [TestMethod]
     [DataRow(Local, "LocalDecisionModel")]
     [DataRow(Foundry, "MicrosoftFoundryDecisionModelDeploymentName")]
-    [DataRow(Luna, "AzureOpenAIGPT6LunaModelDeploymentName")]
+    [DataRow(Decision11, "MicrosoftFoundryDecisionModelDeploymentName")]
+    [DataRow(Luna, "MicrosoftFoundryOpenAIModelDeploymentName")]
     public void SelectingCurrentProviderStillResolvesAndDisplaysItsModel(string provider, string setting)
     {
         WriteConfiguration(provider, false);
@@ -202,7 +227,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
 
         AssertEx.Contains(text, ModelDescription(provider, model));
         AssertEx.Contains(text, $"{(provider == Luna ? "Decisions" : "SystemOne")} API provider: {ConnectionProviderLabel(provider)}");
-        Assert.AreEqual(provider, SavedProvider());
+        Assert.AreEqual(CanonicalProvider(provider), SavedProvider());
         Assert.AreEqual(0, Server.Requests.Count);
         AssertEx.DoesNotContain(text, "Error:");
     }
@@ -215,15 +240,18 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
             yield return [Local, "LocalDecisionsAPI", value];
             yield return [Luna, "MicrosoftFoundryDecisionsAPI", value];
             yield return [Foundry, "MicrosoftFoundrySystemOneAPI", value];
+            yield return [Decision11, "MicrosoftFoundrySystemOneAPI", value];
         }
         foreach (string key in new[] { "MicrosoftFoundryDecisionModelDeploymentName", "MicrosoftFoundryAPIKey" })
             foreach (string value in new[] { "", "   " })
             {
                 yield return [Foundry, key, value];
-                yield return [Luna, key == "MicrosoftFoundryDecisionModelDeploymentName" ? "AzureOpenAIGPT6LunaModelDeploymentName" : "MicrosoftFoundryDecisionsAPIKey", value];
+                yield return [Luna, key == "MicrosoftFoundryDecisionModelDeploymentName" ? "MicrosoftFoundryOpenAIModelDeploymentName" : "MicrosoftFoundryAPIKey", value];
+                yield return [Decision11, key, value];
             }
         yield return [Foundry, "MicrosoftFoundryAPIKey", "private-invalid-header\nsecret-suffix"];
-        yield return [Luna, "MicrosoftFoundryDecisionsAPIKey", "private-invalid-header\nsecret-suffix"];
+        yield return [Decision11, "MicrosoftFoundryAPIKey", "private-invalid-header\nsecret-suffix"];
+        yield return [Luna, "MicrosoftFoundryAPIKey", "private-invalid-header\nsecret-suffix"];
     }
 
     [TestMethod]
@@ -257,9 +285,10 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
         AssertEx.Count(text, "Please enter", 4);
         AssertEx.Count(text, "1) Basic Decision Examples", 2);
         AssertEx.Count(text, "2) Decision provider (currently Local AI)", 2);
-        AssertEx.Contains(text, "1) (Microsoft Foundry AI) - SystemOne - Decision1");
-        AssertEx.Contains(text, "2) (Microsoft Foundry AI) - Decisions - GPT-6-Luna");
+        AssertEx.Contains(text, "1) SystemOne API (Microsoft Foundry AI) - Decision-1.1");
+        AssertEx.Contains(text, "2) Decisions API (Microsoft Foundry AI) - GPT-6-Luna");
         AssertEx.Contains(text, "3) Local AI");
+        AssertEx.DoesNotContain(text, "SystemOne - Decision1");
         AssertEx.DoesNotContain(text, "Error:");
         Assert.AreEqual(Local, SavedProvider());
         Assert.AreEqual(0, Server.Requests.Count);
@@ -294,20 +323,22 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     [TestMethod]
     [DataRow(Local)]
     [DataRow(Foundry)]
+    [DataRow(Decision11)]
     [DataRow(Luna)]
     public void EnvironmentEndpointModelAndAuthenticationOverridesAreSharedByPreviewAndExecution(string provider)
     {
         const string model = "environment-override-model";
         const string key = "environment-override-private-key";
         using var alternate = new FixtureServer();
-        string path = provider == Luna ? TestSupport.LunaPath : provider == Foundry ? TestSupport.FoundryPath : "/v1/systemone";
+        bool decisionsProvider = provider == Luna;
+        string path = provider == Luna ? TestSupport.LunaPath : provider is Foundry or Decision11 ? TestSupport.FoundryPath : "/v1/systemone";
         string endpoint = alternate.BaseUrl + path;
         var overrides = provider != Local
             ? new Dictionary<string, string>
             {
                 [provider == Luna ? "MicrosoftFoundryDecisionsAPI" : "MicrosoftFoundrySystemOneAPI"] = endpoint,
-                [provider == Luna ? "AzureOpenAIGPT6LunaModelDeploymentName" : "MicrosoftFoundryDecisionModelDeploymentName"] = model,
-                [provider == Luna ? "MicrosoftFoundryDecisionsAPIKey" : "MicrosoftFoundryAPIKey"] = key
+                [provider == Luna ? "MicrosoftFoundryOpenAIModelDeploymentName" : "MicrosoftFoundryDecisionModelDeploymentName"] = model,
+                ["MicrosoftFoundryAPIKey"] = key
             }
             : new Dictionary<string, string>
             {
@@ -316,7 +347,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
                 ["LocalDecisionModel"] = model
             };
 
-        string text = Run(ProviderInput(provider) + "0\n" + TestSupport.BasicInput(provider == Luna ? 4 : 1, provider), overrides);
+        string text = Run(ProviderInput(provider) + "0\n" + TestSupport.BasicInput(decisionsProvider ? 4 : 1, provider), overrides);
 
         AssertEx.Count(text, ModelDescription(provider, model), 2);
         AssertEx.DoesNotContain(text, "Error:");
@@ -363,6 +394,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     [TestMethod]
     [DataRow(Local)]
     [DataRow(Foundry)]
+    [DataRow(Decision11)]
     [DataRow(Luna)]
     public void JsonTogglePreservesSelectedProvider(string provider)
     {
@@ -373,7 +405,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
         AssertEx.DoesNotContain(text, "Error:");
         AssertEx.Contains(text, "Decision JSON is now shown.");
         AssertEx.Count(text, "Response JSON:\n", 1);
-        Assert.AreEqual(provider, SavedProvider());
+        Assert.AreEqual(CanonicalProvider(provider), SavedProvider());
         Assert.IsTrue(SavedJsonVisibility());
         AssertConnection(Server.Requests.Single(), provider, provider == Luna);
     }
@@ -381,6 +413,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     [TestMethod]
     [DataRow(Local)]
     [DataRow(Foundry)]
+    [DataRow(Decision11)]
     [DataRow(Luna)]
     public void FailedProviderSaveKeepsCurrentProviderForFollowingRequests(string originalProvider)
     {
@@ -410,7 +443,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
 
     [TestMethod]
     [DataRow(Local, 6, 14, 3, 3, 13, 1)]
-    [DataRow(Foundry, 3, 13, 3, 0, 13, 0)]
+    [DataRow(Decision11, 3, 14, 3, 0, 14, 0)]
     [DataRow(Luna, 3, 14, 0, 3, 0, 14)]
     public void MenusFilterSupportedApiFamiliesAndNumberEntriesContiguously(string provider, int basicCount,
         int advancedCount, int basicSystemOne, int basicDecisions, int advancedSystemOne, int advancedDecisions)
@@ -443,7 +476,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
 
     public static IEnumerable<object[]> SystemOneScenarios()
     {
-        foreach (string provider in new[] { Local, Foundry })
+        foreach (string provider in new[] { Local, Decision11 })
         {
             yield return [provider, 1, 1, 1, "Department: Billing"];
             yield return [provider, 1, 2, 1, "Probability of yes: 87.50 %"];
@@ -488,7 +521,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
             JsonNode report = App.ReadJson(Directory.GetFiles(App.WorkingDirectory, "results.json", SearchOption.AllDirectories).Single());
             Assert.AreEqual("complete", report["status"]!.GetValue<string>());
             Assert.AreEqual(200, report["completedCases"]!.GetValue<int>());
-            string model = provider == Foundry ? TestSupport.FoundryModel : TestSupport.LocalModel;
+            string model = provider != Local ? TestSupport.FoundryModel : TestSupport.LocalModel;
             Assert.AreEqual(model, report["model"]!.GetValue<string>());
             Assert.AreEqual(200, report["records"]!.AsArray().Count);
             foreach (JsonNode? record in report["records"]!.AsArray())
@@ -540,8 +573,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
             ["MicrosoftFoundrySystemOneAPI"] = "invalid-foundry-endpoint",
             ["MicrosoftFoundryDecisionsAPI"] = "invalid-foundry-decisions-endpoint",
             ["MicrosoftFoundryDecisionModelDeploymentName"] = "   ",
-            ["AzureOpenAIGPT6LunaModelDeploymentName"] = "   ",
-            ["MicrosoftFoundryDecisionsAPIKey"] = "   ",
+            ["MicrosoftFoundryOpenAIModelDeploymentName"] = "   ",
             ["MicrosoftFoundryAPIKey"] = "   "
         });
 
@@ -553,9 +585,9 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     }
 
     [TestMethod]
-    [DataRow(Foundry, "")]
-    [DataRow(Foundry, "   ")]
-    [DataRow(Foundry, "invalid-other-hosted-endpoint")]
+    [DataRow(Decision11, "")]
+    [DataRow(Decision11, "   ")]
+    [DataRow(Decision11, "invalid-other-hosted-endpoint")]
     [DataRow(Luna, "")]
     [DataRow(Luna, "   ")]
     [DataRow(Luna, "invalid-other-hosted-endpoint")]
@@ -566,8 +598,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
             ["LocalSystemOneAPI"] = "invalid-local-endpoint",
             ["LocalDecisionsAPI"] = "invalid-local-endpoint",
             [provider == Luna ? "MicrosoftFoundrySystemOneAPI" : "MicrosoftFoundryDecisionsAPI"] = otherEndpoint,
-            [provider == Luna ? "MicrosoftFoundryAPIKey" : "MicrosoftFoundryDecisionsAPIKey"] = "private-unused-key\nsecret-suffix",
-            [provider == Luna ? "MicrosoftFoundryDecisionModelDeploymentName" : "AzureOpenAIGPT6LunaModelDeploymentName"] = "   "
+            [provider == Luna ? "MicrosoftFoundryDecisionModelDeploymentName" : "MicrosoftFoundryOpenAIModelDeploymentName"] = "   "
         });
 
         AssertEx.DoesNotContain(text, "Error:");
@@ -577,7 +608,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     [TestMethod]
     [DataRow(Local, false)]
     [DataRow(Local, true)]
-    [DataRow(Foundry, false)]
+    [DataRow(Decision11, false)]
     [DataRow(Luna, true)]
     public void ResolverUsesProvidedSecretSettingsWhenEnvironmentIsAbsent(string provider, bool decisions)
     {
@@ -595,7 +626,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     [TestMethod]
     [DataRow(Local, false)]
     [DataRow(Local, true)]
-    [DataRow(Foundry, false)]
+    [DataRow(Decision11, false)]
     [DataRow(Luna, true)]
     public void ResolverEnvironmentOverridesProvidedSecretEndpointModelAndAuthentication(string provider, bool decisions)
     {
@@ -609,102 +640,28 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
         AssertResolvedSettings(connection, provider, decisions, "environment");
     }
 
-    [TestMethod]
-    public void LunaSpecificSecretApiKeyTakesPrecedenceOverSharedKey()
-    {
-        var secretSettings = Settings("secret");
-        secretSettings["MicrosoftFoundryDecisionsAPIKey"] = "  secret-luna-specific-key  ";
-        secretSettings["MicrosoftFoundryAPIKey"] = "private-unused-key\nsecret-suffix";
-        using var environment = new ScopedSettingsEnvironment(secretSettings.Keys.ToDictionary(key => key, _ => (string?)null));
-        IConfigurationRoot settings = new ConfigurationBuilder().AddInMemoryCollection(secretSettings).Build();
-        using var settingsLifetime = settings as IDisposable;
-
-        DecisionConnection connection = DecisionConnectionResolver.Resolve(DecisionApi.Decisions, DecisionProvider.DecisionsGPT6Luna, settings);
-
-        Assert.AreEqual("secret-luna-specific-key", connection.ApiKey);
-    }
-
-    [TestMethod]
-    public void LunaSpecificEnvironmentApiKeyOverridesBothSecretSpecificAndSharedKeys()
-    {
-        var secretSettings = Settings("secret");
-        secretSettings["MicrosoftFoundryDecisionsAPIKey"] = "secret-luna-specific-key";
-        var overrides = Settings("environment");
-        overrides["MicrosoftFoundryDecisionsAPIKey"] = "environment-luna-specific-key";
-        using var environment = new ScopedSettingsEnvironment(overrides);
-        IConfigurationRoot settings = new ConfigurationBuilder().AddInMemoryCollection(secretSettings).Build();
-        using var settingsLifetime = settings as IDisposable;
-
-        DecisionConnection connection = DecisionConnectionResolver.Resolve(DecisionApi.Decisions, DecisionProvider.DecisionsGPT6Luna, settings);
-
-        Assert.AreEqual("environment-luna-specific-key", connection.ApiKey);
-    }
-
-    [TestMethod]
-    [DataRow(false, "")]
-    [DataRow(false, "   ")]
-    [DataRow(false, "private-invalid-header\nsecret-suffix")]
-    [DataRow(true, "")]
-    [DataRow(true, "   ")]
-    [DataRow(true, "private-invalid-header\nsecret-suffix")]
-    public void LunaPresentInvalidSpecificApiKeyFailsWithoutFallingBack(bool fromEnvironment, string value)
-    {
-        var secretSettings = Settings("secret");
-        secretSettings["MicrosoftFoundryDecisionsAPIKey"] = fromEnvironment ? "secret-luna-specific-key" : value;
-        var overrides = secretSettings.Keys.ToDictionary(key => key, _ => (string?)null);
-        if (fromEnvironment) overrides["MicrosoftFoundryDecisionsAPIKey"] = value;
-        using var environment = new ScopedSettingsEnvironment(overrides);
-        IConfigurationRoot settings = new ConfigurationBuilder().AddInMemoryCollection(secretSettings).Build();
-        using var settingsLifetime = settings as IDisposable;
-
-        InvalidDataException error = Assert.ThrowsExactly<InvalidDataException>(() =>
-            DecisionConnectionResolver.Resolve(DecisionApi.Decisions, DecisionProvider.DecisionsGPT6Luna, settings));
-
-        AssertEx.Contains(error.Message, "MicrosoftFoundryDecisionsAPIKey");
-        AssertEx.DoesNotContain(error.Message, "secret-private-key");
-        AssertEx.DoesNotContain(error.Message, "private-invalid-header");
-        AssertEx.DoesNotContain(error.Message, "secret-suffix");
-    }
-
-    [TestMethod]
-    [DataRow("")]
-    [DataRow("   ")]
-    [DataRow("private-invalid-header\nsecret-suffix")]
-    public void SystemOneIgnoresInvalidOptionalDecisionsApiKey(string value)
-    {
-        var secretSettings = Settings("secret");
-        secretSettings["MicrosoftFoundryDecisionsAPIKey"] = value;
-        using var environment = new ScopedSettingsEnvironment(secretSettings.Keys.ToDictionary(key => key, _ => (string?)null));
-        IConfigurationRoot settings = new ConfigurationBuilder().AddInMemoryCollection(secretSettings).Build();
-        using var settingsLifetime = settings as IDisposable;
-
-        DecisionConnection connection = DecisionConnectionResolver.Resolve(DecisionApi.SystemOne, DecisionProvider.SystemOneDecision1, settings);
-
-        Assert.AreEqual("secret-private-key", connection.ApiKey);
-    }
-
     private static void AssertResolvedSettings(DecisionConnection connection, string provider, bool decisions, string prefix)
     {
-        string path = provider == Luna ? $"/{prefix}/global-luna/openai/v1/decisions?api-version=luna-fixture" :
-            provider == Foundry ? $"/{prefix}/gateway/providers/microsoft/v1/systemone?api-version=fixture" :
+        bool usesDecisionsEndpoint = provider == Luna;
+        string path = usesDecisionsEndpoint ? $"/{prefix}/global-luna/openai/v1/decisions?api-version=luna-fixture" :
+            provider is Foundry or Decision11 ? $"/{prefix}/gateway/providers/microsoft/v1/systemone?api-version=fixture" :
             $"/{prefix}/{(decisions ? "decisions" : "systemone")}";
         Assert.AreEqual("http://127.0.0.1:1" + path, connection.Endpoint.AbsoluteUri);
-        Assert.AreEqual($"{prefix}-{(provider == Luna ? "luna" : provider == Foundry ? "foundry" : "local")}-model", connection.Model);
+        Assert.AreEqual($"{prefix}-{(provider == Luna ? "luna" : provider is Foundry or Decision11 ? "foundry" : "local")}-model", connection.Model);
         Assert.AreEqual(provider == Local ? null : $"{prefix}-private-key", connection.ApiKey);
-        Assert.AreEqual(provider == Luna ? DecisionBackend.FoundryDecisions : provider == Foundry ? DecisionBackend.FoundrySystemOne :
+        Assert.AreEqual(usesDecisionsEndpoint && provider != Local ? DecisionBackend.FoundryDecisions : provider is Foundry or Decision11 ? DecisionBackend.FoundrySystemOne :
             decisions ? DecisionBackend.LocalDecisions : DecisionBackend.LocalSystemOne, connection.Backend);
     }
 
     [TestMethod]
     [DataRow(Local, false, "LocalSystemOneAPI")]
     [DataRow(Local, true, "LocalDecisionsAPI")]
-    [DataRow(Foundry, false, "MicrosoftFoundrySystemOneAPI")]
-    [DataRow(Foundry, false, "MicrosoftFoundryDecisionModelDeploymentName")]
-    [DataRow(Foundry, false, "MicrosoftFoundryAPIKey")]
     [DataRow(Luna, true, "MicrosoftFoundryDecisionsAPI")]
-    [DataRow(Luna, true, "AzureOpenAIGPT6LunaModelDeploymentName")]
+    [DataRow(Luna, true, "MicrosoftFoundryOpenAIModelDeploymentName")]
     [DataRow(Luna, true, "MicrosoftFoundryAPIKey")]
-    [DataRow(Luna, true, "MicrosoftFoundryDecisionsAPIKey")]
+    [DataRow(Decision11, false, "MicrosoftFoundrySystemOneAPI")]
+    [DataRow(Decision11, false, "MicrosoftFoundryDecisionModelDeploymentName")]
+    [DataRow(Decision11, false, "MicrosoftFoundryAPIKey")]
     public void BlankEnvironmentSettingDoesNotFallBackToProvidedSecrets(string provider, bool decisions, string key)
     {
         var secretSettings = Settings("secret");
@@ -763,6 +720,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     }
 
     [TestMethod]
+    [DataRow(Decision11, true)]
     [DataRow(Foundry, true)]
     [DataRow(Luna, false)]
     public void ResolverRejectsApiFamiliesUnsupportedBySelectedProvider(string provider, bool decisions)
@@ -782,8 +740,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
         ["MicrosoftFoundrySystemOneAPI"] = $"http://127.0.0.1:1/{prefix}/gateway/providers/microsoft/v1/systemone?api-version=fixture",
         ["MicrosoftFoundryDecisionsAPI"] = $"http://127.0.0.1:1/{prefix}/global-luna/openai/v1/decisions?api-version=luna-fixture",
         ["MicrosoftFoundryDecisionModelDeploymentName"] = $"{prefix}-foundry-model",
-        ["AzureOpenAIGPT6LunaModelDeploymentName"] = $"{prefix}-luna-model",
-        ["MicrosoftFoundryDecisionsAPIKey"] = null,
+        ["MicrosoftFoundryOpenAIModelDeploymentName"] = $"{prefix}-luna-model",
         ["MicrosoftFoundryAPIKey"] = $"{prefix}-private-key"
     };
 

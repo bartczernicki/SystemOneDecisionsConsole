@@ -105,7 +105,7 @@ class Program
     {
         while (true)
         {
-            WriteMenu("Decision provider", ["(Microsoft Foundry AI) - SystemOne - Decision1", "(Microsoft Foundry AI) - Decisions - GPT-6-Luna", "Local AI"], "Back");
+            WriteMenu("Decision provider", ["SystemOne API (Microsoft Foundry AI) - Decision-1.1", "Decisions API (Microsoft Foundry AI) - GPT-6-Luna", "Local AI"], "Back");
             int? option = ReadMenuSelection(3, "Please enter 0, 1, 2, or 3");
             if (option is null)
             {
@@ -118,7 +118,7 @@ class Program
 
             DecisionProvider provider = option switch
             {
-                1 => DecisionProvider.SystemOneDecision1,
+                1 => DecisionProvider.DecisionsDecision11,
                 2 => DecisionProvider.DecisionsGPT6Luna,
                 _ => DecisionProvider.LocalAI
             };
