@@ -6,7 +6,7 @@ namespace SystemOneDecisionsConsole;
 
 internal sealed partial class DecisionExampleRunner
 {
-    private const int VarianceRunsPerSample = 25;
+    private const int VarianceRunsPerSample = 100;
 
     private sealed record VarianceSample(DecisionExample Example, string Input,
         Dictionary<string, SystemOneQuestion> Questions);
@@ -24,7 +24,7 @@ internal sealed partial class DecisionExampleRunner
     internal async Task<bool> RunDecisionVarianceAsync()
     {
         Console.WriteLine();
-        Console.WriteLine("Test Decision Variance: each configured model runs each supported basic sample 25 times.");
+        Console.WriteLine($"Test Decision Variance: each configured model runs each supported basic sample {VarianceRunsPerSample} times.");
         Console.WriteLine("Requests run sequentially in shuffled rounds; no decisions or configuration are changed.");
 
         List<VarianceSample> samples;
@@ -57,7 +57,7 @@ internal sealed partial class DecisionExampleRunner
         string? failure = null;
 
         // Each round contains one request for every model/sample pair, then shuffles the order.
-        // This keeps the run balanced while preventing one sample from receiving 25 consecutive calls.
+        // This keeps the run balanced while preventing one sample from receiving consecutive calls in a batch.
         for (int round = 1; round <= VarianceRunsPerSample && failure is null; round++)
         {
             var roundRuns = plans.SelectMany(plan => plan.Runs.Select(run => (plan, run))).ToList();
