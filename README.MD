@@ -117,7 +117,7 @@ Run your first decision locally with LM Studio. This path uses Local AI and does
    dotnet run --project SystemOneDecisionsConsole
    ```
 
-5. **Try the first example.** Select **1) Basic Decision Examples**, then **1) SystemOne API (Local AI) - Choice**. Local AI is the default on first run. To select it again, use **3) Configure → 2) Decision provider → 3) Local AI**, then return to the main menu.
+5. **Try the first example.** Select **1) Basic Decision Examples**, then **1) SystemOne API (Local AI) - Choice**. Local AI is the default on first run. To select it again, use **4) Configure → 2) Decision provider → 3) Local AI**, then return to the main menu.
 
    A successful response shows your provider and model, a department recommendation (normally **Billing** for the duplicate-charge complaint), confidence, and probability bars for Billing, Technical, and Shipping. The model's recommendation and probabilities can vary. Press **Enter** to return to the menu.
 
@@ -177,7 +177,7 @@ dotnet run --project SystemOneDecisionsConsole
 
 Use a terminal that supports ANSI RGB colors to display the cyan banner and gold menu.
 
-The top-level menu includes **3) Configure**. Select **1) Show / Hide Decision JSON** to toggle the raw `Response JSON:` blocks; the menu shows the current state. JSON starts **hidden**, and each toggle is saved immediately for subsequent responses and future runs.
+The top-level menu includes **3) Test Decision Variance** and **4) Configure**. Variance testing runs each supported basic sample 25 times for each configured provider, shuffling the sample/provider order in each round. Local AI uses only its SystemOne API and its three SystemOne basic samples. It reports per-outcome probability and confidence minima, maxima, and population variance; Yes/No samples report Yes and No probabilities, and note when their API does not return confidence. Requests are sequential and produce no actions. Select **1) Show / Hide Decision JSON** under Configure to toggle raw response blocks; JSON starts **hidden**, and each toggle is saved immediately.
 
 Select **2) Decision provider** to choose **1) SystemOne API (Microsoft Foundry AI) - Decision-1.1**, **2) Decisions API (Microsoft Foundry AI) - GPT-6-Luna**, or **3) Local AI** (the default). Decision-1.1 uses the SystemOne API and the Decision-1.1-Global deployment for all its examples, including Courier Logistics; GPT-6-Luna uses the Decisions API. Selection validates the configured endpoint, model and authentication without making an API request, then displays the model name or Foundry model deployment. Missing or invalid settings and failed saves leave the current selection unchanged. Every example states its API, provider and model before running. Decision-1.1 and GPT-6-Luna each include all 14 advanced workflows.
 

@@ -38,8 +38,8 @@ class Program
 
         while (true)
         {
-            WriteMenu(null, ["Basic Decision Examples", "Advanced Decision Examples", "Configure"], "Exit");
-            int? category = ReadMenuSelection(3, "Please enter 0, 1, 2, or 3");
+            WriteMenu(null, ["Basic Decision Examples", "Advanced Decision Examples", "Test Decision Variance", "Configure"], "Exit");
+            int? category = ReadMenuSelection(4, "Please enter 0, 1, 2, 3, or 4");
             if (category is null or 0)
             {
                 return;
@@ -49,6 +49,7 @@ class Program
             {
                 1 => await ShowExamplesAsync(runner, DecisionExampleRunner.Examples, "Basic Decision Examples"),
                 2 => await ShowExamplesAsync(runner, DecisionExampleRunner.AdvancedExamples, "Advanced Decision Examples", advanced: true),
+                3 => await runner.RunDecisionVarianceAsync(),
                 _ => ShowConfiguration(configurationStore, configuration)
             };
             if (!returnToMain)

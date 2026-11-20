@@ -12,6 +12,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
     {
         string text = Run(" 1 \n 0 \n 2 \n 0 \n 0 \n"); NotContains(text, "Error:"); Assert.AreEqual(0, Server.Requests.Count);
         Assert.AreEqual(3, Count(text, "1) Basic Decision Examples")); Assert.AreEqual(1, Count(text, "1) SystemOne API (Local AI) - Choice"));
+        Contains(text, "3) Test Decision Variance"); Contains(text, "4) Configure");
         Contains(text, $"\n{BasicCategory}\n"); Contains(text, $"\n{AdvancedCategory}\n"); Contains(text, "0) Back");
         for (int i = 0; i < BasicLabels.Length; i++) Contains(text, $"{i + 1}) {BasicLabels[i]}");
         for (int i = 0; i < AdvancedLabels.Length; i++) Contains(text, $"{i + 1}) {AdvancedLabels[i]}");
@@ -19,7 +20,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
         if (!OperatingSystem.IsWindows())
         {
             string colored = string.Join('\n', Regex.Matches(LastRawOutput, "\u001b\\[38;2;255;215;0m(.*?)\u001b\\[39m", RegexOptions.Singleline).Select(m => m.Groups[1].Value));
-            foreach (string label in new[] { "1) Basic Decision Examples", "2) Advanced Decision Examples", "3) Configure", "0) Exit", "0) Back" }) Contains(colored, label);
+            foreach (string label in new[] { "1) Basic Decision Examples", "2) Advanced Decision Examples", "3) Test Decision Variance", "4) Configure", "0) Exit", "0) Back" }) Contains(colored, label);
             for (int i = 0; i < BasicLabels.Length; i++) Contains(colored, $"{i + 1}) {BasicLabels[i]}");
             for (int i = 0; i < AdvancedLabels.Length; i++) Contains(colored, $"{i + 1}) {AdvancedLabels[i]}");
         }
@@ -73,7 +74,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
         if (foundry) SetProvider("SystemOneDecision1");
         int menuOption = App.MenuOption(2, option);
         string input = foundry
-            ? $"2\n {menuOption} \n\n0\n3\n2\n3\n0\n2\n1\n\n0\n3\n2\n1\n0\n2\n{menuOption}\n\n0\n0\n"
+            ? $"2\n {menuOption} \n\n0\n4\n2\n3\n0\n2\n1\n\n0\n4\n2\n1\n0\n2\n{menuOption}\n\n0\n0\n"
             : $"2\n {option} \n\n1\n\n{option}\n\n0\n0\n";
         string text = Run(input, timeout: 60); NotContains(text, "Error:");
         Assert.AreEqual(stageCount * 2 + 1, Server.Requests.Count);
@@ -127,7 +128,7 @@ public sealed class ConsoleMenuTests : BasicTestBase
             if (index == 2) response["answers"]!["Dining Strategy"]!["choice"] = "Exploit";
             return FixtureResponse.Json(response);
         };
-        string text = Run("2\n 9 \n\n0\n3\n2\n3\n0\n2\n1\n\n0\n3\n2\n1\n0\n2\n9\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
+        string text = Run("2\n 9 \n\n0\n4\n2\n3\n0\n2\n1\n\n0\n4\n2\n1\n0\n2\n9\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
         JsonObject expected = ExpectedAdvancedPayloads(9)[0];
         EqualJson(expected, Server.Requests[0].Payload);
         EqualJson(expected, Server.Requests[2].Payload);

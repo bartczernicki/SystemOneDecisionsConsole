@@ -57,7 +57,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     {
         File.Delete(ConfigurationPath);
 
-        string text = Run("3\n0\n" + TestSupport.BasicInput(1));
+        string text = Run("4\n0\n" + TestSupport.BasicInput(1));
 
         Assert.AreEqual(Local, SavedProvider());
         Assert.IsFalse(SavedJsonVisibility());
@@ -78,7 +78,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
         string original = $"{{ \"ShowDecisionJson\": {shown.ToString().ToLowerInvariant()}, \"FutureOption\": 17 }}";
         App.WriteText(ConfigurationPath, original);
 
-        string text = Run("3\n0\n" + TestSupport.BasicInput(1));
+        string text = Run("4\n0\n" + TestSupport.BasicInput(1));
 
         AssertEx.Contains(text, "2) Decision provider (currently Local AI)");
         AssertEx.Contains(text, ModelDescription(Local));
@@ -103,7 +103,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
         string original = $"{{\"ShowDecisionJson\":true,\"{setting}\":{providerJson}}}";
         App.WriteText(ConfigurationPath, original);
 
-        string text = Run("3\n0\n" + TestSupport.BasicInput(1));
+        string text = Run("4\n0\n" + TestSupport.BasicInput(1));
 
         AssertEx.Contains(text, "Warning: Could not load Configuration.json:");
         AssertEx.Contains(text, "currently Local AI");
@@ -123,7 +123,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
         string original = $"{{ \"ShowDecisionJson\": {shown.ToString().ToLowerInvariant()}, \"SystemOneProvider\": \"{legacy}\" }}";
         App.WriteText(ConfigurationPath, original);
 
-        string text = Run("3\n0\n" + TestSupport.BasicInput(1, provider));
+        string text = Run("4\n0\n" + TestSupport.BasicInput(1, provider));
 
         AssertEx.Contains(text, $"Decision provider (currently {ProviderLabel(provider)})");
         AssertEx.DoesNotContain(text, "Warning:");
@@ -143,7 +143,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
         string original = $"{{\"ShowDecisionJson\":true,\"DecisionProvider\":\"{provider}\",\"SystemOneProvider\":{legacyJson}}}";
         App.WriteText(ConfigurationPath, original);
 
-        string text = Run("3\n0\n" + TestSupport.BasicInput(provider == Luna ? 4 : 1, provider));
+        string text = Run("4\n0\n" + TestSupport.BasicInput(provider == Luna ? 4 : 1, provider));
 
         AssertEx.Contains(text, $"Decision provider (currently {ProviderLabel(provider)})");
         AssertEx.DoesNotContain(text, "Warning:");
@@ -157,7 +157,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     {
         App.WriteJson(ConfigurationPath, new JsonObject { ["ShowDecisionJson"] = false, ["SystemOneProvider"] = "MicrosoftFoundryAI" });
 
-        string text = Run("3\n1\n0\n0\n");
+        string text = Run("4\n1\n0\n0\n");
 
         AssertEx.DoesNotContain(text, "Error:");
         Assert.AreEqual(Decision11, SavedProvider());
@@ -175,7 +175,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
             ["DecisionProvider"] = "SystemOneDecision1"
         });
 
-        string text = Run("3\n1\n0\n0\n");
+        string text = Run("4\n1\n0\n0\n");
 
         AssertEx.DoesNotContain(text, "Warning:");
         AssertEx.DoesNotContain(text, "Error:");
@@ -400,7 +400,7 @@ public sealed class SystemOneProviderTests : ConsoleScenarioTestBase
     {
         WriteConfiguration(provider, false);
 
-        string text = Run("3\n1\n0\n" + TestSupport.BasicInput(provider == Luna ? 4 : 1, provider));
+        string text = Run("4\n1\n0\n" + TestSupport.BasicInput(provider == Luna ? 4 : 1, provider));
 
         AssertEx.DoesNotContain(text, "Error:");
         AssertEx.Contains(text, "Decision JSON is now shown.");

@@ -13,7 +13,7 @@ public sealed class TransportConfigurationTests : BasicTestBase
     public void FoundryAuthenticationDoesNotLeakIntoSubsequentLocalCalls(string provider)
     {
         SetProvider(provider);
-        string text = Run("1\n1\n\n0\n3\n2\n3\n0\n1\n1\n\n4\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
+        string text = Run("1\n1\n\n0\n4\n2\n3\n0\n1\n1\n\n4\n\n0\n0\n"); NotContains(text, "Error:"); Assert.AreEqual(3, Server.Requests.Count);
         Assert.AreEqual(FoundryKey, Server.Requests[0].Headers.GetValueOrDefault("api-key"));
         foreach (var request in Server.Requests.Skip(1)) { Assert.IsFalse(request.Headers.ContainsKey("api-key")); Assert.IsFalse(request.Headers.ContainsKey("authorization")); }
     }

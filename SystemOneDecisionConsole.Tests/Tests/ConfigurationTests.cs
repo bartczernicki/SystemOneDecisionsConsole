@@ -31,12 +31,12 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
         App.WriteJson(besideApplication, new JsonObject { ["ShowDecisionJson"] = true });
         MarkResponses();
 
-        string text = Run("3\n0\n" + TestSupport.BasicInput(1));
+        string text = Run("4\n0\n" + TestSupport.BasicInput(1));
 
         Assert.IsTrue(File.Exists(ConfigurationPath));
         Assert.IsFalse(SavedSetting());
         Assert.IsTrue(App.ReadJson(besideApplication)["ShowDecisionJson"]!.GetValue<bool>());
-        AssertEx.Contains(text, "3) Configure");
+        AssertEx.Contains(text, "4) Configure");
         AssertEx.Contains(text, "1) Show / Hide Decision JSON (currently Hidden)");
         AssertEx.DoesNotContain(text, "Response JSON:");
         AssertEx.DoesNotContain(text, RawMarker);
@@ -53,7 +53,7 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
         App.WriteText(ConfigurationPath, original);
         MarkResponses();
 
-        string text = Run("3\n0\n" + TestSupport.BasicInput(1));
+        string text = Run("4\n0\n" + TestSupport.BasicInput(1));
 
         AssertEx.Contains(text, $"currently {(shown ? "Shown" : "Hidden")}");
         AssertEx.Count(text, "Response JSON:\n", shown ? 1 : 0);
@@ -69,7 +69,7 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
         const string original = "{ \"FutureOption\": \"retained\" }";
         App.WriteText(ConfigurationPath, original);
 
-        string text = Run("3\n0\n" + TestSupport.BasicInput(1));
+        string text = Run("4\n0\n" + TestSupport.BasicInput(1));
 
         AssertEx.Contains(text, "currently Hidden");
         AssertEx.DoesNotContain(text, "Response JSON:");
@@ -89,7 +89,7 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
         App.WriteText(ConfigurationPath, original);
         MarkResponses();
 
-        string text = Run("3\n0\n" + TestSupport.BasicInput(1));
+        string text = Run("4\n0\n" + TestSupport.BasicInput(1));
 
         AssertEx.Contains(text, "Configuration.json");
         AssertEx.Contains(text, "currently Hidden");
@@ -105,7 +105,7 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
     {
         Directory.CreateDirectory(ConfigurationPath);
 
-        string text = Run("3\n0\n" + TestSupport.BasicInput(1));
+        string text = Run("4\n0\n" + TestSupport.BasicInput(1));
 
         AssertEx.Contains(text, "Configuration.json");
         AssertEx.Contains(text, "currently Hidden");
@@ -124,7 +124,7 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
         string text;
         using (var lockedFile = new FileStream(ConfigurationPath, FileMode.Open, FileAccess.Read, FileShare.None))
         {
-            text = Run("3\n0\n" + TestSupport.BasicInput(1));
+            text = Run("4\n0\n" + TestSupport.BasicInput(1));
         }
 
         AssertEx.Contains(text, "Warning: Could not load Configuration.json:");
@@ -140,7 +140,7 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
     [TestMethod]
     public void ConfigureMenuHandlesWhitespaceInvalidSelectionsAndBackWithoutRequests()
     {
-        string text = Run(" 3 \nbad\n\n3\n-1\n 0 \n0\n");
+        string text = Run(" 4 \nbad\n\n3\n-1\n 0 \n0\n");
 
         AssertEx.Count(text, "Please enter 0, 1, or 2", 4);
         AssertEx.Count(text, "1) Basic Decision Examples", 2);
@@ -154,11 +154,11 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
 
     [TestMethod]
     [DataRow("", false)]
-    [DataRow("3\n", false)]
-    [DataRow("3\nbad\n", false)]
-    [DataRow("3\n0\n", false)]
-    [DataRow("3\n1\n", true)]
-    [DataRow("3\n1\n0\n", true)]
+    [DataRow("4\n", false)]
+    [DataRow("4\nbad\n", false)]
+    [DataRow("4\n0\n", false)]
+    [DataRow("4\n1\n", true)]
+    [DataRow("4\n1\n0\n", true)]
     public void EndOfInputExitsCleanlyAtConfigureAndAfterToggle(string input, bool shown)
     {
         string text = Run(input);
@@ -172,7 +172,7 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
     public void ToggleAppliesImmediatelyAcrossMenusAndPersistsAcrossRestarts()
     {
         MarkResponses();
-        string text = Run("1\n1\n\n0\n3\n1\n0\n1\n1\n\n0\n3\n1\n0\n2\n1\n\n0\n0\n");
+        string text = Run("1\n1\n\n0\n4\n1\n0\n1\n1\n\n0\n4\n1\n0\n2\n1\n\n0\n0\n");
 
         Assert.AreEqual(3, Server.Requests.Count);
         AssertEx.Count(text, "Response JSON:\n", 1);
@@ -189,7 +189,7 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
         AssertEx.DoesNotContain(text, "Response JSON:");
         Assert.AreEqual(1, Server.Requests.Count);
 
-        Run("3\n 1 \n0\n0\n");
+        Run("4\n 1 \n0\n0\n");
         Assert.IsTrue(SavedSetting());
         Assert.AreEqual(0, Server.Requests.Count);
         text = Run(TestSupport.BasicInput(1));
@@ -214,7 +214,7 @@ public sealed class ConfigurationTests : ConsoleScenarioTestBase
             return FixtureResponse.Json(TestSupport.AnswersFor(request.Payload, request.Path));
         };
 
-        string text = Run("1\n1\n\n0\n3\n1\n0\n1\n1\n\n0\n0\n");
+        string text = Run("1\n1\n\n0\n4\n1\n0\n1\n1\n\n0\n0\n");
 
         AssertEx.Contains(text, "Configuration.json");
         AssertEx.Count(text, $"currently {(shown ? "Shown" : "Hidden")}", 2);
